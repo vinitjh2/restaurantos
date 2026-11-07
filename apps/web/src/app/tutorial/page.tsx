@@ -61,12 +61,20 @@ export default function TutorialPage() {
           {/* Action Buttons: Direct Download PDF & Print */}
           <div className="flex flex-wrap items-center gap-3 print:hidden">
             <a
+              href="/downloads/RestaurantOS_Owner_Beginner_Manual.pdf"
+              download="RestaurantOS_Owner_Beginner_Manual.pdf"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <Download className="w-4 h-4" />
+              Download Owner Beginner Guide (PDF)
+            </a>
+            <a
               href="/downloads/RestaurantOS-User-Tutorial.pdf"
               download="RestaurantOS-Official-User-Tutorial.pdf"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-xl shadow-orange-600/20 transition-all hover:scale-105 active:scale-95"
             >
               <Download className="w-4 h-4" />
-              Download Official PDF
+              Download Technical Manual
             </a>
             <Button
               variant="outline"
