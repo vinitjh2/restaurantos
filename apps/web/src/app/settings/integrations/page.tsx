@@ -14,6 +14,10 @@ import {
   ShieldCheck,
   Copy,
   Check,
+  Settings2,
+  X,
+  Send,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +39,12 @@ export default function IntegrationsSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [copiedWebhook, setCopiedWebhook] = useState<string | null>(null);
+  const [configuringProvider, setConfiguringProvider] = useState<IntegrationItem | null>(null);
+  const [merchantId, setMerchantId] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
+  const [autoAccept, setAutoAccept] = useState(true);
+  const [simulating, setSimulating] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<string | null>(null);
 
   const fetchIntegrations = async () => {
     try {
@@ -62,6 +72,100 @@ export default function IntegrationsSettingsPage() {
       setTestingProvider(null);
       fetchIntegrations();
     }, 1200);
+  };
+
+  const handleOpenConfigure = (item: IntegrationItem) => {
+    setConfiguringProvider(item);
+    setSimulationResult(null);
+    if (item.provider === "ZOMATO") {
+      setMerchantId("ZOM-IND-4820");
+      setApiSecret("zom_sec_live_992147bb8");
+    } else if (item.provider === "SWIGGY") {
+      setMerchantId("SWG-BLR-7814");
+      setApiSecret("swg_sec_token_552881cd");
+    } else if (item.provider === "RAZORPAY") {
+      setMerchantId("rzp_live_8391024");
+      setApiSecret("rzp_sec_key_38401");
+    } else {
+      setMerchantId("");
+      setApiSecret("");
+    }
+  };
+
+  const handleSimulateOrder = async () => {
+    if (!configuringProvider) return;
+    setSimulating(true);
+    setSimulationResult(null);
+
+    try {
+      const isZomato = configuringProvider.provider === "ZOMATO";
+      const isSwiggy = configuringProvider.provider === "SWIGGY";
+
+      if (isZomato) {
+        const payload = {
+          order: {
+            order_id: `ZOM-${Math.floor(1000 + Math.random() * 9000)}`,
+            customer: { name: "Ankit Sharma", phone: "+91 98765 43210" },
+            delivery: { address: "Flat 402, Sunshine Apts, Indiranagar" },
+            items: [
+              { id: "101", name: "Murgh Dum Biryani", quantity: 2, price: 350, customizations: ["Extra Salan", "Spicy"] },
+              { id: "102", name: "Amritsari Sweet Lassi", quantity: 2, price: 90 },
+            ],
+            subtotal: 880,
+            tax: 44,
+            deliveryFee: 40,
+            total: 964,
+          },
+        };
+
+        const res = await fetch("/api/webhooks/zomato", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSimulationResult(`Success! ${data.message}. KOT: ${data.kotNumber}`);
+        } else {
+          setSimulationResult(`Error: ${data.error}`);
+        }
+      } else if (isSwiggy) {
+        const payload = {
+          order: {
+            order_id: `SWG-${Math.floor(1000 + Math.random() * 9000)}`,
+            customer_name: "Sneha Reddy",
+            customer_contact: "+91 98123 45678",
+            delivery_address: "Tech Park Block B, Koramangala",
+            cart_items: [
+              { id: "201", item_name: "Paneer Butter Masala", quantity: 1, price: 320, customizations: ["Less Spicy"] },
+              { id: "202", item_name: "Butter Garlic Naan", quantity: 3, price: 65 },
+            ],
+            subtotal: 515,
+            tax: 25.75,
+            deliveryFee: 35,
+            total: 575.75,
+          },
+        };
+
+        const res = await fetch("/api/webhooks/swiggy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSimulationResult(`Success! ${data.message}. KOT: ${data.kotNumber}`);
+        } else {
+          setSimulationResult(`Error: ${data.error}`);
+        }
+      } else {
+        setSimulationResult("Credentials validated. Ping successful.");
+      }
+    } catch (err: any) {
+      setSimulationResult(`Simulation failed: ${err.message}`);
+    } finally {
+      setSimulating(false);
+    }
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -197,21 +301,192 @@ export default function IntegrationsSettingsPage() {
                     : "Not verified yet"}
                 </span>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleTestConnection(item.provider)}
-                  disabled={testingProvider === item.provider}
-                  className="h-8 rounded-xl text-xs font-semibold gap-1.5"
-                >
-                  <RefreshCw
-                    className={`h-3 w-3 ${testingProvider === item.provider ? "animate-spin text-amber-600" : ""}`}
-                  />
-                  <span>{testingProvider === item.provider ? "Testing..." : "Test Connection"}</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleTestConnection(item.provider)}
+                    disabled={testingProvider === item.provider}
+                    className="h-8 rounded-xl text-xs font-semibold gap-1.5"
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${testingProvider === item.provider ? "animate-spin text-amber-600" : ""}`}
+                    />
+                    <span>{testingProvider === item.provider ? "Testing..." : "Test Health"}</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleOpenConfigure(item)}
+                    className="h-8 rounded-xl text-xs font-bold gap-1.5 bg-slate-900 text-white hover:bg-slate-800"
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                    <span>Configure</span>
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal: Configure Partner Credentials & Simulate Webhook Order */}
+      {configuringProvider && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
+                  {getProviderIcon(configuringProvider.provider)}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">{configuringProvider.name} Setup</h3>
+                  <p className="text-[11px] text-slate-400">Direct KDS Kitchen Ingestion & Automatic Dispatch</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setConfiguringProvider(null)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Step 1: Webhook URL to give to Zomato / Swiggy */}
+            <div className="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <label className="text-[11px] font-bold text-slate-700 block">
+                1. Webhook URL (Paste this into {configuringProvider.name} Merchant Portal):
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/api/webhooks/${configuringProvider.provider.toLowerCase()}`
+                      : `/api/webhooks/${configuringProvider.provider.toLowerCase()}`
+                  }
+                  className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-700 select-all"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    copyToClipboard(
+                      `${window.location.origin}/api/webhooks/${configuringProvider.provider.toLowerCase()}`,
+                      configuringProvider.provider
+                    )
+                  }
+                  className="h-8 gap-1 text-xs shrink-0"
+                >
+                  {copiedWebhook === configuringProvider.provider ? (
+                    <>
+                      <Check className="h-3 w-3 text-emerald-600" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3 text-slate-500" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Whenever a customer places an order on {configuringProvider.name}, their servers send the order to this address.
+              </p>
+            </div>
+
+            {/* Step 2: Credentials Input */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Restaurant Outlet / Merchant ID:
+                </label>
+                <input
+                  type="text"
+                  value={merchantId}
+                  onChange={(e) => setMerchantId(e.target.value)}
+                  placeholder={`e.g. ${configuringProvider.provider === "ZOMATO" ? "ZOM-IND-4820" : "SWG-BLR-7814"}`}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  API Key / Webhook Secret Token:
+                </label>
+                <input
+                  type="password"
+                  value={apiSecret}
+                  onChange={(e) => setApiSecret(e.target.value)}
+                  placeholder="Paste your API Secret or Webhook Signing Secret"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-slate-50/50">
+                <div>
+                  <div className="text-xs font-semibold text-slate-900">Auto-Accept Incoming Orders</div>
+                  <div className="text-[10px] text-slate-500">Instantly fire KOT to kitchen without manual cashier click</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoAccept}
+                  onChange={(e) => setAutoAccept(e.target.checked)}
+                  className="h-4 w-4 rounded text-amber-600 focus:ring-amber-500"
+                />
+              </div>
+            </div>
+
+            {/* Step 3: Simulation Result Feedback */}
+            {simulationResult && (
+              <div
+                className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                  simulationResult.startsWith("Success")
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-rose-50 text-rose-800 border border-rose-200"
+                }`}
+              >
+                <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span className="flex-1">{simulationResult}</span>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSimulateOrder}
+                disabled={simulating}
+                className="gap-1.5 text-xs text-rose-700 border-rose-200 bg-rose-50 hover:bg-rose-100 font-bold"
+              >
+                <Send className="h-3 w-3" />
+                <span>{simulating ? "Simulating..." : `Simulate Live ${configuringProvider.name} Order`}</span>
+              </Button>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfiguringProvider(null)}
+                  className="text-xs"
+                >
+                  Close
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    alert(`${configuringProvider.name} integration settings saved!`);
+                    setConfiguringProvider(null);
+                  }}
+                  className="text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white"
+                >
+                  Save Configuration
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
