@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -36,6 +36,11 @@ export function TopNav() {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [dateDisplay, setDateDisplay] = useState("Sat, 7 Nov 2026");
+
+  useEffect(() => {
+    setDateDisplay(formatIndianDate());
+  }, []);
 
   const activeBranch = getActiveBranch();
   const activeOrg = organizations.find((o) => o.id === currentOrgId) || organizations[0];
@@ -147,7 +152,7 @@ export function TopNav() {
         {/* Current Date Display */}
         <div className="hidden lg:flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200/80 px-2.5 py-1 text-xs text-slate-600 font-medium">
           <Calendar className="h-3.5 w-3.5 text-slate-400" />
-          <span suppressHydrationWarning>{formatIndianDate()}</span>
+          <span suppressHydrationWarning>{dateDisplay}</span>
         </div>
 
         {/* PWA One-Click Install */}

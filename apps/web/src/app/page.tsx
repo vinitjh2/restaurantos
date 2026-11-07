@@ -39,7 +39,7 @@ export default function DashboardOverviewPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1" suppressHydrationWarning>
-            Real-time telemetry for <span className="font-semibold text-slate-800">{activeBranch.name}</span> (Code: {activeBranch.code} · GSTIN: {activeBranch.gstin})
+            Real-time telemetry for <span className="font-semibold text-slate-800" suppressHydrationWarning>{activeBranch.name}</span> (Code: <span suppressHydrationWarning>{activeBranch.code}</span> · GSTIN: <span suppressHydrationWarning>{activeBranch.gstin}</span>)
           </p>
         </div>
 
