@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # Next.js Full-Stack Application (POS, KDS, ERP, CRM, Analytics)
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: restaurantos_web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-restaurantos_user}:${POSTGRES_PASSWORD:-SecurePassword123}@postgres:5432/${POSTGRES_DB:-restaurantos_prod}?schema=public
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-RedisSecurePassword}@redis:6379
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - APP_SECRET=${APP_SECRET:-change-this-to-a-super-secure-random-64-character-secret-in-production}
+      - DEFAULT_BRANCH_CODE=IND
+      - UPI_PAYEE_VPA=${UPI_PAYEE_VPA:-bawarchiroyale@icici}
+      - UPI_PAYEE_NAME=${UPI_PAYEE_NAME:-Bawarchi Royale}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - restaurantos_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 16 Enterprise Database
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: restaurantos_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-restaurantos_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SecurePassword123}
+      POSTGRES_DB: ${POSTGRES_DB:-restaurantos_prod}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-restaurantos_user} -d ${POSTGRES_DB:-restaurantos_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - restaurantos_network
+
+  # ----------------------------------------------------------------------------
+  # Redis 7 (In-Memory Cache & Socket.IO Real-Time Adapter)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: restaurantos_redis
+    restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-RedisSecurePassword}"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-RedisSecurePassword}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - restaurantos_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  restaurantos_network:
+    driver: bridge

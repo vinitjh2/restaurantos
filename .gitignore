@@ -1,0 +1,10 @@
+node_modules/
+.next/
+*.db
+*.db-journal
+*.db-wal
+*.tsbuildinfo
+.env
+.env.local
+target/
+.gradle/
