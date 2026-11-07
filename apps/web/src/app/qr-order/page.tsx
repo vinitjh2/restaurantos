@@ -61,7 +61,7 @@ function QrOrderContent() {
   const [selectedMods, setSelectedMods] = useState<string[]>([]);
   const [itemCookingNotes, setItemCookingNotes] = useState("");
 
-  const menuCatalog: MenuItem[] = [
+  const DEFAULT_CATALOG: MenuItem[] = [
     {
       id: "item-pbm",
       name: "Paneer Butter Masala",
@@ -130,6 +130,34 @@ function QrOrderContent() {
       availableModifiers: ["Serve Warm", "Add Ice Cream"],
     },
   ];
+
+  const [menuCatalog, setMenuCatalog] = useState<MenuItem[]>(DEFAULT_CATALOG);
+
+  useEffect(() => {
+    fetch("/api/pos/menu")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.items) && data.items.length > 0) {
+          const mapped: MenuItem[] = data.items.map((it: any) => ({
+            id: it.id,
+            name: it.name,
+            category: it.category || "Main Course",
+            dietType: it.dietary === "NON_VEG" || it.dietType === "NON_VEG" ? "NON_VEG" : "VEG",
+            price: Number(it.basePrice || it.price || 120),
+            description: it.description || `${it.category || "Chef special"} freshly prepared to order.`,
+            spiceLevel: it.spiceLevel || "Medium",
+            availableModifiers: it.modifiers?.flatMap((m: any) => m.options?.map((o: any) => o.name)) || [
+              "Regular",
+              "Less Spicy",
+            ],
+          }));
+          setMenuCatalog(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn("Using fallback catalog for QR order:", err);
+      });
+  }, []);
 
   const handleQuickAdd = (item: MenuItem) => {
     setCart((prev) => {
