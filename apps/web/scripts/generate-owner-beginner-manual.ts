@@ -1,5 +1,5 @@
 /**
- * RestaurantOS — The Complete Beginner's Guide for Restaurant Owners
+ * RestaurantOS  -  The Complete Beginner's Guide for Restaurant Owners
  * Publication-Grade PDF Generator using PDFKit
  * Tailored specifically for non-technical restaurant owners with zero computer experience.
  */
@@ -56,7 +56,10 @@ function drawHeader(chapterNumber: string, title: string, subtitle?: string) {
   const headerHeight = 32;
   doc.rect(45, startY, 505, headerHeight).fill(COLOR_SECONDARY);
   doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold');
-  doc.text(`CHAPTER ${chapterNumber}: ${title.toUpperCase()}`, 58, startY + 10, { width: 480 });
+  const headerLabel = /^\d+$/.test(chapterNumber)
+    ? `CHAPTER ${chapterNumber}: ${title.toUpperCase()}`
+    : title.toUpperCase();
+  doc.text(headerLabel, 58, startY + 10, { width: 480 });
   doc.y = startY + headerHeight + 10;
 
   if (subtitle) {
@@ -72,7 +75,8 @@ function drawSectionHeading(num: string, text: string) {
   doc.rect(45, startY, 4, 16).fill(COLOR_PRIMARY);
   doc.fillColor(COLOR_SECONDARY).fontSize(11.5).font('Helvetica-Bold');
   doc.text(`${num} ${text}`, 56, startY + 2, { width: 480 });
-  doc.y = startY + 22;
+  const headingH = doc.heightOfString(`${num} ${text}`, { width: 480 });
+  doc.y = startY + Math.max(20, headingH + 5);
 }
 
 function drawParagraph(text: string) {
@@ -89,48 +93,113 @@ function drawBullet(title: string, desc: string) {
 }
 
 function drawStepBox(stepNum: number, title: string, instruction: string, tip?: string) {
-  const y = doc.y;
-  const boxHeight = tip ? 50 : 38;
-  doc.roundedRect(45, y, 505, boxHeight, 5).fillAndStroke(COLOR_BG_LIGHT, COLOR_BORDER);
+  // Set font properties and calculate dynamic heights
+  doc.fontSize(9.5).font('Helvetica-Bold');
+  const titleH = doc.heightOfString(title, { width: 440 });
 
-  // Step Number Badge
-  doc.roundedRect(52, y + 6, 24, 24, 4).fill(COLOR_PRIMARY);
-  doc.fillColor('#ffffff').fontSize(12).font('Helvetica-Bold');
-  doc.text(stepNum.toString(), 52, y + 12, { width: 24, align: 'center' });
+  doc.fontSize(8.5).font('Helvetica').lineGap(2);
+  const instrH = doc.heightOfString(instruction, { width: 440, lineGap: 2 });
 
-  // Title & Instruction
-  doc.fillColor(COLOR_SECONDARY).fontSize(9.5).font('Helvetica-Bold');
-  doc.text(title, 84, y + 7, { width: 450 });
-  doc.fillColor(COLOR_TEXT_MAIN).fontSize(8.5).font('Helvetica');
-  doc.text(instruction, 84, y + 19, { width: 450 });
-
+  let tipH = 0;
   if (tip) {
-    doc.fillColor(COLOR_GREEN).fontSize(7.5).font('Helvetica-Bold');
-    doc.text(`TIP: ${tip}`, 84, y + 34, { width: 450 });
+    doc.fontSize(7.5).font('Helvetica-Bold');
+    tipH = doc.heightOfString(`TIP: ${tip}`, { width: 440 });
   }
 
-  doc.y = y + boxHeight + 5;
+  const topPad = 8;
+  const bottomPad = 8;
+  const titleGap = 3;
+  const tipGap = tip ? 6 : 0;
+  const totalContentH = titleH + titleGap + instrH + (tip ? (tipGap + tipH) : 0);
+  const boxHeight = Math.max(38, topPad + totalContentH + bottomPad);
+
+  // Ensure box fits on current page
+  if (doc.y + boxHeight > 790) {
+    doc.addPage();
+  }
+
+  const y = doc.y;
+  doc.roundedRect(45, y, 505, boxHeight, 5).fillAndStroke(COLOR_BG_LIGHT, COLOR_BORDER);
+
+  // Step Number Badge (pinned to top-left of box)
+  doc.roundedRect(52, y + 8, 24, 24, 4).fill(COLOR_PRIMARY);
+  doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold');
+  doc.text(stepNum.toString(), 52, y + 14, { width: 24, align: 'center' });
+
+  // Sequential rendering of text blocks to guarantee ZERO overlap
+  let textY = y + topPad;
+
+  // Title
+  doc.fillColor(COLOR_SECONDARY).fontSize(9.5).font('Helvetica-Bold');
+  doc.text(title, 84, textY, { width: 440 });
+  textY += titleH + titleGap;
+
+  // Instruction
+  doc.fillColor(COLOR_TEXT_MAIN).fontSize(8.5).font('Helvetica').lineGap(2);
+  doc.text(instruction, 84, textY, { width: 440, lineGap: 2 });
+  textY += instrH;
+
+  // Tip (Guaranteed to be strictly below instruction)
+  if (tip) {
+    textY += tipGap;
+    doc.fillColor(COLOR_GREEN).fontSize(7.5).font('Helvetica-Bold');
+    doc.text(`TIP: ${tip}`, 84, textY, { width: 440 });
+  }
+
+  doc.y = y + boxHeight + 6;
 }
 
 function drawButtonCallout(buttonName: string, iconDescription: string, whatItDoes: string) {
+  const line1 = `BUTTON TO LOOK FOR: [ ${buttonName} ]`;
+  const line2 = `Symbol: ${iconDescription}  |  Action: ${whatItDoes}`;
+  doc.fontSize(8.5).font('Helvetica-Bold');
+  const h1 = doc.heightOfString(line1, { width: 480 });
+  doc.fontSize(8).font('Helvetica');
+  const h2 = doc.heightOfString(line2, { width: 480 });
+
+  const boxHeight = Math.max(30, 6 + h1 + 3 + h2 + 6);
+
+  if (doc.y + boxHeight > 790) {
+    doc.addPage();
+  }
+
   const y = doc.y;
-  doc.roundedRect(45, y, 505, 30, 4).fillAndStroke('#fff7ed', '#fed7aa');
+  doc.roundedRect(45, y, 505, boxHeight, 4).fillAndStroke('#fff7ed', '#fed7aa');
+  let curY = y + 6;
   doc.fillColor(COLOR_PRIMARY_DARK).fontSize(8.5).font('Helvetica-Bold');
-  doc.text(`BUTTON TO LOOK FOR: [ ${buttonName} ]`, 55, y + 6);
+  doc.text(line1, 55, curY, { width: 480 });
+  curY += h1 + 3;
   doc.fillColor(COLOR_TEXT_MAIN).fontSize(8).font('Helvetica');
-  doc.text(`Symbol: ${iconDescription}  |  Action: ${whatItDoes}`, 55, y + 17, { width: 480 });
-  doc.y = y + 34;
+  doc.text(line2, 55, curY, { width: 480 });
+
+  doc.y = y + boxHeight + 6;
 }
 
 function drawImportantBox(title: string, message: string, color = COLOR_PRIMARY) {
+  doc.fontSize(8.5).font('Helvetica-Bold');
+  const titleH = doc.heightOfString(title.toUpperCase(), { width: 475 });
+  doc.fontSize(8).font('Helvetica').lineGap(2);
+  const msgH = doc.heightOfString(message, { width: 475, lineGap: 2 });
+
+  const boxHeight = Math.max(36, 7 + titleH + 3 + msgH + 7);
+
+  if (doc.y + boxHeight > 790) {
+    doc.addPage();
+  }
+
   const y = doc.y;
-  doc.roundedRect(45, y, 505, 38, 5).fillAndStroke(COLOR_BG_LIGHT, COLOR_BORDER);
-  doc.rect(45, y, 4, 38).fill(color);
+  doc.roundedRect(45, y, 505, boxHeight, 5).fillAndStroke(COLOR_BG_LIGHT, COLOR_BORDER);
+  doc.rect(45, y, 4, boxHeight).fill(color);
+
+  let curY = y + 7;
   doc.fillColor(color).fontSize(8.5).font('Helvetica-Bold');
-  doc.text(title.toUpperCase(), 56, y + 6);
-  doc.fillColor(COLOR_TEXT_MAIN).fontSize(8).font('Helvetica');
-  doc.text(message, 56, y + 18, { width: 480 });
-  doc.y = y + 43;
+  doc.text(title.toUpperCase(), 56, curY, { width: 475 });
+  curY += titleH + 3;
+
+  doc.fillColor(COLOR_TEXT_MAIN).fontSize(8).font('Helvetica').lineGap(2);
+  doc.text(message, 56, curY, { width: 475, lineGap: 2 });
+
+  doc.y = y + boxHeight + 6;
 }
 
 function drawScreenMockup(
@@ -229,13 +298,13 @@ for (const h of highlights) {
 }
 
 doc.fontSize(8.5).font('Helvetica-Oblique').fillColor('#64748b');
-doc.text('Official RestaurantOS Customer Onboarding Kit — Version 2026 Edition', 50, 785);
+doc.text('Official RestaurantOS Customer Onboarding Kit  -  Version 2026 Edition', 50, 785);
 
 // =============================================================================
 // PAGE 2: WELCOME LETTER & THE GOLDEN RULES
 // =============================================================================
 doc.addPage();
-drawHeader('WELCOME', "A Friendly Message to the Restaurant Owner", "Take a deep breath — this software was built for you");
+drawHeader('WELCOME', "A Friendly Message to the Restaurant Owner", "Take a deep breath  -  this software was built for you");
 
 drawSectionHeading('1.', 'Running a Restaurant is Hard. Software Should Be Easy.');
 drawParagraph(
@@ -274,7 +343,7 @@ drawImportantBox(
 );
 
 // =============================================================================
-// PAGE 3: MODULE 1 — SCREEN TOUR & ROAD SIGNS
+// PAGE 3: MODULE 1  -  SCREEN TOUR & ROAD SIGNS
 // =============================================================================
 doc.addPage();
 drawHeader('1', 'Where Everything Is on Your Screen', 'Like learning the road signs before driving a car');
@@ -316,7 +385,7 @@ drawBullet('Restaurant & Branch Switcher', 'Shows your restaurant name (e.g. Baw
 drawBullet('Universal Search (Ctrl + K)', 'Type any dish name, table number, or customer phone number to find it immediately.');
 
 // =============================================================================
-// PAGE 4: MODULE 2 — UPLOADING & ADDING YOUR FOOD MENU
+// PAGE 4: MODULE 2  -  UPLOADING & ADDING YOUR FOOD MENU
 // =============================================================================
 doc.addPage();
 drawHeader('2', 'Uploading & Adding Your Food Menu', 'How to enter your categories, dishes, prices & portion sizes');
@@ -362,7 +431,7 @@ drawStepBox(
 
 drawSectionHeading('2.1', 'How to Handle "Half" and "Full" Portion Sizes');
 drawParagraph(
-  'Does your restaurant sell dishes in different sizes? (e.g. Chicken Biryani: Half plate ₹180, Full plate ₹320). When creating or editing a dish, look for the section called "Portion Sizes / Variants". Click "+ Add Size", type "Half" with ₹180, and "Full" with ₹320. On the billing screen, the cashier can pick the size with 1 touch!'
+  'Does your restaurant sell dishes in different sizes? (e.g. Chicken Biryani: Half plate Rs. 180, Full plate Rs. 320). When creating or editing a dish, look for the section called "Portion Sizes / Variants". Click "+ Add Size", type "Half" with Rs. 180, and "Full" with Rs. 320. On the billing screen, the cashier can pick the size with 1 touch!'
 );
 
 drawSectionHeading('2.2', 'What to Do When Food Runs Out (Mark Sold Out)');
@@ -371,7 +440,7 @@ drawParagraph(
 );
 
 // =============================================================================
-// PAGE 5: MODULE 3 — BILLING AT THE CASH COUNTER (POS)
+// PAGE 5: MODULE 3  -  BILLING AT THE CASH COUNTER (POS)
 // =============================================================================
 doc.addPage();
 drawHeader('3', 'Taking Orders & Billing at the Cash Counter (POS)', 'How any cashier can generate a bill in under 10 seconds');
@@ -423,22 +492,22 @@ drawScreenMockup('Cash Counter Billing Terminal (POS)', 'http://localhost:3000/p
 
   // Left Dish Tile 1
   doc.roundedRect(x + 5, y + 24, 140, 22, 3).fillAndStroke('#ffffff', '#e2e8f0');
-  doc.fillColor('#15803d').fontSize(5.5).text('● VEG', x + 10, y + 28);
+  doc.fillColor('#15803d').fontSize(5.5).text('[VEG]', x + 10, y + 28);
   doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('Paneer Butter Masala', x + 10, y + 35);
-  doc.fillColor('#475569').fontSize(6.5).text('₹320', x + 115, y + 35);
+  doc.fillColor('#475569').fontSize(6.5).text('Rs. 320', x + 115, y + 35);
 
   // Left Dish Tile 2
   doc.roundedRect(x + 150, y + 24, 145, 22, 3).fillAndStroke('#ffffff', '#e2e8f0');
-  doc.fillColor('#b91c1c').fontSize(5.5).text('● NON-VEG', x + 155, y + 28);
+  doc.fillColor('#b91c1c').fontSize(5.5).text('[NON-VEG]', x + 155, y + 28);
   doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('Murgh Dum Biryani', x + 155, y + 35);
-  doc.fillColor('#475569').fontSize(6.5).text('₹350', x + 260, y + 35);
+  doc.fillColor('#475569').fontSize(6.5).text('Rs. 350', x + 260, y + 35);
 
   // Right Bill Slip
   doc.roundedRect(x + 305, y + 5, 185, 42, 3).fillAndStroke('#f8fafc', '#cbd5e1');
   doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('TABLE T-04 (DINE-IN)', x + 312, y + 8);
-  doc.fillColor('#475569').fontSize(6).font('Helvetica').text('2x Murgh Dum Biryani ................. ₹700', x + 312, y + 16);
-  doc.fillColor('#475569').fontSize(6).text('2x Butter Garlic Naan ................. ₹130', x + 312, y + 24);
-  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('TOTAL: ₹872 (Incl. GST)', x + 312, y + 33);
+  doc.fillColor('#475569').fontSize(6).font('Helvetica').text('2x Murgh Dum Biryani ................. Rs. 700', x + 312, y + 16);
+  doc.fillColor('#475569').fontSize(6).text('2x Butter Garlic Naan ................. Rs. 130', x + 312, y + 24);
+  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('TOTAL: Rs. 872 (Incl. GST)', x + 312, y + 33);
 
   // Bottom action buttons
   doc.roundedRect(x + 305, y + 51, 88, 15, 3).fill('#2563eb');
@@ -454,7 +523,7 @@ drawImportantBox(
 );
 
 // =============================================================================
-// PAGE 6: MODULE 4 — COLLECTING PAYMENTS & GST INVOICES
+// PAGE 6: MODULE 4  -  COLLECTING PAYMENTS & GST INVOICES
 // =============================================================================
 doc.addPage();
 drawHeader('4', 'Collecting Payments & Printing Tax Invoices', 'Accepting Cash, UPI QR Code, Cards & Splitting Bills');
@@ -465,7 +534,7 @@ drawParagraph(
 
 drawSectionHeading('4.1', 'Payment Method 1: Cash Payment (With Auto-Change Calculator)');
 drawParagraph(
-  '1. Click the "CASH" button on the payment window.\n2. The screen shows the Grand Total (e.g. ₹420).\n3. If the customer hands you a ₹500 note, type "500" in the Cash Received box.\n4. The screen instantly displays in big green letters: "RETURN CHANGE: ₹80". You never have to do mental math in your head or make calculation errors!\n5. Click "Print Tax Invoice". The cash drawer pops open automatically, and the receipt prints.'
+  '1. Click the "CASH" button on the payment window.\n2. The screen shows the Grand Total (e.g. Rs. 420).\n3. If the customer hands you a Rs. 500 note, type "500" in the Cash Received box.\n4. The screen instantly displays in big green letters: "RETURN CHANGE: Rs. 80". You never have to do mental math in your head or make calculation errors!\n5. Click "Print Tax Invoice". The cash drawer pops open automatically, and the receipt prints.'
 );
 
 drawSectionHeading('4.2', 'Payment Method 2: UPI / QR Code Payment (Google Pay, PhonePe, Paytm)');
@@ -490,7 +559,7 @@ drawButtonCallout(
 );
 
 // =============================================================================
-// PAGE 7: MODULE 5 — MANAGING TABLES & DINING ROOM
+// PAGE 7: MODULE 5  -  MANAGING TABLES & DINING ROOM
 // =============================================================================
 doc.addPage();
 drawHeader('5', 'Managing Tables & Dining Room Floor', 'Keep track of every seated guest with 3 easy colors');
@@ -511,7 +580,7 @@ drawStepBox(
 drawStepBox(
   2,
   'RED TABLE = Guests Sitting & Eating (Active Bill)',
-  'The table has an active order being prepared or served. The tile displays the running bill amount (e.g. ₹850) and a small timer showing how many minutes they have been seated (e.g. 24 mins).',
+  'The table has an active order being prepared or served. The tile displays the running bill amount (e.g. Rs. 850) and a small timer showing how many minutes they have been seated (e.g. 24 mins).',
   'Clicking the red table allows you to add more rotis, drinks, or extra dishes.'
 );
 
@@ -527,24 +596,24 @@ drawScreenMockup('Dining Room Tables & Floor Map', 'http://localhost:3000/tables
   doc.roundedRect(x + 5, y + 6, 115, 38, 4).fillAndStroke('#ecfdf5', '#10b981');
   doc.fillColor('#065f46').fontSize(7.5).font('Helvetica-Bold').text('TABLE T-01', x + 10, y + 10);
   doc.fillColor('#047857').fontSize(6.5).font('Helvetica').text('AVAILABLE (4 Seats)', x + 10, y + 20);
-  doc.fillColor('#059669').fontSize(6).text('🟢 Clean & Ready', x + 10, y + 29);
+  doc.fillColor('#059669').fontSize(6).text(' Clean & Ready', x + 10, y + 29);
 
   // Table 2: Red
   doc.roundedRect(x + 128, y + 6, 115, 38, 4).fillAndStroke('#fff1f2', '#f43f5e');
   doc.fillColor('#881337').fontSize(7.5).font('Helvetica-Bold').text('TABLE T-02', x + 133, y + 10);
-  doc.fillColor('#be123c').fontSize(6.5).font('Helvetica-Bold').text('₹1,450 (32 mins)', x + 133, y + 20);
-  doc.fillColor('#e11d48').fontSize(6).font('Helvetica').text('🔴 Guests Eating (KOT #42)', x + 133, y + 29);
+  doc.fillColor('#be123c').fontSize(6.5).font('Helvetica-Bold').text('Rs. 1,450 (32 mins)', x + 133, y + 20);
+  doc.fillColor('#e11d48').fontSize(6).font('Helvetica').text(' Guests Eating (KOT #42)', x + 133, y + 29);
 
   // Table 3: Yellow
   doc.roundedRect(x + 251, y + 6, 118, 38, 4).fillAndStroke('#fefce8', '#eab308');
   doc.fillColor('#713f12').fontSize(7.5).font('Helvetica-Bold').text('TABLE T-03', x + 256, y + 10);
   doc.fillColor('#a16207').fontSize(6.5).font('Helvetica-Bold').text('BILL REQUESTED', x + 256, y + 20);
-  doc.fillColor('#ca8a04').fontSize(6).font('Helvetica').text('🟡 Pre-Bill Printed', x + 256, y + 29);
+  doc.fillColor('#ca8a04').fontSize(6).font('Helvetica').text(' Pre-Bill Printed', x + 256, y + 29);
 
   // Table 4: QR Standee Card
   doc.roundedRect(x + 377, y + 6, 118, 38, 4).fillAndStroke('#eff6ff', '#3b82f6');
   doc.fillColor('#1e3a8a').fontSize(7).font('Helvetica-Bold').text('TABLE QR STANDEE', x + 382, y + 10);
-  doc.fillColor('#1d4ed8').fontSize(6).font('Helvetica').text('⚏ Scan with Camera', x + 382, y + 20);
+  doc.fillColor('#1d4ed8').fontSize(6).font('Helvetica').text(' Scan with Camera', x + 382, y + 20);
   doc.fillColor('#2563eb').fontSize(6).text('No Waiter Needed', x + 382, y + 29);
 });
 
@@ -559,7 +628,7 @@ drawParagraph(
 );
 
 // =============================================================================
-// PAGE 8: MODULE 6 — KITCHEN DISPLAY & KOT FOR COOKS
+// PAGE 8: MODULE 6  -  KITCHEN DISPLAY & KOT FOR COOKS
 // =============================================================================
 doc.addPage();
 drawHeader('6', 'Kitchen Display & KOT for Your Cooks', 'Eliminate shouting, wrong food orders & slow cooking times');
@@ -620,7 +689,7 @@ drawScreenMockup('Kitchen Display System (KDS) Live Order Queue', 'http://localh
 });
 
 // =============================================================================
-// PAGE 9: MODULE 7 — MANAGING STOREROOM & INVENTORY
+// PAGE 9: MODULE 7  -  MANAGING STOREROOM & INVENTORY
 // =============================================================================
 doc.addPage();
 drawHeader('7', 'Managing Storeroom & Raw Ingredients', 'Stop food theft, track raw material costs & avoid running out');
@@ -663,7 +732,7 @@ drawImportantBox(
 );
 
 // =============================================================================
-// PAGE 10: MODULE 8 — STAFF, PASSWORDS & SECURITY
+// PAGE 10: MODULE 8  -  STAFF, PASSWORDS & SECURITY
 // =============================================================================
 doc.addPage();
 drawHeader('8', 'Staff Management & 4-Digit PIN Security', 'Give employees their own login while keeping your money safe');
@@ -705,7 +774,7 @@ drawParagraph(
 );
 
 // =============================================================================
-// PAGE 11: MODULE 9 — THE DAILY ROUTINE (OPENING TO CLOSING)
+// PAGE 11: MODULE 9  -  THE DAILY ROUTINE (OPENING TO CLOSING)
 // =============================================================================
 doc.addPage();
 drawHeader('9', 'The Daily Routine: Opening, Rush & Closing', 'Your restaurant\'s complete operating rhythm in 3 simple checklists');
@@ -724,7 +793,7 @@ drawStepBox(
 drawStepBox(
   2,
   '2. Start Cash Shift (Enter Starting Float / Petty Cash)',
-  'Click Staff -> Shift Register. Enter the cash currently in your physical cash drawer (e.g. ₹2,000 in small change notes for customer balance). This is your starting float.',
+  'Click Staff -> Shift Register. Enter the cash currently in your physical cash drawer (e.g. Rs. 2,000 in small change notes for customer balance). This is your starting float.',
   'Starting float prevents confusing opening change with today\'s fresh sales.'
 );
 drawStepBox(
@@ -747,21 +816,21 @@ drawStepBox(
 drawStepBox(
   5,
   '2. Match the Numbers with Your Physical Cash Drawer',
-  'The Z-Report displays:\n• Total Cash Sales: e.g. ₹18,450\n• Total UPI (GPay/PhonePe): e.g. ₹24,800\n• Total Card Sales: e.g. ₹12,300\n• Total GST Collected: e.g. ₹2,780\nCount the cash notes in your physical counter drawer. If your cash matches the screen number, your cashier has accounted for every single rupee! Lock the cash drawer and shut down.'
+  'The Z-Report displays:\n• Total Cash Sales: e.g. Rs. 18,450\n• Total UPI (GPay/PhonePe): e.g. Rs. 24,800\n• Total Card Sales: e.g. Rs. 12,300\n• Total GST Collected: e.g. Rs. 2,780\nCount the cash notes in your physical counter drawer. If your cash matches the screen number, your cashier has accounted for every single rupee! Lock the cash drawer and shut down.'
 );
 
 drawScreenMockup('Daily Z-Report Shift Closure Snapshot', 'http://localhost:3000/reports', 62, (x, y, w, h) => {
   // Receipt Paper Mockup
   doc.roundedRect(x + 120, y + 5, 260, 48, 3).fillAndStroke('#ffffff', '#cbd5e1');
-  doc.fillColor('#0f172a').fontSize(7).font('Helvetica-Bold').text('BAWARCHI ROYALE — DAILY Z-REPORT (Shift #44)', x + 130, y + 9);
-  doc.fillColor('#475569').fontSize(6).font('Helvetica').text('Cash Sales: ₹18,450  |  UPI (QR): ₹24,800  |  Cards: ₹12,300', x + 130, y + 20);
-  doc.fillColor('#475569').fontSize(6).text('Total Revenue: ₹55,550.00  |  GST Tax Collected (5%): ₹2,778.00', x + 130, y + 29);
+  doc.fillColor('#0f172a').fontSize(7).font('Helvetica-Bold').text('BAWARCHI ROYALE  -  DAILY Z-REPORT (Shift #44)', x + 130, y + 9);
+  doc.fillColor('#475569').fontSize(6).font('Helvetica').text('Cash Sales: Rs. 18,450  |  UPI (QR): Rs. 24,800  |  Cards: Rs. 12,300', x + 130, y + 20);
+  doc.fillColor('#475569').fontSize(6).text('Total Revenue: Rs. 55,550.00  |  GST Tax Collected (5%): Rs. 2,778.00', x + 130, y + 29);
   doc.roundedRect(x + 130, y + 37, 240, 12, 2).fill('#ecfdf5');
-  doc.fillColor('#047857').fontSize(6.5).font('Helvetica-Bold').text('✓ PHYSICAL CASH DRAWER RECONCILIATION: 100% MATCH', x + 140, y + 40);
+  doc.fillColor('#047857').fontSize(6.5).font('Helvetica-Bold').text(' PHYSICAL CASH DRAWER RECONCILIATION: 100% MATCH', x + 140, y + 40);
 });
 
 // =============================================================================
-// PAGE 12: MODULE 10 — SIMPLE TROUBLESHOOTING & FAQ
+// PAGE 12: MODULE 10  -  SIMPLE TROUBLESHOOTING & FAQ
 // =============================================================================
 doc.addPage();
 drawHeader('10', 'Frequently Asked Questions & Don\'t Panic Guide', 'Simple answers to common situations you might face');
@@ -779,7 +848,7 @@ const faqs = [
   },
   {
     q: 'Q3: A customer wants to apply a 10% discount on their bill.',
-    a: 'On the POS billing screen, look right below the item list. Click the button "Apply Discount". You can choose 10% percentage discount or type a flat Rupee discount (e.g. ₹50 off). The bill recalculates taxes and totals instantly.',
+    a: 'On the POS billing screen, look right below the item list. Click the button "Apply Discount". You can choose 10% percentage discount or type a flat Rupee discount (e.g. Rs. 50 off). The bill recalculates taxes and totals instantly.',
   },
   {
     q: 'Q4: How do I change the price of a dish if vegetable prices increase?',

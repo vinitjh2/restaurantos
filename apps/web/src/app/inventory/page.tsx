@@ -602,7 +602,7 @@ export default function InventoryPage() {
                           <td className="py-3 px-4">
                             <div className="font-mono text-[11px] text-slate-700">{item.batchNumber || "—"}</div>
                             {item.expiryDate ? (
-                              <div className="text-[10px] text-slate-400">
+                              <div className="text-[10px] text-slate-400" suppressHydrationWarning>
                                 Exp: {new Date(item.expiryDate).toLocaleDateString("en-IN")}
                               </div>
                             ) : (
@@ -783,7 +783,7 @@ export default function InventoryPage() {
                       const isPositive = mov.quantity > 0;
                       return (
                         <tr key={mov.id} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
+                          <td className="py-3 px-4 text-slate-500 whitespace-nowrap" suppressHydrationWarning>
                             {new Date(mov.createdAt).toLocaleString("en-IN", {
                               day: "2-digit",
                               month: "short",

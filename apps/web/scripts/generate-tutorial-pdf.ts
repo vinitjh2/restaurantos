@@ -95,14 +95,24 @@ function drawBullet(title: string, desc: string) {
 }
 
 function drawCalloutBox(title: string, text: string, color = PRIMARY) {
+  doc.fontSize(8.5).font('Helvetica-Bold');
+  const titleH = doc.heightOfString(title.toUpperCase(), { width: 485 });
+  doc.fontSize(8).font('Helvetica').lineGap(2);
+  const textH = doc.heightOfString(text, { width: 485, lineGap: 2 });
+  const boxHeight = Math.max(38, 7 + titleH + 3 + textH + 7);
+
+  if (doc.y + boxHeight > 790) {
+    doc.addPage();
+  }
+
   const y = doc.y;
-  doc.roundedRect(45, y, 505, 42, 6).fillAndStroke(BG_CARD, BORDER_COLOR);
-  doc.rect(45, y, 4, 42).fill(color);
+  doc.roundedRect(45, y, 505, boxHeight, 6).fillAndStroke(BG_CARD, BORDER_COLOR);
+  doc.rect(45, y, 4, boxHeight).fill(color);
   doc.fillColor(color).fontSize(8.5).font('Helvetica-Bold');
-  doc.text(title.toUpperCase(), 55, y + 6);
-  doc.fillColor(TEXT_MAIN).fontSize(8).font('Helvetica');
-  doc.text(text, 55, y + 18, { width: 485 });
-  doc.y = y + 48;
+  doc.text(title.toUpperCase(), 55, y + 7, { width: 485 });
+  doc.fillColor(TEXT_MAIN).fontSize(8).font('Helvetica').lineGap(2);
+  doc.text(text, 55, y + 7 + titleH + 3, { width: 485, lineGap: 2 });
+  doc.y = y + boxHeight + 6;
 }
 
 // =============================================================================
