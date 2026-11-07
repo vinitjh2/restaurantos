@@ -5,9 +5,20 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const tables = await prisma.tableSeat.findMany({
+    let tables = await prisma.tableSeat.findMany({
       orderBy: { tableNumber: "asc" },
     });
+
+    if (tables.length === 0) {
+      tables = [
+        { id: "t1", tableNumber: "T-01", floor: "Ground Floor", capacity: 4, status: "AVAILABLE" } as any,
+        { id: "t2", tableNumber: "T-02", floor: "Ground Floor", capacity: 2, status: "OCCUPIED" } as any,
+        { id: "t3", tableNumber: "T-03", floor: "Ground Floor", capacity: 6, status: "AVAILABLE" } as any,
+        { id: "t4", tableNumber: "T-04", floor: "Ground Floor", capacity: 4, status: "OCCUPIED" } as any,
+        { id: "t5", tableNumber: "T-05", floor: "First Floor", capacity: 4, status: "AVAILABLE" } as any,
+        { id: "t6", tableNumber: "T-06", floor: "First Floor", capacity: 8, status: "AVAILABLE" } as any,
+      ];
+    }
 
     return NextResponse.json({
       success: true,
