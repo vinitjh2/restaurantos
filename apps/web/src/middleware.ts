@@ -8,6 +8,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/cfd") ||
+    pathname.startsWith("/qr-order") ||
     pathname.startsWith("/downloads") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/webhooks") ||
@@ -29,11 +30,12 @@ export function middleware(request: NextRequest) {
   if (!sessionToken) {
     // For API requests, return 401 JSON instead of redirect
     if (pathname.startsWith("/api/")) {
-      return NextResponse.next(); // API routes handle getTenantContext with developer fallback
+      return NextResponse.next(); // API routes handle getTenantContext
     }
 
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    const returnDestination = pathname + (request.nextUrl.search || "");
+    loginUrl.searchParams.set("redirect", returnDestination);
     return NextResponse.redirect(loginUrl);
   }
 
