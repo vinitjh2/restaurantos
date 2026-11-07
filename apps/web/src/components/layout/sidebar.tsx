@@ -30,6 +30,7 @@ import {
   Tablet,
   TrendingUp,
   Layers,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRestaurantStore } from "@/stores/restaurant-store";
@@ -56,7 +57,9 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Orders", href: "/orders", icon: ShoppingBag, badge: "9", badgeVariant: "warning" },
       { title: "Tables", href: "/tables", icon: UtensilsCrossed },
       { title: "Kitchen Display", href: "/kitchen", icon: ChefHat },
-      { title: "Mobile Waiter", href: "/mobile/waiter", icon: Smartphone, badge: "App" },
+      { title: "Waiter Station", href: "/waiter", icon: UserCheck, badge: "Floor" },
+      { title: "Mobile Waiter", href: "/mobile/waiter", icon: Smartphone, badge: "Phone" },
+      { title: "Customer QR Menu", href: "/qr-order", icon: QrCode, badge: "Self" },
       { title: "Mobile POS", href: "/mobile/pos", icon: Tablet, badge: "Handheld" },
       { title: "Owner Mobile", href: "/mobile/owner", icon: TrendingUp, badge: "Live" },
     ],

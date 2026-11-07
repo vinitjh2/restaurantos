@@ -12,6 +12,7 @@ const OFFLINE_APP_SHELLS = [
   "/kitchen",
   "/tables",
   "/orders",
+  "/waiter",
   "/sync-monitor",
   "/mobile/waiter",
   "/mobile/pos",
