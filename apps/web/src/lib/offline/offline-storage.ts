@@ -405,6 +405,10 @@ class OfflineStorageEngine {
     return activeRaw ? JSON.parse(activeRaw) : null;
   }
 
+  async getActiveOfflineSession(): Promise<CachedUserSession | null> {
+    return this.getCachedSession();
+  }
+
   // =========================================================================
   // CATALOG & DINING TABLE CACHING
   // =========================================================================

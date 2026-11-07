@@ -2,12 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { calculateOrderTotals } from "@/lib/server/billing-engine";
 import { deductStockForOrder } from "@/lib/server/inventory-engine";
+import {
+  getTenantContext,
+  verifyBranchOwnership,
+  AuthenticationError,
+  AuthorizationError,
+} from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    // 1. Strict Authentication: Verify authenticated tenant session
+    const tenantCtx = await getTenantContext(req);
+
+    // 2. Parse and validate JSON request payload
+    let payload: any;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Validation Error: Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
     const orderData = payload;
 
     const opId =
@@ -15,20 +33,108 @@ export async function POST(req: NextRequest) {
       orderData.offlineSyncId ||
       orderData.uuid;
 
-    if (!opId) {
+    if (!opId || typeof opId !== "string" || opId.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: "Missing required operationId or offlineSyncId" },
+        { success: false, error: "Validation Error: Missing required operationId or offlineSyncId" },
         { status: 400 }
       );
     }
 
-    const offlineSyncId = opId;
-    const deviceId = orderData.deviceId || "POS-DEV-DEFAULT";
-    const tenantId = orderData.tenantId || "org-bawarchi";
-    const operationType = orderData.operationType || "CREATE_ORDER";
-    const userId = orderData.userId || "staff-offline";
+    // 3. Forged Tenant & User ID Protection
+    // Cross-tenant injection barrier: Never trust client-supplied tenantId
+    if (
+      orderData.tenantId &&
+      orderData.tenantId !== tenantCtx.organizationId &&
+      tenantCtx.role !== "PLATFORM_OWNER"
+    ) {
+      await prisma.auditLog.create({
+        data: {
+          action: "SECURITY_FORGED_TENANT_SYNC_ATTEMPT",
+          entityType: "SYNC_OPERATION",
+          entityId: opId,
+          authorizedBy: `${tenantCtx.email} (${tenantCtx.role})`,
+          reason: `Sync payload tenantId '${orderData.tenantId}' does not match authenticated tenant '${tenantCtx.organizationId}'`,
+          details: JSON.stringify({
+            claimedTenantId: orderData.tenantId,
+            actualTenantId: tenantCtx.organizationId,
+            operationId: opId,
+          }),
+        },
+      }).catch(() => {});
 
-    // 1. Conflict / Duplicate Detection: Check SyncOperation ledger
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden: Cross-tenant sync is strictly prohibited. Supplied tenantId does not match authenticated session.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // Forged User ID barrier:
+    // Only managers or platform owners may sync on behalf of other staff
+    const canSyncForOthers = ["PLATFORM_OWNER", "TENANT_OWNER", "TENANT_ADMIN", "BRANCH_MANAGER"].includes(tenantCtx.role);
+    if (orderData.userId && orderData.userId !== tenantCtx.userId && !canSyncForOthers) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Forbidden: Staff role '${tenantCtx.role}' cannot synchronize operations on behalf of another user ID.`,
+        },
+        { status: 403 }
+      );
+    }
+
+    // Authoritative identifiers derived strictly from authenticated session
+    const tenantId = tenantCtx.organizationId;
+    const userId = (canSyncForOthers && orderData.userId) ? orderData.userId : tenantCtx.userId;
+    const offlineSyncId = opId;
+    const deviceId = (orderData.deviceId && typeof orderData.deviceId === "string") ? orderData.deviceId.trim() : "POS-DEV-DEFAULT";
+    const operationType = orderData.operationType || "CREATE_ORDER";
+
+    // 4. Branch Ownership & Confinement Verification
+    const branchIdentifier = orderData.branchId || orderData.branchCode;
+    if (!branchIdentifier) {
+      return NextResponse.json(
+        { success: false, error: "Validation Error: Missing required branch identifier (branchId or branchCode)" },
+        { status: 400 }
+      );
+    }
+
+    const branch = await verifyBranchOwnership(tenantCtx, branchIdentifier);
+    const branchId = branch.id;
+
+    // 5. Payload Validation for Order Creation Operations
+    if (operationType === "CREATE_ORDER" || !orderData.operationType) {
+      if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "Validation Error: Order must contain at least one line item" },
+          { status: 400 }
+        );
+      }
+
+      for (const item of orderData.items) {
+        if (!item.itemName && !item.menuItemId) {
+          return NextResponse.json(
+            { success: false, error: "Validation Error: Line item missing name or menuItemId" },
+            { status: 400 }
+          );
+        }
+        if (typeof item.quantity !== "number" || item.quantity <= 0) {
+          return NextResponse.json(
+            { success: false, error: `Validation Error: Invalid quantity for item '${item.itemName || item.menuItemId}'. Must be > 0` },
+            { status: 400 }
+          );
+        }
+        if (typeof item.unitPrice === "number" && item.unitPrice < 0) {
+          return NextResponse.json(
+            { success: false, error: `Validation Error: Negative unit price for item '${item.itemName || item.menuItemId}' is prohibited` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // 6. Conflict / Duplicate Detection: Check SyncOperation ledger
     const existingOp = await prisma.syncOperation.findUnique({
       where: { operationId: opId },
     });
@@ -77,20 +183,6 @@ export async function POST(req: NextRequest) {
         serverInvoiceNumber: existingOrder.invoice?.invoiceNumber || null,
       });
     }
-
-    // 2. Fetch Branch context
-    const branchCode = orderData.branchId || "IND";
-    let branch = await prisma.branch.findFirst({
-      where: {
-        OR: [{ code: branchCode }, { id: branchCode }],
-      },
-    });
-
-    if (!branch) {
-      branch = await prisma.branch.findFirst({ where: { code: "IND" } });
-    }
-
-    const branchId = branch?.id || "default";
 
     // 3. Conflict Detection: Table or Status Overwrite Barrier
     if (operationType === "UPDATE_ORDER" || operationType === "CANCEL_ORDER") {
@@ -371,13 +463,25 @@ export async function POST(req: NextRequest) {
       grandTotal: calc.grandTotal,
     });
   } catch (error: any) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 401 }
+      );
+    }
+    if (error instanceof AuthorizationError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 403 }
+      );
+    }
     console.error("Offline POS Sync error:", error);
     return NextResponse.json(
       {
         success: false,
         error: error.message || "Failed to process offline sync request",
       },
-      { status: 500 }
+      { status: error.statusCode || 500 }
     );
   }
 }

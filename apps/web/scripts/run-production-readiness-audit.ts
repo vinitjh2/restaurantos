@@ -26,6 +26,7 @@ const suites = [
   { name: "Database Schema & Foreign Key Integrity", script: "scripts/audit-db-integrity.ts" },
   { name: "Master F&B Core Suite (POS, Billing, GST, KDS, BOM)", script: "scripts/test-master-suite.ts" },
   { name: "Multi-Tenant Security & Isolation Suite", script: "scripts/test-multi-tenant-security.ts" },
+  { name: "Targeted Security & Database Fixes Suite", script: "scripts/test-security-fixes-suite.ts" },
   { name: "Platform Super Admin & SaaS Subscription Suite", script: "scripts/test-platform-admin-system.ts" },
   { name: "Offline-First Resilience & Queue Sync Suite", script: "scripts/test-offline-sync-suite.ts" },
   { name: "Hardware Thermal Printer & Cash Drawer Suite", script: "scripts/test-hardware-printer-suite.ts" },

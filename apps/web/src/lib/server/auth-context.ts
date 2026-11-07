@@ -11,10 +11,82 @@
 
 import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import * as fs from "fs";
+import * as path from "path";
 import { prisma } from "./prisma";
 
-const JWT_SECRET = process.env.APP_SECRET || "restaurantos-super-secret-jwt-key-2026-production";
+// Attempt to load .env in CLI / script execution environments if not already loaded by Next.js
+function ensureEnvLoaded() {
+  if (!process.env.APP_SECRET && !process.env.JWT_SECRET) {
+    if (typeof process.loadEnvFile === "function") {
+      const candidates = [
+        path.resolve(process.cwd(), ".env"),
+        path.resolve(__dirname, "../../.env"),
+        path.resolve(__dirname, "../../../.env"),
+      ];
+      for (const envPath of candidates) {
+        if (fs.existsSync(envPath)) {
+          try {
+            process.loadEnvFile(envPath);
+            if (process.env.APP_SECRET || process.env.JWT_SECRET) break;
+          } catch {}
+        }
+      }
+    }
+  }
+}
+ensureEnvLoaded();
+
 const COOKIE_NAME = "restaurantos_session";
+
+const INSECURE_SECRET_PATTERNS = [
+  "restaurantos-super-secret-jwt-key-2026-production",
+  "change-this-to-a-super-secure-random",
+  "replace-with-a-cryptographically-secure",
+  "change-me",
+  "super-secret",
+  "secret",
+  "password",
+  "12345678",
+  "default-secret",
+  "placeholder",
+];
+
+/**
+ * Authoritatively retrieves and validates the application secret from environment variables.
+ * Strictly prevents hardcoded fallbacks and insecure placeholders.
+ */
+export function getJwtSecret(): string {
+  const secret = process.env.APP_SECRET || process.env.JWT_SECRET;
+
+  if (!secret || secret.trim() === "") {
+    throw new Error(
+      "FATAL SECURITY CONFIGURATION ERROR: APP_SECRET environment variable is missing or empty. A secure cryptographic secret of at least 32 characters is required to operate RestaurantOS."
+    );
+  }
+
+  if (secret.length < 32) {
+    throw new Error(
+      `FATAL SECURITY CONFIGURATION ERROR: APP_SECRET must be at least 32 characters in length for cryptographic integrity (currently ${secret.length} characters).`
+    );
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  const lowerSecret = secret.toLowerCase();
+
+  if (isProduction) {
+    const isKnownPlaceholder = INSECURE_SECRET_PATTERNS.some(
+      (pattern) => lowerSecret.includes(pattern) || lowerSecret === pattern
+    );
+    if (isKnownPlaceholder) {
+      throw new Error(
+        "FATAL SECURITY CONFIGURATION ERROR: Insecure placeholder APP_SECRET detected in production environment. Generate a cryptographically random secret using 'openssl rand -base64 32'."
+      );
+    }
+  }
+
+  return secret;
+}
 
 export interface UserSessionPayload {
   userId: string;
@@ -46,7 +118,8 @@ export class AuthorizationError extends Error {
  * Signs a cryptographic JWT session token with tenant context
  */
 export function signJwtToken(payload: UserSessionPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  const secret = getJwtSecret();
+  return jwt.sign(payload, secret, {
     expiresIn: "7d",
     issuer: "RestaurantOS-SaaS",
   });
@@ -57,7 +130,8 @@ export function signJwtToken(payload: UserSessionPayload): string {
  */
 export function verifyJwtToken(token: string): UserSessionPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(token, secret, {
       issuer: "RestaurantOS-SaaS",
     }) as UserSessionPayload;
     return decoded;
@@ -67,7 +141,9 @@ export function verifyJwtToken(token: string): UserSessionPayload | null {
 }
 
 /**
- * Extracts and verifies the authenticated tenant context from HTTP request
+ * Extracts and verifies the authenticated tenant context from HTTP request.
+ * Enforces strict authentication (NO demo/default tenant fallback) and authoritatively
+ * verifies user role and restaurant membership against trusted server-side data.
  */
 export async function getTenantContext(req: NextRequest): Promise<UserSessionPayload> {
   // 1. Check HTTP-only cookie first
@@ -81,36 +157,49 @@ export async function getTenantContext(req: NextRequest): Promise<UserSessionPay
     }
   }
 
-  // 3. Fallback to default flagship organization during developer testing if no token present
+  // 3. Strict authentication requirement - NEVER fall back to demo/default tenant
   if (!token) {
-    const defaultOrg = await prisma.organization.findUnique({
-      where: { slug: "bawarchi-royale" },
-    });
-    const defaultOwner = await prisma.userAccount.findFirst({
-      where: { organizationId: defaultOrg?.id },
-    });
-
-    if (defaultOrg && defaultOwner) {
-      return {
-        userId: defaultOwner.id,
-        organizationId: defaultOrg.id,
-        organizationSlug: defaultOrg.slug,
-        email: defaultOwner.email,
-        name: defaultOwner.name,
-        role: defaultOwner.role as any,
-        assignedBranchId: defaultOwner.assignedBranchId,
-      };
-    }
-
-    throw new AuthenticationError("No session cookie or bearer token provided");
+    throw new AuthenticationError("Authentication required: No session cookie or bearer token provided");
   }
 
+  // 4. Cryptographic signature and structure validation
   const payload = verifyJwtToken(token);
-  if (!payload || !payload.organizationId) {
-    throw new AuthenticationError("Invalid or expired session token");
+  if (!payload || !payload.organizationId || !payload.userId) {
+    throw new AuthenticationError("Authentication failed: Invalid, expired, or tampered session token");
   }
 
-  return payload;
+  // 5. Authoritatively verify user role & restaurant membership from trusted server-side data
+  const user = await prisma.userAccount.findUnique({
+    where: { id: payload.userId },
+    include: { organization: true },
+  });
+
+  if (!user) {
+    throw new AuthenticationError("Authentication failed: User account does not exist or has been removed");
+  }
+
+  if (!user.isActive) {
+    throw new AuthenticationError("Authentication failed: User account has been deactivated");
+  }
+
+  if (user.organizationId !== payload.organizationId) {
+    throw new AuthenticationError("Authentication failed: Tenant membership mismatch");
+  }
+
+  if (user.organization && user.organization.status === "SUSPENDED") {
+    throw new AuthorizationError("Access denied: Restaurant account has been suspended by platform administrator");
+  }
+
+  // Return refreshed authoritative user session from database
+  return {
+    userId: user.id,
+    organizationId: user.organizationId,
+    organizationSlug: user.organization.slug,
+    email: user.email,
+    name: user.name,
+    role: user.role as any,
+    assignedBranchId: user.assignedBranchId,
+  };
 }
 
 /**

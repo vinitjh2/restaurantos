@@ -166,6 +166,12 @@ class SyncQueueManager {
     const now = Date.now();
 
     // 1. Process Operations Queue
+    const activeSession = await offlineStorage.getCachedSession();
+    const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (activeSession?.token) {
+      authHeaders['Authorization'] = `Bearer ${activeSession.token}`;
+    }
+
     for (const op of pendingOps) {
       if (op.nextRetryAt && op.nextRetryAt > now) continue;
 
@@ -174,7 +180,7 @@ class SyncQueueManager {
 
         const res = await fetch('/api/pos/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders,
           body: JSON.stringify({
             operationId: op.uuid,
             deviceId: op.deviceId,
@@ -229,7 +235,7 @@ class SyncQueueManager {
 
         const res = await fetch('/api/pos/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders,
           body: JSON.stringify({
             ...order,
             deviceId: offlineStorage.getDeviceId(),
