@@ -25,9 +25,48 @@ import {
   Receipt,
   QrCode,
   ArrowRight,
+  TrendingUp,
+  Plus,
+  Minus,
+  Send,
+  Clock,
+  Sparkles,
+  Smartphone,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+
+function ScreenshotFrame({
+  title,
+  url,
+  children,
+}: {
+  title: string;
+  url: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border-2 border-slate-800 bg-slate-900 shadow-xl overflow-hidden my-4 text-left">
+      {/* Top Browser / App Window Bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <span className="h-3 w-3 rounded-full bg-rose-500 inline-block" />
+            <span className="h-3 w-3 rounded-full bg-amber-500 inline-block" />
+            <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block" />
+          </div>
+          <span className="font-bold text-slate-300 ml-2">{title}</span>
+        </div>
+        <span className="font-mono text-[10px] text-slate-400 bg-slate-900 px-3 py-0.5 rounded-md border border-slate-800 hidden sm:inline-block">
+          {url}
+        </span>
+      </div>
+      {/* Visual Mockup Canvas */}
+      <div className="bg-slate-50 text-slate-900 p-4 sm:p-5">{children}</div>
+    </div>
+  );
+}
 
 export default function TutorialPage() {
   const [activeTab, setActiveTab] = useState('all');
@@ -166,6 +205,45 @@ export default function TutorialPage() {
                 <p className="text-xs text-slate-500">Interactive 24-hour Recharts graph pinpointing lunch and dinner rushes to optimize kitchen prep and staff allocation.</p>
               </div>
             </div>
+
+            {/* Visual Screenshot-like Mockup for Module 1 */}
+            <ScreenshotFrame title="Operations Overview Screen Preview" url="http://localhost:3000/">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-sm text-slate-900">Operations Overview</span>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">● Live Shift #44</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="bg-white border text-slate-700 px-2.5 py-1 rounded-md text-[10px] font-bold shadow-2xs">Export Z-Report</span>
+                    <span className="bg-slate-900 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-2xs">Fast POS Terminal</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Today&apos;s Gross Sales</span>
+                    <div className="text-base font-black text-slate-900 mt-0.5">₹1,48,650</div>
+                    <span className="text-[9px] text-emerald-600 font-bold">+14.2% vs yesterday</span>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Net Sales (Excl. Tax)</span>
+                    <div className="text-base font-black text-slate-900 mt-0.5">₹1,36,280</div>
+                    <span className="text-[9px] text-slate-500">GST: ₹12,370</span>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Total Orders</span>
+                    <div className="text-base font-black text-slate-900 mt-0.5">284</div>
+                    <span className="text-[9px] text-indigo-600 font-bold">Peak: 58 orders @ 8 PM</span>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Estimated Profit</span>
+                    <div className="text-base font-black text-emerald-700 mt-0.5">₹97,880</div>
+                    <span className="text-[9px] text-emerald-600 font-bold">Gross Margin: 65.8%</span>
+                  </div>
+                </div>
+              </div>
+            </ScreenshotFrame>
           </section>
 
           {/* MODULE 2 */}
@@ -199,6 +277,67 @@ export default function TutorialPage() {
                 <li>Tap <strong>Send KOT</strong> to route tickets to the kitchen, or <strong>Settle Bill</strong> to accept payment.</li>
               </ol>
             </div>
+
+            {/* Visual Screenshot-like Mockup for Module 2 */}
+            <ScreenshotFrame title="High-Speed Touch POS Screen Preview" url="http://localhost:3000/pos">
+              <div className="grid grid-cols-12 gap-3">
+                {/* Left Food Tiles */}
+                <div className="col-span-12 sm:col-span-8 space-y-2">
+                  <div className="flex gap-1.5 overflow-x-auto text-[10px] pb-1 font-bold">
+                    <span className="bg-slate-900 text-white px-2.5 py-1 rounded-md">All (48)</span>
+                    <span className="bg-white border text-slate-700 px-2 py-1 rounded-md">Starters</span>
+                    <span className="bg-white border text-slate-700 px-2 py-1 rounded-md">Main Course</span>
+                    <span className="bg-white border text-slate-700 px-2 py-1 rounded-md">Biryani</span>
+                    <span className="bg-white border text-slate-700 px-2 py-1 rounded-md">Breads</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white p-2 rounded-xl border border-slate-200 flex justify-between items-center shadow-3xs">
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full bg-emerald-600 inline-block" />
+                          <span className="text-xs font-bold text-slate-900">Paneer Butter Masala</span>
+                        </div>
+                        <span className="text-[11px] font-black text-slate-700">₹320</span>
+                      </div>
+                      <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-md">+ Add</span>
+                    </div>
+
+                    <div className="bg-white p-2 rounded-xl border border-slate-200 flex justify-between items-center shadow-3xs">
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full bg-rose-600 inline-block" />
+                          <span className="text-xs font-bold text-slate-900">Murgh Dum Biryani</span>
+                        </div>
+                        <span className="text-[11px] font-black text-slate-700">₹350</span>
+                      </div>
+                      <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-md">+ Add</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Bill Slip */}
+                <div className="col-span-12 sm:col-span-4 bg-white p-3 rounded-xl border border-slate-200 shadow-3xs flex flex-col justify-between text-xs">
+                  <div>
+                    <div className="flex justify-between font-bold text-slate-900 border-b pb-1">
+                      <span>TABLE T-04 (Dine-In)</span>
+                      <span className="text-amber-600">Bill #42</span>
+                    </div>
+                    <div className="py-2 space-y-1 text-[11px]">
+                      <div className="flex justify-between"><span>2x Murgh Dum Biryani</span><span className="font-bold">₹700</span></div>
+                      <div className="flex justify-between"><span>2x Butter Garlic Naan</span><span className="font-bold">₹130</span></div>
+                      <div className="flex justify-between text-slate-500 pt-1 border-t text-[10px]"><span>GST (5.0%)</span><span>₹41.50</span></div>
+                      <div className="flex justify-between font-black text-slate-900 text-xs pt-1"><span>Grand Total:</span><span>₹872</span></div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-2">
+                    <span className="bg-blue-600 text-white font-bold text-[10px] py-1.5 text-center rounded-lg">Print KOT</span>
+                    <span className="bg-emerald-600 text-white font-bold text-[10px] py-1.5 text-center rounded-lg">Settle & Pay</span>
+                  </div>
+                </div>
+              </div>
+            </ScreenshotFrame>
           </section>
 
           {/* MODULE 3 */}
@@ -232,6 +371,45 @@ export default function TutorialPage() {
                 </p>
               </div>
             </div>
+
+            {/* Visual Screenshot-like Mockup for Module 3 */}
+            <ScreenshotFrame title="Table Floor & QR Standees Screen Preview" url="http://localhost:3000/tables">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex gap-1.5 text-[10px] font-bold">
+                    <span className="bg-slate-900 text-white px-2.5 py-0.5 rounded">Ground Floor</span>
+                    <span className="bg-white border text-slate-600 px-2.5 py-0.5 rounded">1st Floor</span>
+                    <span className="bg-white border text-slate-600 px-2.5 py-0.5 rounded">Rooftop Lounge</span>
+                  </div>
+                  <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 rounded text-[10px] font-bold">
+                    ⚏ Print All QR Standees
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="p-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/50">
+                    <div className="flex justify-between font-black text-xs text-slate-900"><span>T-01</span><span className="h-2 w-2 rounded-full bg-emerald-500" /></div>
+                    <span className="text-[10px] font-bold text-emerald-700 block mt-1">AVAILABLE</span>
+                    <span className="text-[9px] text-slate-400">4 Seats</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl border-2 border-rose-400 bg-rose-50/50">
+                    <div className="flex justify-between font-black text-xs text-slate-900"><span>T-02</span><span className="h-2 w-2 rounded-full bg-rose-500" /></div>
+                    <span className="text-[10px] font-bold text-rose-700 block mt-1">₹1,450 (32 mins)</span>
+                    <span className="text-[9px] text-slate-500">2x Biryani, Starters</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl border-2 border-amber-400 bg-amber-50/50">
+                    <div className="flex justify-between font-black text-xs text-slate-900"><span>T-03</span><span className="h-2 w-2 rounded-full bg-amber-500" /></div>
+                    <span className="text-[10px] font-bold text-amber-800 block mt-1">BILL REQUESTED</span>
+                    <span className="text-[9px] text-slate-500">Pre-bill printed</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/50">
+                    <div className="flex justify-between font-black text-xs text-slate-900"><span>T-04</span><span className="h-2 w-2 rounded-full bg-emerald-500" /></div>
+                    <span className="text-[10px] font-bold text-emerald-700 block mt-1">AVAILABLE</span>
+                    <span className="text-[9px] text-slate-400">6 Seats</span>
+                  </div>
+                </div>
+              </div>
+            </ScreenshotFrame>
           </section>
 
           {/* MODULE 4 */}
@@ -262,6 +440,43 @@ export default function TutorialPage() {
                 <span className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 font-bold">Critical Rush: &gt; 20 Mins (Red Flashing)</span>
               </div>
             </div>
+
+            {/* Visual Screenshot-like Mockup for Module 4 */}
+            <ScreenshotFrame title="Kitchen Display System (KDS) Screen Preview" url="http://localhost:3000/kitchen">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="bg-white p-3 rounded-xl border-2 border-amber-400 shadow-2xs space-y-2">
+                  <div className="flex justify-between items-center border-b pb-1">
+                    <span className="font-extrabold text-slate-900">KOT #42 • Table 4</span>
+                    <span className="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">12m ago • PREPARING</span>
+                  </div>
+                  <div className="space-y-1 text-[11px]">
+                    <div className="font-semibold text-slate-800">• 2x Murgh Dum Biryani <span className="text-amber-700 text-[10px]">(Less Spicy)</span></div>
+                    <div className="font-semibold text-slate-800">• 2x Butter Garlic Naan</div>
+                  </div>
+                  <div className="pt-1">
+                    <span className="block w-full py-1 bg-emerald-600 text-white font-bold text-center rounded-lg text-[10px]">
+                      ✓ Mark Food Ready
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl border-2 border-emerald-400 shadow-2xs space-y-2">
+                  <div className="flex justify-between items-center border-b pb-1">
+                    <span className="font-extrabold text-slate-900">KOT #43 • Table 1</span>
+                    <span className="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[10px]">3m ago • NEW</span>
+                  </div>
+                  <div className="space-y-1 text-[11px]">
+                    <div className="font-semibold text-slate-800">• 1x Paneer Tikka Angara</div>
+                    <div className="font-semibold text-slate-800">• 2x Fresh Lime Soda</div>
+                  </div>
+                  <div className="pt-1">
+                    <span className="block w-full py-1 bg-indigo-600 text-white font-bold text-center rounded-lg text-[10px]">
+                      🔥 Start Cooking
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </ScreenshotFrame>
           </section>
 
           {/* MODULE 5 */}
@@ -387,6 +602,29 @@ export default function TutorialPage() {
                 <div className="text-rose-600 font-bold pt-1">Negative variance = Cash Shortage (Investigated by manager)</div>
               </div>
             </div>
+
+            {/* Visual Screenshot-like Mockup for Module 10 */}
+            <ScreenshotFrame title="Daily Closing Z-Report Snapshot Preview" url="http://localhost:3000/reports">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 max-w-sm mx-auto shadow-2xs font-mono text-xs space-y-2.5">
+                <div className="text-center border-b pb-2">
+                  <div className="font-black text-slate-900 text-sm">BAWARCHI ROYALE</div>
+                  <div className="text-[10px] text-slate-500">Official Daily Shift Z-Report</div>
+                  <div className="text-[9px] text-slate-400 mt-0.5">Shift #44 • Sat, 7 Nov 2026</div>
+                </div>
+
+                <div className="space-y-1 text-[11px] border-b pb-2">
+                  <div className="flex justify-between"><span>Cash Collected:</span><span className="font-bold text-slate-900">₹18,450.00</span></div>
+                  <div className="flex justify-between"><span>UPI (QR) Sales:</span><span className="font-bold text-slate-900">₹24,800.00</span></div>
+                  <div className="flex justify-between"><span>Card Payments:</span><span className="font-bold text-slate-900">₹12,300.00</span></div>
+                  <div className="flex justify-between text-slate-500"><span>GST Tax (5%):</span><span>₹2,778.00</span></div>
+                  <div className="flex justify-between font-black text-slate-900 text-xs pt-1 border-t"><span>TOTAL GROSS SALES:</span><span>₹55,550.00</span></div>
+                </div>
+
+                <div className="p-2 rounded bg-emerald-50 text-emerald-800 text-[10px] font-bold text-center border border-emerald-200">
+                  ✓ Physical Drawer Match: VERIFIED 100%
+                </div>
+              </div>
+            </ScreenshotFrame>
           </section>
 
           {/* MODULE 11 */}

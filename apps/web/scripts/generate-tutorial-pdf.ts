@@ -46,24 +46,33 @@ const ACCENT_RED = '#b91c1c'; // Red-700
 
 // Helper functions
 function drawHeader(title: string, subtitle?: string) {
-  doc.rect(45, doc.y, 505, 30).fill(SECONDARY);
-  doc.fillColor('#ffffff').fontSize(12).font('Helvetica-Bold');
-  doc.text(title.toUpperCase(), 55, doc.y - 22, { width: 485 });
-  doc.moveDown(0.8);
+  const startY = doc.y;
+  const headerHeight = 32;
+
+  // Draw header black bar
+  doc.rect(45, startY, 505, headerHeight).fill(SECONDARY);
+
+  // Draw white title centered vertically inside the black bar
+  doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold');
+  doc.text(title.toUpperCase(), 58, startY + 10, { width: 480 });
+
+  // Explicitly move doc.y past the black bar with clean padding
+  doc.y = startY + headerHeight + 10;
+
   if (subtitle) {
-    doc.fillColor(TEXT_MUTED).fontSize(9).font('Helvetica-Oblique');
-    doc.text(subtitle);
-    doc.moveDown(0.4);
+    doc.fillColor(TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique');
+    doc.text(subtitle, 45, doc.y, { width: 505 });
+    doc.y = doc.y + 6;
   }
 }
 
 function drawSectionHeading(num: string, text: string) {
-  doc.moveDown(0.6);
-  const y = doc.y;
-  doc.rect(45, y, 5, 18).fill(PRIMARY);
-  doc.fillColor(SECONDARY).fontSize(13).font('Helvetica-Bold');
-  doc.text(`${num}. ${text}`, 56, y + 2, { width: 480 });
-  doc.moveDown(0.5);
+  doc.moveDown(0.3);
+  const startY = doc.y;
+  doc.rect(45, startY, 4, 16).fill(PRIMARY);
+  doc.fillColor(SECONDARY).fontSize(12).font('Helvetica-Bold');
+  doc.text(`${num}. ${text}`, 56, startY + 2, { width: 480 });
+  doc.y = startY + 22;
 }
 
 function drawSubHeading(text: string) {

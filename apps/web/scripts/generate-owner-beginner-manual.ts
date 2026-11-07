@@ -52,26 +52,27 @@ const COLOR_BLUE = '#1d4ed8'; // Blue-700
 
 // Reusable drawing helpers
 function drawHeader(chapterNumber: string, title: string, subtitle?: string) {
-  const y = doc.y;
-  doc.rect(45, y, 505, 32).fill(COLOR_SECONDARY);
+  const startY = doc.y;
+  const headerHeight = 32;
+  doc.rect(45, startY, 505, headerHeight).fill(COLOR_SECONDARY);
   doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold');
-  doc.text(`CHAPTER ${chapterNumber}: ${title.toUpperCase()}`, 58, y + 9, { width: 480 });
-  doc.y = y + 38;
+  doc.text(`CHAPTER ${chapterNumber}: ${title.toUpperCase()}`, 58, startY + 10, { width: 480 });
+  doc.y = startY + headerHeight + 10;
 
   if (subtitle) {
     doc.fillColor(COLOR_TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique');
-    doc.text(subtitle, 45, doc.y);
-    doc.moveDown(0.5);
+    doc.text(subtitle, 45, doc.y, { width: 505 });
+    doc.y = doc.y + 6;
   }
 }
 
 function drawSectionHeading(num: string, text: string) {
-  doc.moveDown(0.5);
-  const y = doc.y;
-  doc.rect(45, y, 4, 16).fill(COLOR_PRIMARY);
-  doc.fillColor(COLOR_SECONDARY).fontSize(12).font('Helvetica-Bold');
-  doc.text(`${num} ${text}`, 56, y + 1, { width: 480 });
-  doc.moveDown(0.4);
+  doc.moveDown(0.3);
+  const startY = doc.y;
+  doc.rect(45, startY, 4, 16).fill(COLOR_PRIMARY);
+  doc.fillColor(COLOR_SECONDARY).fontSize(11.5).font('Helvetica-Bold');
+  doc.text(`${num} ${text}`, 56, startY + 2, { width: 480 });
+  doc.y = startY + 22;
 }
 
 function drawParagraph(text: string) {
@@ -130,6 +131,40 @@ function drawImportantBox(title: string, message: string, color = COLOR_PRIMARY)
   doc.fillColor(COLOR_TEXT_MAIN).fontSize(8).font('Helvetica');
   doc.text(message, 56, y + 18, { width: 480 });
   doc.y = y + 43;
+}
+
+function drawScreenMockup(
+  title: string,
+  route: string,
+  height: number,
+  renderContent: (x: number, y: number, w: number, h: number) => void
+) {
+  const y = doc.y;
+  const w = 505;
+  const headerH = 18;
+
+  // Window Container
+  doc.roundedRect(45, y, w, height, 5).fillAndStroke('#ffffff', '#cbd5e1');
+
+  // Header Bar (Dark Slate)
+  doc.roundedRect(45, y, w, headerH, 5).fill('#0f172a');
+  doc.rect(45, y + 12, w, 6).fill('#0f172a');
+
+  // Window dots
+  doc.circle(55, y + 9, 3).fill('#ef4444');
+  doc.circle(64, y + 9, 3).fill('#f59e0b');
+  doc.circle(73, y + 9, 3).fill('#10b981');
+
+  // Title & Route
+  doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold');
+  doc.text(`[ SCREEN PREVIEW ]: ${title}`, 85, y + 5);
+  doc.fillColor('#94a3b8').fontSize(7).font('Helvetica');
+  doc.text(route, 320, y + 5, { width: 220, align: 'right' });
+
+  // Render Inner Content
+  renderContent(47, y + headerH + 2, w - 4, height - headerH - 4);
+
+  doc.y = y + height + 8;
 }
 
 // =============================================================================
@@ -380,6 +415,39 @@ drawStepBox(
   'Turn to Chapter 4 to see how to collect cash, UPI, or cards.'
 );
 
+drawScreenMockup('Cash Counter Billing Terminal (POS)', 'http://localhost:3000/pos', 78, (x, y, w, h) => {
+  // Category Bar
+  doc.rect(x + 5, y + 5, 290, 15).fill('#f1f5f9');
+  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold');
+  doc.text('[ All (48) ]   [ Starters ]   [ Main Course ]   [ Biryani ]   [ Breads ]', x + 10, y + 9);
+
+  // Left Dish Tile 1
+  doc.roundedRect(x + 5, y + 24, 140, 22, 3).fillAndStroke('#ffffff', '#e2e8f0');
+  doc.fillColor('#15803d').fontSize(5.5).text('● VEG', x + 10, y + 28);
+  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('Paneer Butter Masala', x + 10, y + 35);
+  doc.fillColor('#475569').fontSize(6.5).text('₹320', x + 115, y + 35);
+
+  // Left Dish Tile 2
+  doc.roundedRect(x + 150, y + 24, 145, 22, 3).fillAndStroke('#ffffff', '#e2e8f0');
+  doc.fillColor('#b91c1c').fontSize(5.5).text('● NON-VEG', x + 155, y + 28);
+  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('Murgh Dum Biryani', x + 155, y + 35);
+  doc.fillColor('#475569').fontSize(6.5).text('₹350', x + 260, y + 35);
+
+  // Right Bill Slip
+  doc.roundedRect(x + 305, y + 5, 185, 42, 3).fillAndStroke('#f8fafc', '#cbd5e1');
+  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('TABLE T-04 (DINE-IN)', x + 312, y + 8);
+  doc.fillColor('#475569').fontSize(6).font('Helvetica').text('2x Murgh Dum Biryani ................. ₹700', x + 312, y + 16);
+  doc.fillColor('#475569').fontSize(6).text('2x Butter Garlic Naan ................. ₹130', x + 312, y + 24);
+  doc.fillColor('#0f172a').fontSize(6.5).font('Helvetica-Bold').text('TOTAL: ₹872 (Incl. GST)', x + 312, y + 33);
+
+  // Bottom action buttons
+  doc.roundedRect(x + 305, y + 51, 88, 15, 3).fill('#2563eb');
+  doc.fillColor('#ffffff').fontSize(6.5).font('Helvetica-Bold').text('PRINT KOT', x + 325, y + 56);
+
+  doc.roundedRect(x + 400, y + 51, 90, 15, 3).fill('#16a34a');
+  doc.fillColor('#ffffff').fontSize(6.5).font('Helvetica-Bold').text('SETTLE & PAY', x + 418, y + 56);
+});
+
 drawImportantBox(
   'Adding Special Cooking Instructions',
   'If a guest says "make the noodles less spicy" or "no garlic in the dal", click the small pencil icon beside the item in the bill slip, type "Less Spicy", and print KOT. The instruction prints clearly for the chef in bold capital letters!'
@@ -454,6 +522,32 @@ drawStepBox(
   'Once payment is completed, the table resets back to clean GREEN automatically.'
 );
 
+drawScreenMockup('Dining Room Tables & Floor Map', 'http://localhost:3000/tables', 55, (x, y, w, h) => {
+  // Table 1: Green
+  doc.roundedRect(x + 5, y + 6, 115, 38, 4).fillAndStroke('#ecfdf5', '#10b981');
+  doc.fillColor('#065f46').fontSize(7.5).font('Helvetica-Bold').text('TABLE T-01', x + 10, y + 10);
+  doc.fillColor('#047857').fontSize(6.5).font('Helvetica').text('AVAILABLE (4 Seats)', x + 10, y + 20);
+  doc.fillColor('#059669').fontSize(6).text('🟢 Clean & Ready', x + 10, y + 29);
+
+  // Table 2: Red
+  doc.roundedRect(x + 128, y + 6, 115, 38, 4).fillAndStroke('#fff1f2', '#f43f5e');
+  doc.fillColor('#881337').fontSize(7.5).font('Helvetica-Bold').text('TABLE T-02', x + 133, y + 10);
+  doc.fillColor('#be123c').fontSize(6.5).font('Helvetica-Bold').text('₹1,450 (32 mins)', x + 133, y + 20);
+  doc.fillColor('#e11d48').fontSize(6).font('Helvetica').text('🔴 Guests Eating (KOT #42)', x + 133, y + 29);
+
+  // Table 3: Yellow
+  doc.roundedRect(x + 251, y + 6, 118, 38, 4).fillAndStroke('#fefce8', '#eab308');
+  doc.fillColor('#713f12').fontSize(7.5).font('Helvetica-Bold').text('TABLE T-03', x + 256, y + 10);
+  doc.fillColor('#a16207').fontSize(6.5).font('Helvetica-Bold').text('BILL REQUESTED', x + 256, y + 20);
+  doc.fillColor('#ca8a04').fontSize(6).font('Helvetica').text('🟡 Pre-Bill Printed', x + 256, y + 29);
+
+  // Table 4: QR Standee Card
+  doc.roundedRect(x + 377, y + 6, 118, 38, 4).fillAndStroke('#eff6ff', '#3b82f6');
+  doc.fillColor('#1e3a8a').fontSize(7).font('Helvetica-Bold').text('TABLE QR STANDEE', x + 382, y + 10);
+  doc.fillColor('#1d4ed8').fontSize(6).font('Helvetica').text('⚏ Scan with Camera', x + 382, y + 20);
+  doc.fillColor('#2563eb').fontSize(6).text('No Waiter Needed', x + 382, y + 29);
+});
+
 drawSectionHeading('5.2', 'What if Guests Want to Move Tables? (Table Transfer)');
 drawParagraph(
   'If a family is seated at Table 3, but Table 8 near the window becomes free and they ask to move: Click Table 3 -> Click the button "Transfer / Move Table" -> Click Table 8. All their food orders and running bill move to Table 8 instantly. You do not have to cancel or retype anything!'
@@ -504,6 +598,26 @@ doc.y = ky + 5;
 drawParagraph(
   'When the cook finishes cooking the dish, they tap the screen on "Mark Ready". An alert sounds on the waiter\'s phone or counter display so the food is served steaming hot!'
 );
+
+drawScreenMockup('Kitchen Display System (KDS) Live Order Queue', 'http://localhost:3000/kitchen', 65, (x, y, w, h) => {
+  // Ticket 1: Preparing
+  doc.roundedRect(x + 5, y + 6, 240, 48, 3).fillAndStroke('#ffffff', '#f59e0b');
+  doc.rect(x + 5, y + 6, 240, 12).fill('#fef3c7');
+  doc.fillColor('#92400e').fontSize(6.5).font('Helvetica-Bold').text('KOT #42 • TABLE 4  (12 mins ago • PREPARING)', x + 10, y + 9);
+  doc.fillColor('#1e293b').fontSize(6.5).font('Helvetica').text('• 2x Murgh Dum Biryani  [LESS SPICY]', x + 10, y + 22);
+  doc.fillColor('#1e293b').fontSize(6.5).text('• 2x Butter Garlic Naan', x + 10, y + 31);
+  doc.roundedRect(x + 172, y + 26, 68, 16, 3).fill('#16a34a');
+  doc.fillColor('#ffffff').fontSize(6.5).font('Helvetica-Bold').text('MARK READY', x + 179, y + 31);
+
+  // Ticket 2: New Order
+  doc.roundedRect(x + 252, y + 6, 242, 48, 3).fillAndStroke('#ffffff', '#10b981');
+  doc.rect(x + 252, y + 6, 242, 12).fill('#d1fae5');
+  doc.fillColor('#065f46').fontSize(6.5).font('Helvetica-Bold').text('KOT #43 • TABLE 1  (3 mins ago • NEW ORDER)', x + 257, y + 9);
+  doc.fillColor('#1e293b').fontSize(6.5).font('Helvetica').text('• 1x Paneer Tikka Angara  [TANDOOR]', x + 257, y + 22);
+  doc.fillColor('#1e293b').fontSize(6.5).text('• 2x Fresh Lime Soda  [BAR]', x + 257, y + 31);
+  doc.roundedRect(x + 420, y + 26, 68, 16, 3).fill('#2563eb');
+  doc.fillColor('#ffffff').fontSize(6.5).font('Helvetica-Bold').text('START COOK', x + 427, y + 31);
+});
 
 // =============================================================================
 // PAGE 9: MODULE 7 — MANAGING STOREROOM & INVENTORY
@@ -635,6 +749,16 @@ drawStepBox(
   '2. Match the Numbers with Your Physical Cash Drawer',
   'The Z-Report displays:\n• Total Cash Sales: e.g. ₹18,450\n• Total UPI (GPay/PhonePe): e.g. ₹24,800\n• Total Card Sales: e.g. ₹12,300\n• Total GST Collected: e.g. ₹2,780\nCount the cash notes in your physical counter drawer. If your cash matches the screen number, your cashier has accounted for every single rupee! Lock the cash drawer and shut down.'
 );
+
+drawScreenMockup('Daily Z-Report Shift Closure Snapshot', 'http://localhost:3000/reports', 62, (x, y, w, h) => {
+  // Receipt Paper Mockup
+  doc.roundedRect(x + 120, y + 5, 260, 48, 3).fillAndStroke('#ffffff', '#cbd5e1');
+  doc.fillColor('#0f172a').fontSize(7).font('Helvetica-Bold').text('BAWARCHI ROYALE — DAILY Z-REPORT (Shift #44)', x + 130, y + 9);
+  doc.fillColor('#475569').fontSize(6).font('Helvetica').text('Cash Sales: ₹18,450  |  UPI (QR): ₹24,800  |  Cards: ₹12,300', x + 130, y + 20);
+  doc.fillColor('#475569').fontSize(6).text('Total Revenue: ₹55,550.00  |  GST Tax Collected (5%): ₹2,778.00', x + 130, y + 29);
+  doc.roundedRect(x + 130, y + 37, 240, 12, 2).fill('#ecfdf5');
+  doc.fillColor('#047857').fontSize(6.5).font('Helvetica-Bold').text('✓ PHYSICAL CASH DRAWER RECONCILIATION: 100% MATCH', x + 140, y + 40);
+});
 
 // =============================================================================
 // PAGE 12: MODULE 10 — SIMPLE TROUBLESHOOTING & FAQ
