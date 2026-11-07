@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -15,6 +16,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Clock, TrendingUp } from "lucide-react";
 
 export function SalesHourlyChart() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
     <Card className="col-span-1 xl:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -34,59 +37,65 @@ export function SalesHourlyChart() {
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full pt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={DEMO_HOURLY_SALES}
-              margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="hourlySalesGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis
-                dataKey="time"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `₹${value / 1000}k`}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-white shadow-xl">
-                        <div className="text-[11px] font-medium text-slate-400">{data.time}</div>
-                        <div className="text-sm font-bold text-amber-400">
-                          {formatINR(data.sales)}
+          {!mounted ? (
+            <div className="h-full w-full flex items-center justify-center text-slate-300 text-xs">
+              Loading sales telemetry...
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={DEMO_HOURLY_SALES}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="hourlySalesGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="time"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `₹${value / 1000}k`}
+                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-white shadow-xl">
+                          <div className="text-[11px] font-medium text-slate-400">{data.time}</div>
+                          <div className="text-sm font-bold text-amber-400">
+                            {formatINR(data.sales)}
+                          </div>
+                          <div className="text-[10px] text-slate-300 mt-0.5">
+                            {data.orders} Completed Orders
+                          </div>
                         </div>
-                        <div className="text-[10px] text-slate-300 mt-0.5">
-                          {data.orders} Completed Orders
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="sales"
-                stroke="#f59e0b"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#hourlySalesGrad)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#f59e0b"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#hourlySalesGrad)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>

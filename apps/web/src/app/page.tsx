@@ -38,7 +38,7 @@ export default function DashboardOverviewPage() {
               Live Shift #44
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1" suppressHydrationWarning>
             Real-time telemetry for <span className="font-semibold text-slate-800">{activeBranch.name}</span> (Code: {activeBranch.code} · GSTIN: {activeBranch.gstin})
           </p>
         </div>

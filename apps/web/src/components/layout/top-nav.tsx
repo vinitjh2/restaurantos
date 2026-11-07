@@ -147,7 +147,7 @@ export function TopNav() {
         {/* Current Date Display */}
         <div className="hidden lg:flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200/80 px-2.5 py-1 text-xs text-slate-600 font-medium">
           <Calendar className="h-3.5 w-3.5 text-slate-400" />
-          <span>{formatIndianDate()}</span>
+          <span suppressHydrationWarning>{formatIndianDate()}</span>
         </div>
 
         {/* PWA One-Click Install */}

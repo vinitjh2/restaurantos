@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 
 export function RevenueTrendsChart() {
   const [view, setView] = useState<"weekly" | "monthly">("weekly");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <Card className="col-span-1 xl:col-span-2">
@@ -66,8 +68,13 @@ export function RevenueTrendsChart() {
 
       <CardContent>
         <div className="h-[280px] w-full pt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            {view === "weekly" ? (
+          {!mounted ? (
+            <div className="h-full w-full flex items-center justify-center text-slate-300 text-xs">
+              Loading revenue trends...
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              {view === "weekly" ? (
               <BarChart
                 data={DEMO_WEEKLY_REVENUE}
                 margin={{ top: 10, right: 10, left: -5, bottom: 0 }}
@@ -165,6 +172,7 @@ export function RevenueTrendsChart() {
               </BarChart>
             )}
           </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { DEMO_PAYMENT_METHOD_DISTRIBUTION } from "@/lib/demo-data";
 import { formatINR } from "@/lib/formatters";
@@ -7,6 +8,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Wallet } from "lucide-react";
 
 export function PaymentMethodsChart() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <Card className="col-span-1">
       <CardHeader className="pb-2">
@@ -18,38 +22,44 @@ export function PaymentMethodsChart() {
       </CardHeader>
       <CardContent>
         <div className="relative h-[220px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="rounded-xl border border-slate-800 bg-slate-900 p-2 text-white shadow-xl text-xs">
-                        <div className="font-semibold">{data.name}</div>
-                        <div className="text-emerald-400 font-bold">{formatINR(data.amount)}</div>
-                        <div className="text-[10px] text-slate-400">{data.value}% of gross revenue</div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Pie
-                data={DEMO_PAYMENT_METHOD_DISTRIBUTION}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={80}
-                paddingAngle={4}
-                dataKey="value"
-              >
-                {DEMO_PAYMENT_METHOD_DISTRIBUTION.map((entry, index) => (
-                  <Cell key={`cell-pm-${index}`} fill={entry.fill} stroke="transparent" />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          {!mounted ? (
+            <div className="h-full w-full flex items-center justify-center text-slate-300 text-xs">
+              Loading payment methods...
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="rounded-xl border border-slate-800 bg-slate-900 p-2 text-white shadow-xl text-xs">
+                          <div className="font-semibold">{data.name}</div>
+                          <div className="text-emerald-400 font-bold">{formatINR(data.amount)}</div>
+                          <div className="text-[10px] text-slate-400">{data.value}% of gross revenue</div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Pie
+                  data={DEMO_PAYMENT_METHOD_DISTRIBUTION}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {DEMO_PAYMENT_METHOD_DISTRIBUTION.map((entry, index) => (
+                    <Cell key={`cell-pm-${index}`} fill={entry.fill} stroke="transparent" />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          )}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-lg font-bold text-slate-900">₹1.48L</span>
             <span className="text-[10px] text-slate-400 font-medium">Total Tendered</span>

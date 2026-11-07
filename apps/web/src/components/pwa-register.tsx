@@ -6,6 +6,25 @@ const CURRENT_CACHE_VERSION = "restaurantos-cache-v4";
 
 export function PwaRegister() {
   useEffect(() => {
+    // In development mode, unregister any active service worker and clear caches
+    // to guarantee Hot Module Replacement (HMR), fast refresh, and eliminate hydration mismatches.
+    if (process.env.NODE_ENV === "development") {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const reg of registrations) {
+            reg.unregister();
+            console.log("[PWA] ServiceWorker unregistered in development environment.");
+          }
+        });
+      }
+      if (typeof window !== "undefined" && "caches" in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((key) => caches.delete(key));
+        });
+      }
+      return;
+    }
+
     // 1. Client-Side Cache Sanitation: Clean up any legacy or poisoned caches
     if (typeof window !== "undefined" && "caches" in window) {
       caches.keys().then((keys) => {
@@ -18,7 +37,7 @@ export function PwaRegister() {
       }).catch(() => {});
     }
 
-    // 2. Register Service Worker and manage lifecycle
+    // 2. Register Service Worker and manage lifecycle in production
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")

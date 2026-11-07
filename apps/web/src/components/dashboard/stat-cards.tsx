@@ -158,7 +158,7 @@ export function DashboardStatCards() {
                 <span className="text-xs font-semibold text-slate-500 tracking-wide">
                   {stat.title}
                 </span>
-                <div className="text-2xl font-bold tracking-tight text-slate-900">
+                <div className="text-2xl font-bold tracking-tight text-slate-900" suppressHydrationWarning>
                   {stat.value}
                 </div>
               </div>

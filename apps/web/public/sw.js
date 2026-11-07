@@ -79,11 +79,12 @@ self.addEventListener("fetch", (event) => {
   // 1. Bypass Service Worker entirely for:
   // - Cross-origin requests
   // - Server-side API routes (/api/)
-  // - Next.js development HMR and socket connections
+  // - Next.js development HMR, chunks, and socket connections on localhost
   if (
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/_next/webpack-hmr")
+    url.pathname.startsWith("/_next/webpack-hmr") ||
+    ((url.hostname === "localhost" || url.hostname === "127.0.0.1") && url.pathname.startsWith("/_next/"))
   ) {
     return;
   }
@@ -220,7 +221,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 5. Default pass-through
-  event.respondWith(fetch(event.request));
+  // 5. Default pass-through (with safe catch to prevent ERR_FAILED)
+  event.respondWith(
+    fetch(event.request).catch((err) => {
+      console.warn("[ServiceWorker v4] Network fetch failed for:", event.request.url, err);
+      return new Response("", { status: 408, statusText: "Request Timeout" });
+    })
+  );
 });
 

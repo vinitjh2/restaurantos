@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -14,6 +15,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Utensils } from "lucide-react";
 
 export function TopDishesChart() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
     <Card className="col-span-1 xl:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -30,11 +33,16 @@ export function TopDishesChart() {
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={DEMO_TOP_DISHES}
-              layout="vertical"
-              margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+          {!mounted ? (
+            <div className="h-full w-full flex items-center justify-center text-slate-300 text-xs">
+              Loading dish analytics...
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={DEMO_TOP_DISHES}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
             >
               <XAxis
                 type="number"
@@ -79,6 +87,7 @@ export function TopDishesChart() {
               <Bar dataKey="count" fill="#f97316" radius={[0, 4, 4, 0]} maxBarSize={20} />
             </BarChart>
           </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>

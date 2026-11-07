@@ -50,12 +50,16 @@ export function AppShell({ children }: AppShellProps) {
 
   // Clean full-screen presentation for login, registration, and customer displays
   if (isAuthOrStandalone) {
-    return <div className="min-h-screen w-full bg-slate-950">{children}</div>;
+    return (
+      <div className="min-h-screen w-full bg-slate-950" suppressHydrationWarning>
+        {children}
+      </div>
+    );
   }
 
   // Standard multi-column application layout for authenticated operations
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden" suppressHydrationWarning>
       {/* Main Collapsible Sidebar */}
       <Sidebar />
 
