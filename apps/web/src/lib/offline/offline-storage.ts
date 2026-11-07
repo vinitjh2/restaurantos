@@ -116,11 +116,44 @@ class OfflineStorageEngine {
   private dbPromise: Promise<IDBDatabase> | null = null;
   private isBrowser = typeof window !== 'undefined';
   private cachedDeviceId: string | null = null;
+  private inMemoryFallback = new Map<string, string>();
 
   constructor() {
     if (this.isBrowser && 'indexedDB' in window) {
-      this.initIndexedDB();
+      this.initIndexedDB().catch(() => {});
     }
+  }
+
+  /**
+   * Safe access to browser storage that never throws in private / incognito browsing
+   */
+  private safeStorageGet(key: string): string | null {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch {}
+    return this.inMemoryFallback.get(key) || null;
+  }
+
+  private safeStorageSet(key: string, val: string): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, val);
+        return;
+      }
+    } catch {}
+    this.inMemoryFallback.set(key, val);
+  }
+
+  private safeStorageRemove(key: string): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(key);
+        return;
+      }
+    } catch {}
+    this.inMemoryFallback.delete(key);
   }
 
   /**
@@ -130,10 +163,10 @@ class OfflineStorageEngine {
     if (this.cachedDeviceId) return this.cachedDeviceId;
 
     if (this.isBrowser) {
-      let storedId = localStorage.getItem('restaurantos_device_id');
+      let storedId = this.safeStorageGet('restaurantos_device_id');
       if (!storedId) {
         storedId = `POS-DEV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-        localStorage.setItem('restaurantos_device_id', storedId);
+        this.safeStorageSet('restaurantos_device_id', storedId);
       }
       this.cachedDeviceId = storedId;
       return storedId;
@@ -150,43 +183,51 @@ class OfflineStorageEngine {
         return;
       }
 
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      try {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
+        request.onupgradeneeded = (event) => {
+          const db = (event.target as IDBOpenDBRequest).result;
 
-        // 1. Offline Orders Store
-        if (!db.objectStoreNames.contains(ORDERS_STORE)) {
-          const store = db.createObjectStore(ORDERS_STORE, { keyPath: 'offlineSyncId' });
-          store.createIndex('syncStatus', 'syncStatus', { unique: false });
-          store.createIndex('clientTimestamp', 'clientTimestamp', { unique: false });
-        }
+          // 1. Offline Orders Store
+          if (!db.objectStoreNames.contains(ORDERS_STORE)) {
+            const store = db.createObjectStore(ORDERS_STORE, { keyPath: 'offlineSyncId' });
+            store.createIndex('syncStatus', 'syncStatus', { unique: false });
+            store.createIndex('clientTimestamp', 'clientTimestamp', { unique: false });
+          }
 
-        // 2. Persistent Sync Operations Queue Store
-        if (!db.objectStoreNames.contains(OPERATIONS_STORE)) {
-          const store = db.createObjectStore(OPERATIONS_STORE, { keyPath: 'uuid' });
-          store.createIndex('syncStatus', 'syncStatus', { unique: false });
-          store.createIndex('timestamp', 'timestamp', { unique: false });
-        }
+          // 2. Persistent Sync Operations Queue Store
+          if (!db.objectStoreNames.contains(OPERATIONS_STORE)) {
+            const store = db.createObjectStore(OPERATIONS_STORE, { keyPath: 'uuid' });
+            store.createIndex('syncStatus', 'syncStatus', { unique: false });
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+          }
 
-        // 3. Cached Catalog Store
-        if (!db.objectStoreNames.contains(CATALOG_STORE)) {
-          db.createObjectStore(CATALOG_STORE, { keyPath: 'key' });
-        }
+          // 3. Cached Catalog Store
+          if (!db.objectStoreNames.contains(CATALOG_STORE)) {
+            db.createObjectStore(CATALOG_STORE, { keyPath: 'key' });
+          }
 
-        // 4. Cached Authorized Sessions Store (for Offline Login)
-        if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
-          db.createObjectStore(SESSIONS_STORE, { keyPath: 'email' });
-        }
+          // 4. Cached Authorized Sessions Store (for Offline Login)
+          if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
+            db.createObjectStore(SESSIONS_STORE, { keyPath: 'email' });
+          }
 
-        // 5. Cached Tables Store
-        if (!db.objectStoreNames.contains(TABLES_STORE)) {
-          db.createObjectStore(TABLES_STORE, { keyPath: 'id' });
-        }
-      };
+          // 5. Cached Tables Store
+          if (!db.objectStoreNames.contains(TABLES_STORE)) {
+            db.createObjectStore(TABLES_STORE, { keyPath: 'id' });
+          }
+        };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => {
+          this.dbPromise = null;
+          reject(request.error || new Error('IndexedDB access denied'));
+        };
+      } catch (err) {
+        this.dbPromise = null;
+        reject(err);
+      }
     });
 
     return this.dbPromise;
@@ -275,7 +316,7 @@ class OfflineStorageEngine {
       }
     } catch {
       const remaining = all.filter((o) => o.syncStatus !== 'SYNCED');
-      localStorage.setItem('restaurantos_sync_operations', JSON.stringify(remaining));
+      this.safeStorageSet('restaurantos_sync_operations', JSON.stringify(remaining));
     }
   }
 
@@ -369,22 +410,18 @@ class OfflineStorageEngine {
   // =========================================================================
 
   async cacheSession(session: CachedUserSession): Promise<void> {
-    if (!this.isBrowser) return;
-
     try {
       const db = await this.initIndexedDB();
       const tx = db.transaction(SESSIONS_STORE, 'readwrite');
       tx.objectStore(SESSIONS_STORE).put(session);
     } catch {
-      localStorage.setItem(`restaurantos_session_${session.email}`, JSON.stringify(session));
+      this.safeStorageSet(`restaurantos_session_${session.email}`, JSON.stringify(session));
     }
     // Also keep a primary active offline session reference
-    localStorage.setItem('restaurantos_active_offline_session', JSON.stringify(session));
+    this.safeStorageSet('restaurantos_active_offline_session', JSON.stringify(session));
   }
 
   async getCachedSession(email?: string): Promise<CachedUserSession | null> {
-    if (!this.isBrowser) return null;
-
     if (email) {
       try {
         const db = await this.initIndexedDB();
@@ -395,13 +432,13 @@ class OfflineStorageEngine {
           req.onerror = () => resolve(null);
         });
       } catch {
-        const raw = localStorage.getItem(`restaurantos_session_${email}`);
+        const raw = this.safeStorageGet(`restaurantos_session_${email}`);
         return raw ? JSON.parse(raw) : null;
       }
     }
 
     // Return last active session if no email specified
-    const activeRaw = localStorage.getItem('restaurantos_active_offline_session');
+    const activeRaw = this.safeStorageGet('restaurantos_active_offline_session');
     return activeRaw ? JSON.parse(activeRaw) : null;
   }
 
@@ -420,7 +457,7 @@ class OfflineStorageEngine {
       const tx = db.transaction(CATALOG_STORE, 'readwrite');
       tx.objectStore(CATALOG_STORE).put({ key, data, cachedAt: Date.now() });
     } catch {
-      localStorage.setItem(`restaurantos_cache_${key}`, JSON.stringify(data));
+      this.safeStorageSet(`restaurantos_cache_${key}`, JSON.stringify(data));
     }
   }
 
@@ -435,7 +472,7 @@ class OfflineStorageEngine {
         req.onerror = () => resolve(null);
       });
     } catch {
-      const raw = localStorage.getItem(`restaurantos_cache_${key}`);
+      const raw = this.safeStorageGet(`restaurantos_cache_${key}`);
       return raw ? JSON.parse(raw) : null;
     }
   }
@@ -452,12 +489,12 @@ class OfflineStorageEngine {
     } else {
       ops.push(op);
     }
-    localStorage.setItem('restaurantos_sync_operations', JSON.stringify(ops));
+    this.safeStorageSet('restaurantos_sync_operations', JSON.stringify(ops));
   }
 
   private getAllOperationsFromLocalStorage(): SyncOperationItem[] {
     try {
-      const raw = localStorage.getItem('restaurantos_sync_operations');
+      const raw = this.safeStorageGet('restaurantos_sync_operations');
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -472,7 +509,7 @@ class OfflineStorageEngine {
     } else {
       orders.push(order);
     }
-    localStorage.setItem('restaurantos_offline_orders', JSON.stringify(orders));
+    this.safeStorageSet('restaurantos_offline_orders', JSON.stringify(orders));
   }
 
   private getOrderFromLocalStorage(id: string): OfflineOrder | null {
@@ -482,7 +519,7 @@ class OfflineStorageEngine {
 
   private getAllOrdersFromLocalStorage(): OfflineOrder[] {
     try {
-      const raw = localStorage.getItem('restaurantos_offline_orders');
+      const raw = this.safeStorageGet('restaurantos_offline_orders');
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];

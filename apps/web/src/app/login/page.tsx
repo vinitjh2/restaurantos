@@ -37,15 +37,19 @@ function LoginForm() {
       if (res.ok && data.success) {
         // Cache session for robust offline authentication
         if (data.user && data.organization) {
-          await offlineStorage.cacheSession({
-            email: data.user.email,
-            name: data.user.name,
-            role: data.user.role,
-            organizationId: data.organization.id,
-            organizationSlug: data.organization.slug || 'bawarchi-royale',
-            assignedBranchId: data.user.assignedBranchId,
-            cachedAt: Date.now(),
-          });
+          try {
+            await offlineStorage.cacheSession({
+              email: data.user.email,
+              name: data.user.name,
+              role: data.user.role,
+              organizationId: data.organization.id,
+              organizationSlug: data.organization.slug || 'bawarchi-royale',
+              assignedBranchId: data.user.assignedBranchId,
+              cachedAt: Date.now(),
+            });
+          } catch (cacheErr) {
+            console.warn('[OfflineStorage] Session caching skipped in private mode:', cacheErr);
+          }
         }
 
         if (data.organization?.id) {
@@ -54,23 +58,33 @@ function LoginForm() {
         if (data.organization?.branches?.[0]?.id) {
           setBranch(data.organization.branches[0].id);
         }
-        if (data.user?.role === 'PLATFORM_OWNER') {
-          router.push('/platform-admin');
+
+        const targetUrl = data.user?.role === 'PLATFORM_OWNER' ? '/platform-admin' : redirectPath;
+        // Full browser navigation: ensures session cookie is processed,
+        // client router cache is wiped, and fresh browser profiles load cleanly
+        if (typeof window !== 'undefined') {
+          window.location.href = targetUrl;
         } else {
-          router.push(redirectPath);
+          router.push(targetUrl);
         }
       } else {
         setErrorMessage(data.error || 'Failed to log in');
       }
     } catch (err: any) {
       // Offline fallback: Check for authorized cached session
-      const cached = await offlineStorage.getCachedSession(email);
-      if (cached) {
-        setOrganization(cached.organizationId);
-        if (cached.assignedBranchId) setBranch(cached.assignedBranchId);
-        router.push(redirectPath);
-        return;
-      }
+      try {
+        const cached = await offlineStorage.getCachedSession(email);
+        if (cached) {
+          setOrganization(cached.organizationId);
+          if (cached.assignedBranchId) setBranch(cached.assignedBranchId);
+          if (typeof window !== 'undefined') {
+            window.location.href = redirectPath;
+          } else {
+            router.push(redirectPath);
+          }
+          return;
+        }
+      } catch {}
       setErrorMessage(err.message || 'Network error during login');
     } finally {
       setIsLoading(false);

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/sidebar";
-import { TopNav } from "@/components/layout/top-nav";
+import { AppShell } from "@/components/layout/app-shell";
 import { PwaRegister } from "@/components/pwa-register";
 
 export const viewport: Viewport = {
@@ -33,18 +32,7 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className="h-full font-sans bg-slate-50/60 text-slate-900 antialiased">
         <PwaRegister />
-        <div className="flex h-screen w-full overflow-hidden">
-          {/* Main Collapsible Sidebar */}
-          <Sidebar />
-
-          {/* Right Main Application Area */}
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <TopNav />
-            <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-8">
-              {children}
-            </main>
-          </div>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

@@ -8,9 +8,11 @@ export async function POST(req: NextRequest) {
     message: "Logged out successfully",
   });
 
+  const isHttps = req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
+
   response.cookies.set("restaurantos_session", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isHttps,
     sameSite: "lax",
     maxAge: 0,
     path: "/",

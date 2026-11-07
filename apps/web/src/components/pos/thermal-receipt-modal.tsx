@@ -90,10 +90,12 @@ export function ThermalReceiptModal({ receiptData, onClose }: ThermalReceiptModa
       paymentMethod: receiptData.payments?.[0]?.method || "CASH",
     });
 
-    navigator.clipboard.writeText(rawCmds).then(() => {
-      setCopiedRaw(true);
-      setTimeout(() => setCopiedRaw(false), 2000);
-    });
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(rawCmds).then(() => {
+        setCopiedRaw(true);
+        setTimeout(() => setCopiedRaw(false), 2000);
+      }).catch(() => {});
+    }
   };
 
   const { branch, calculation } = receiptData;

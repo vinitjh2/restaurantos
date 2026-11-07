@@ -87,7 +87,11 @@ export default function RegisterRestaurantPage() {
       if (res.ok && data.success) {
         if (data.organization?.id) setOrganization(data.organization.id);
         if (data.branch?.id) setBranch(data.branch.id);
-        router.push('/');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        } else {
+          router.push('/');
+        }
       } else {
         setErrorMessage(data.error || 'Failed to register restaurant');
       }

@@ -188,9 +188,11 @@ export async function POST(req: NextRequest) {
       token,
     });
 
+    const isHttps = req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
+
     response.cookies.set("restaurantos_session", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isHttps,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",

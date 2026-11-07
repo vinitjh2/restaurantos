@@ -10,6 +10,7 @@ interface RestaurantState {
   isSearchOpen: boolean;
   setOrganization: (orgId: string) => void;
   setBranch: (branchId: string) => void;
+  setSessionData: (data: { organization?: any; branches?: RestaurantBranch[] }) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setSearchOpen: (open: boolean) => void;
@@ -26,6 +27,17 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
   setOrganization: (orgId) => set({ currentOrgId: orgId }),
   setBranch: (branchId) => set({ currentBranchId: branchId }),
+  setSessionData: (data) =>
+    set((state) => {
+      const branches = data.branches && data.branches.length > 0 ? data.branches : state.branches;
+      const organizations = data.organization ? [data.organization] : state.organizations;
+      return {
+        organizations,
+        branches,
+        currentOrgId: data.organization?.id || state.currentOrgId,
+        currentBranchId: branches[0]?.id || state.currentBranchId,
+      };
+    }),
   toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
   setSearchOpen: (open) => set({ isSearchOpen: open }),
