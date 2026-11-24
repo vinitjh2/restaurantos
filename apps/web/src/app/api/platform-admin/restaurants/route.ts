@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const tenantCtx = await getTenantContext(req);
-    requireRole(tenantCtx, ["PLATFORM_OWNER"]);
+    requireRole(tenantCtx, ["PLATFORM_OWNER", "PLATFORM_AUDITOR"]);
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");

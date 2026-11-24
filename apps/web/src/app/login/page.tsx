@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Utensils, Lock, Mail, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRestaurantStore } from '@/stores/restaurant-store';
 import { offlineStorage } from '@/lib/offline/offline-storage';
@@ -15,8 +15,8 @@ function LoginForm() {
   const rawRedirect = searchParams.get('redirect');
   const redirectPath = (!rawRedirect || rawRedirect === '/' || rawRedirect === '/landing') ? '/dashboard' : rawRedirect;
 
-  const [email, setEmail] = useState('owner@bawarchiroyale.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -61,7 +61,7 @@ function LoginForm() {
           setBranch(data.organization.branches[0].id);
         }
 
-        const targetUrl = data.user?.role === 'PLATFORM_OWNER' ? '/platform-admin' : redirectPath;
+        const targetUrl = (data.user?.role === 'PLATFORM_OWNER' || data.user?.role === 'PLATFORM_AUDITOR') ? '/platform-admin' : redirectPath;
         // Full browser navigation: ensures session cookie is processed,
         // client router cache is wiped, and fresh browser profiles load cleanly
         if (typeof window !== 'undefined') {
@@ -91,11 +91,6 @@ function LoginForm() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDemoQuickFill = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
   };
 
   return (
@@ -173,35 +168,6 @@ function LoginForm() {
             <ArrowRight className="w-4 h-4" />
           </Button>
         </form>
-
-        {/* Quick Demo Fill Buttons */}
-        <div className="pt-4 border-t border-slate-800/80 space-y-2">
-          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            Quick Demo Logins:
-          </div>
-          <button
-            type="button"
-            onClick={() => handleDemoQuickFill('superadmin@sutrauniverse.com', 'AdminPassword123!')}
-            className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-indigo-900/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-indigo-600 flex items-center justify-between"
-          >
-            <div className="text-left">
-              <span className="font-bold text-indigo-400 block">SutraUniverse Super Admin (Master Owner)</span>
-              <span className="text-[10px] text-slate-500">superadmin@sutrauniverse.com</span>
-            </div>
-            <ShieldCheck className="w-4 h-4 text-indigo-400" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoQuickFill('owner@bawarchiroyale.com', 'Password123!')}
-            className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 flex items-center justify-between"
-          >
-            <div className="text-left">
-              <span className="font-bold text-orange-400 block">Restaurant Owner (Tenant)</span>
-              <span className="text-[10px] text-slate-500">owner@bawarchiroyale.com</span>
-            </div>
-            <Sparkles className="w-4 h-4 text-orange-500" />
-          </button>
-        </div>
       </div>
 
       {/* Register CTA */}

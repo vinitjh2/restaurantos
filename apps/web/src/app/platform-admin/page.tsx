@@ -113,6 +113,8 @@ interface InvoiceRecord {
 export default function PlatformAdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "restaurants" | "plans" | "invoices" | "razorpay">("overview");
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<{ email: string; name: string; role: string } | null>(null);
+  const isAuditor = currentUser?.role === "PLATFORM_AUDITOR";
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [restaurants, setRestaurants] = useState<RestaurantRecord[]>([]);
   const [plans, setPlans] = useState<PlanRecord[]>([]);
@@ -137,27 +139,39 @@ export default function PlatformAdminPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch {
+      window.location.href = "/login";
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ovRes, restRes, plansRes, invRes] = await Promise.all([
+      const [ovRes, restRes, plansRes, invRes, meRes] = await Promise.all([
         fetch("/api/platform-admin/overview"),
         fetch("/api/platform-admin/restaurants"),
         fetch("/api/platform-admin/plans"),
         fetch("/api/platform-admin/invoices"),
+        fetch("/api/auth/me"),
       ]);
 
-      const [ovData, restData, plansData, invData] = await Promise.all([
+      const [ovData, restData, plansData, invData, meData] = await Promise.all([
         ovRes.json(),
         restRes.json(),
         plansRes.json(),
         invRes.json(),
+        meRes.json(),
       ]);
 
       if (ovData.success) setMetrics(ovData.metrics);
       if (restData.success) setRestaurants(restData.restaurants);
       if (plansData.success) setPlans(plansData.plans);
       if (invData.success) setInvoices(invData.invoices);
+      if (meData?.success && meData?.user) setCurrentUser(meData.user);
     } catch (err) {
       console.error("Failed to load platform admin telemetry:", err);
     } finally {
@@ -170,6 +184,10 @@ export default function PlatformAdminPage() {
   }, []);
 
   const handleToggleStatus = async (orgId: string, currentStatus: string) => {
+    if (isAuditor) {
+      showToast("Action blocked: Read-Only Auditor Mode cannot modify restaurant status.");
+      return;
+    }
     const nextStatus = currentStatus === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
     try {
       setActionLoading(true);
@@ -195,6 +213,10 @@ export default function PlatformAdminPage() {
 
   const handleAssignPlan = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAuditor) {
+      showToast("Action blocked: Read-Only Auditor Mode cannot reassign plans.");
+      return;
+    }
     if (!assignPlanModalOrg) return;
     try {
       setActionLoading(true);
@@ -218,6 +240,10 @@ export default function PlatformAdminPage() {
 
   const handleSavePlanEdits = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAuditor) {
+      showToast("Action blocked: Read-Only Auditor Mode cannot edit plan pricing.");
+      return;
+    }
     if (!editingPlan) return;
     try {
       setActionLoading(true);
@@ -253,47 +279,81 @@ export default function PlatformAdminPage() {
   });
 
   return (
-    <div className="space-y-6 pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto px-4 sm:px-6 pt-6">
       {/* Top Banner / Breadcrumb */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-indigo-600 text-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
               <ShieldCheck className="h-5 w-5" />
             </div>
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-              Platform Super Admin Dashboard
-            </h1>
-            <Badge variant="outline" className="text-[10px] bg-indigo-50 text-indigo-700 border-indigo-200 font-bold">
-              Software Owner Mode
-            </Badge>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-black tracking-tight text-slate-900">
+                  DineAdmin <span className="text-indigo-600">Portal</span>
+                </h1>
+                {isAuditor ? (
+                  <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300 font-bold px-2 py-0.5">
+                    👁️ Read-Only Auditor Mode
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-800 border-emerald-300 font-bold px-2 py-0.5">
+                    🛡️ Full Access Super Admin
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                dineadmin.sutrauniverse.com · Central Multi-Tenant Registry, Subscriptions & Telemetry
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Global multi-tenant restaurant registry, MRR financial telemetry, subscription entitlements, and Razorpay billing
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {currentUser?.email && (
+            <div className="hidden sm:flex flex-col text-right mr-2">
+              <span className="text-xs font-bold text-slate-800">{currentUser.name}</span>
+              <span className="text-[10px] text-slate-500 font-mono">{currentUser.email}</span>
+            </div>
+          )}
+
           <Button
             variant="outline"
             size="sm"
             onClick={loadData}
             disabled={loading}
-            className="gap-1.5 text-xs"
+            className="gap-1.5 text-xs h-9"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-indigo-600" : ""}`} />
-            <span>Refresh Telemetry</span>
+            <span>Refresh</span>
           </Button>
 
-          <Link
-            href="/subscription"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleLogout}
+            className="gap-1.5 text-xs h-9 bg-rose-600 hover:bg-rose-700 text-white font-semibold"
           >
-            <span>Tenant View</span>
-            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-          </Link>
+            <Power className="h-3.5 w-3.5" />
+            <span>Sign Out</span>
+          </Button>
         </div>
       </div>
+
+      {/* Read-Only Auditor Warning Banner */}
+      {isAuditor && (
+        <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-950 flex items-start gap-3 shadow-xs animate-in fade-in">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-950">
+              Read-Only Inspector Mode (Inspection Only)
+            </h3>
+            <p className="text-xs text-amber-800">
+              You have read-only privileges across all restaurant tenants, revenue MRR metrics, invoices, and subscriptions. All modification buttons (status toggles, plan reassignments, pricing updates) are locked and cannot mutate any data.
+            </p>
+          </div>
+        </div>
+      )}
 
       {toastMessage && (
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
@@ -679,10 +739,13 @@ export default function PlatformAdminPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
+                            if (isAuditor) return;
                             setAssignPlanModalOrg(r);
                             setSelectedPlanToAssign(r.subscriptionPlan);
                           }}
                           className="h-7 text-xs"
+                          disabled={isAuditor}
+                          title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Assign Subscription Plan"}
                         >
                           Plan
                         </Button>
@@ -690,9 +753,13 @@ export default function PlatformAdminPage() {
                         <Button
                           variant={r.status === "SUSPENDED" ? "default" : "destructive"}
                           size="sm"
-                          onClick={() => handleToggleStatus(r.id, r.status)}
+                          onClick={() => {
+                            if (isAuditor) return;
+                            handleToggleStatus(r.id, r.status);
+                          }}
                           className="h-7 text-[11px]"
-                          disabled={actionLoading}
+                          disabled={actionLoading || isAuditor}
+                          title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Toggle Restaurant Status"}
                         >
                           {r.status === "SUSPENDED" ? "Reactivate" : "Suspend"}
                         </Button>
@@ -762,11 +829,16 @@ export default function PlatformAdminPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditingPlan(p)}
+                    onClick={() => {
+                      if (isAuditor) return;
+                      setEditingPlan(p);
+                    }}
+                    disabled={isAuditor}
+                    title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Edit Pricing & Entitlements"}
                     className="w-full text-xs gap-1.5"
                   >
                     <Edit2 className="h-3 w-3" />
-                    <span>Edit Pricing & Entitlements</span>
+                    <span>{isAuditor ? "Locked (Read-Only)" : "Edit Pricing & Entitlements"}</span>
                   </Button>
                 </div>
               </div>
@@ -880,7 +952,10 @@ export default function PlatformAdminPage() {
               <Button
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs gap-1.5"
+                disabled={isAuditor}
+                title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Simulate Real Signed Webhook Trigger"}
                 onClick={async () => {
+                  if (isAuditor) return;
                   try {
                     setWebhookTestStatus("Testing signature and idempotency verification...");
                     // Test simulated call
@@ -1079,7 +1154,7 @@ export default function PlatformAdminPage() {
                 type="submit"
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                disabled={actionLoading}
+                disabled={actionLoading || isAuditor}
               >
                 {actionLoading ? "Updating..." : "Confirm Plan"}
               </Button>
@@ -1216,7 +1291,7 @@ export default function PlatformAdminPage() {
                 type="submit"
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                disabled={actionLoading}
+                disabled={actionLoading || isAuditor}
               >
                 {actionLoading ? "Saving..." : "Save Plan Limits"}
               </Button>

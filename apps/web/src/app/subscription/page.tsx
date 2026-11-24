@@ -220,14 +220,6 @@ export default function SubscriptionPage() {
             {testAlertLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 text-rose-600" />}
             <span>Test Pre-Debit SMS</span>
           </button>
-
-          <Link
-            href="/platform-admin"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors shadow-xs"
-          >
-            <ShieldCheck className="h-4 w-4" />
-            <span>Platform Admin</span>
-          </Link>
         </div>
       </div>
 

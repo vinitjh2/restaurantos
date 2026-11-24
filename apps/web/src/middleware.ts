@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
+  const host = request.headers.get("host") || "";
   const { pathname } = request.nextUrl;
+  const isDineAdmin = host.toLowerCase().includes("dineadmin");
+
+  // Handle dedicated Admin domain: dineadmin.sutrauniverse.com
+  if (isDineAdmin) {
+    if (pathname === "/" || pathname === "/landing") {
+      const sessionToken = request.cookies.get("restaurantos_session")?.value;
+      if (sessionToken) {
+        return NextResponse.redirect(new URL("/platform-admin", request.url));
+      } else {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", "/platform-admin");
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+  }
 
   // 1. Allow public routes, static assets, and auth APIs
   const isPublicPath =

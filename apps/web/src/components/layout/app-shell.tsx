@@ -30,7 +30,8 @@ export function AppShell({ children }: AppShellProps) {
     pathname.startsWith("/qr-order") ||
     pathname.startsWith("/downloads") ||
     pathname.startsWith("/waiter") ||
-    pathname.startsWith("/mobile");
+    pathname.startsWith("/mobile") ||
+    pathname.startsWith("/platform-admin");
 
   const isPureAuth = pathname === "/login" || pathname === "/register";
 
@@ -72,7 +73,8 @@ export function AppShell({ children }: AppShellProps) {
       pathname.startsWith("/qr-order") ||
       pathname.startsWith("/cfd") ||
       pathname.startsWith("/waiter") ||
-      pathname.startsWith("/mobile");
+      pathname.startsWith("/mobile") ||
+      pathname.startsWith("/platform-admin");
 
     return (
       <div

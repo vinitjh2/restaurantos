@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const tenantCtx = await getTenantContext(req);
-    requireRole(tenantCtx, ["PLATFORM_OWNER"]);
+    requireRole(tenantCtx, ["PLATFORM_OWNER", "PLATFORM_AUDITOR"]);
 
     const { id } = params;
 

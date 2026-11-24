@@ -268,14 +268,6 @@ export function TopNav() {
                   <span>Subscription & Plans</span>
                 </Link>
                 <Link
-                  href="/platform-admin"
-                  className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-indigo-700 font-bold hover:bg-indigo-50"
-                  onClick={() => setProfileOpen(false)}
-                >
-                  <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Platform Super Admin</span>
-                </Link>
-                <Link
                   href="/staff"
                   className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-slate-700 hover:bg-slate-100"
                   onClick={() => setProfileOpen(false)}

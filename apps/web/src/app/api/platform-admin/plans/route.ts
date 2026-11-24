@@ -6,6 +6,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
+    requireRole(tenantCtx, ["PLATFORM_OWNER", "PLATFORM_AUDITOR"]);
+
     const plans = await prisma.subscriptionPlan.findMany({
       orderBy: { monthlyPrice: "asc" },
       include: {

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const tenantCtx = await getTenantContext(req);
-    requireRole(tenantCtx, ["PLATFORM_OWNER"]);
+    requireRole(tenantCtx, ["PLATFORM_OWNER", "PLATFORM_AUDITOR"]);
 
     // Exclude the platform HQ organization itself from metrics
     const restaurantWhere = {
