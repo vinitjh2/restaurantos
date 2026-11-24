@@ -5,19 +5,37 @@ export function middleware(request: NextRequest) {
 
   // 1. Allow public routes, static assets, and auth APIs
   const isPublicPath =
+    pathname === "/" ||
+    pathname.startsWith("/landing") ||
+    pathname.startsWith("/about") ||
+    pathname.startsWith("/contact") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/refund") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/cfd") ||
     pathname.startsWith("/qr-order") ||
     pathname.startsWith("/downloads") ||
+    pathname.startsWith("/waiter") ||
+    pathname.startsWith("/mobile") ||
+    pathname.startsWith("/tutorial") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/webhooks") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/pos/menu") ||
     pathname.startsWith("/api/pos/tables") ||
+    pathname.startsWith("/api/pos/orders/kot") ||
+    pathname.startsWith("/api/kds/tickets") ||
     pathname === "/manifest.json" ||
     pathname === "/sw.js" ||
-    pathname === "/favicon.ico";
+    pathname === "/favicon.ico" ||
+    pathname.endsWith(".jpg") ||
+    pathname.endsWith(".jpeg") ||
+    pathname.endsWith(".png") ||
+    pathname.endsWith(".svg") ||
+    pathname.endsWith(".webp") ||
+    pathname.endsWith(".ico");
 
   if (isPublicPath) {
     return NextResponse.next();
@@ -49,7 +67,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - static images / assets (.jpg, .jpeg, .png, .svg, .webp, .ico)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:jpg|jpeg|png|svg|webp|ico)$).*)",
   ],
 };

@@ -7,11 +7,13 @@ import { Utensils, Lock, Mail, ArrowRight, Sparkles, ShieldCheck } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { useRestaurantStore } from '@/stores/restaurant-store';
 import { offlineStorage } from '@/lib/offline/offline-storage';
+import { DineSutraLogo } from '@/components/DineSutraLogo';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/';
+  const rawRedirect = searchParams.get('redirect');
+  const redirectPath = (!rawRedirect || rawRedirect === '/' || rawRedirect === '/landing') ? '/dashboard' : rawRedirect;
 
   const [email, setEmail] = useState('owner@bawarchiroyale.com');
   const [password, setPassword] = useState('Password123!');
@@ -100,12 +102,19 @@ function LoginForm() {
     <div className="w-full max-w-md space-y-8 z-10">
       {/* Brand Header */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 shadow-lg shadow-orange-500/20 mb-2">
-          <Utensils className="w-7 h-7 text-white" />
+        <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl mb-2">
+          <DineSutraLogo variant="icon" className="w-12 h-12" />
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">RestaurantOS</h1>
+        <div className="flex items-center justify-center gap-1.5">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Dine<span className="text-amber-500">Sutra</span>
+          </h1>
+          <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+            POS
+          </span>
+        </div>
         <p className="text-xs text-slate-400">
-          Enterprise Cloud Multi-Tenant Restaurant Platform & POS
+          Enterprise Cloud Multi-Tenant Restaurant Platform · Part of <span className="text-amber-400 font-semibold">SutraUniverse</span>
         </p>
       </div>
 
@@ -172,12 +181,12 @@ function LoginForm() {
           </div>
           <button
             type="button"
-            onClick={() => handleDemoQuickFill('superadmin@restaurantos.io', 'AdminPassword123!')}
+            onClick={() => handleDemoQuickFill('superadmin@sutrauniverse.com', 'AdminPassword123!')}
             className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-indigo-900/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-indigo-600 flex items-center justify-between"
           >
             <div className="text-left">
-              <span className="font-bold text-indigo-400 block">Platform Super Admin (Software Owner)</span>
-              <span className="text-[10px] text-slate-500">superadmin@restaurantos.io</span>
+              <span className="font-bold text-indigo-400 block">SutraUniverse Super Admin (Master Owner)</span>
+              <span className="text-[10px] text-slate-500">superadmin@sutrauniverse.com</span>
             </div>
             <ShieldCheck className="w-4 h-4 text-indigo-400" />
           </button>

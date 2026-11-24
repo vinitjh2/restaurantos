@@ -44,12 +44,17 @@ export function RecentOrdersTable() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PREPARING":
+      case "KOT_SENT":
         return <Badge variant="warning">Cooking (KOT)</Badge>;
+      case "OPEN":
+        return <Badge variant="outline">Active (Open)</Badge>;
       case "SERVED":
+      case "BILLED":
         return <Badge variant="info">Served</Badge>;
       case "PAID":
         return <Badge variant="success">Paid & Settled</Badge>;
       case "CANCELLED":
+      case "REFUNDED":
         return <Badge variant="destructive">Voided</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;

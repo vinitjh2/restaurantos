@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RestaurantOS - Executive Summary & Pitch One-Pager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --accent: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.15);
+      --emerald: #10b981;
+      --blue: #3b82f6;
+      --rose: #ef4444;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #06090e;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 12px 20px;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .toolbar h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #374151;
+    }
+
+    /* Print Paper Container - A4 Aspect Ratio */
+    .one-pager {
+      width: 100%;
+      max-width: 900px;
+      background: #0d121f;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      padding: 36px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .one-pager::before {
+      content: "";
+      position: absolute;
+      top: -150px;
+      right: -150px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #1f2937;
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #000;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .brand-title span {
+      color: var(--accent);
+    }
+
+    .brand-tagline {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+      max-width: 520px;
+      line-height: 1.4;
+    }
+
+    .compliance-pill {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: right;
+    }
+
+    /* Key Metrics Highlights Grid */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid #1f2937;
+      padding: 14px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .metric-card .value {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .metric-card.green .value { color: #34d399; }
+    .metric-card.blue .value { color: #60a5fa; }
+    .metric-card.rose .value { color: #f87171; }
+
+    .metric-card .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* 4 Core Pillars */
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .pillar-box {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .pillar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .pillar-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .pillar-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .pillar-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pillar-list li {
+      font-size: 12px;
+      color: #d1d5db;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.4;
+    }
+
+    .pillar-list li::before {
+      content: "✔";
+      color: #10b981;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    /* Visual Comparison Table */
+    .comparison-section {
+      margin-bottom: 24px;
+    }
+
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: #111827;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #1f2937;
+    }
+
+    .comp-table th {
+      background: #1a2234;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: #e5e7eb;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .comp-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1f2937;
+      color: #d1d5db;
+    }
+
+    .comp-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comp-table .highlight {
+      background: rgba(245, 158, 11, 0.08);
+      font-weight: 700;
+      color: #fbbf24;
+    }
+
+    .badge-good {
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .badge-bad {
+      color: #f87171;
+    }
+
+    /* Pricing & Call to Action */
+    .footer-action {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .offer-details h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .offer-details p {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .pricing-tags {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .price-pill {
+      background: #111827;
+      border: 1px solid #374151;
+      padding: 8px 14px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .price-pill .plan {
+      font-size: 10px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .price-pill .cost {
+      font-size: 15px;
+      font-weight: 800;
+      color: #f59e0b;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Print Stylesheet */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0 !important;
+      }
+
+      .toolbar {
+        display: none !important;
+      }
+
+      .one-pager {
+        max-width: 100% !important;
+        width: 100% !important;
+        background: #fff !important;
+        color: #111 !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 10mm 12mm !important;
+      }
+
+      .one-pager::before {
+        display: none !important;
+      }
+
+      .brand-title {
+        color: #000 !important;
+      }
+
+      .brand-title span {
+        color: #d97706 !important;
+      }
+
+      .compliance-pill {
+        background: #e6fffa !important;
+        border-color: #059669 !important;
+        color: #047857 !important;
+      }
+
+      .metric-card {
+        background: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+      }
+
+      .metric-card .value {
+        color: #d97706 !important;
+      }
+
+      .metric-card.green .value { color: #059669 !important; }
+      .metric-card.blue .value { color: #2563eb !important; }
+      .metric-card.rose .value { color: #dc2626 !important; }
+
+      .pillar-box {
+        background: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+      }
+
+      .pillar-title {
+        color: #111827 !important;
+      }
+
+      .pillar-list li {
+        color: #374151 !important;
+      }
+
+      .comp-table {
+        background: #fff !important;
+        border: 1px solid #d1d5db !important;
+      }
+
+      .comp-table th {
+        background: #f3f4f6 !important;
+        color: #111827 !important;
+      }
+
+      .comp-table td {
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+      }
+
+      .comp-table .highlight {
+        background: #fef3c7 !important;
+        color: #b45309 !important;
+      }
+
+      .footer-action {
+        background: #f8fafc !important;
+        border: 2px solid #d97706 !important;
+      }
+
+      .offer-details h3 {
+        color: #111827 !important;
+      }
+
+      .price-pill {
+        background: #fff !important;
+        border: 1px solid #d1d5db !important;
+      }
+
+      .price-pill .cost {
+        color: #d97706 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls Toolbar -->
+  <div class="toolbar">
+    <h2>
+      <span>⚡</span> RestaurantOS Executive Pitch Leave-Behind
+    </h2>
+    <div style="display: flex; gap: 10px;">
+      <a href="RestaurantOS_Sales_Deck.html" class="btn btn-secondary">
+        📊 Open 16:9 Presentation Deck
+      </a>
+      <button onclick="window.print()" class="btn btn-primary">
+        🖨️ Print or Save as PDF (A4)
+      </button>
+    </div>
+  </div>
+
+  <!-- A4 One-Pager Content -->
+  <div class="one-pager">
+
+    <!-- Header -->
+    <header class="header">
+      <div>
+        <div class="logo-badge">
+          <div class="logo-icon">R</div>
+          <h1 class="brand-title">Restaurant<span>OS</span></h1>
+        </div>
+        <p class="brand-tagline">
+          The all-in-one Cloud Operating System built for Indian high-table-turnover restaurants, bars, and cloud kitchens. Save aggregator commissions, eliminate staff theft, and streamline kitchen workflow.
+        </p>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+        <div class="compliance-pill">
+          ✓ GST & FSSAI Compliant
+        </div>
+        <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+          CGST 2.5% + SGST 2.5% SAC 996331
+        </span>
+      </div>
+    </header>
+
+    <!-- Metrics Bar -->
+    <div class="metrics-bar">
+      <div class="metric-card green">
+        <div class="value">28.5%</div>
+        <div class="label">Aggregator Fees Saved</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">0 ₹</div>
+        <div class="label">Hidden Hardware Lock-in</div>
+      </div>
+      <div class="metric-card blue">
+        <div class="value">22 Mins</div>
+        <div class="label">Faster Table Turnover</div>
+      </div>
+      <div class="metric-card rose">
+        <div class="value">100%</div>
+        <div class="label">Theft Audit Coverage</div>
+      </div>
+    </div>
+
+    <!-- 4 Core Pillars -->
+    <div class="section-title">
+      <span>🛡️</span> Why Leading Restaurateurs Choose RestaurantOS
+    </div>
+
+    <div class="pillars-grid">
+      <!-- Pillar 1 -->
+      <div class="pillar-box">
+        <div class="pillar-header">
+          <div class="pillar-icon">💰</div>
+          <div class="pillar-title">0% Commission Direct Online & QR Storefront</div>
+        </div>
+        <ul class="pillar-list">
+          <li><strong>Zero Aggregator Commission:</strong> Stop paying 25% to 30% to Swiggy/Zomato. Give customers a direct 1-tap web store on Instagram and WhatsApp.</li>
+          <li><strong>Direct-to-Bank Instant UPI:</strong> Dynamic table and delivery UPI QR lands money directly in the restaurant's current account without middleman delays.</li>
+          <li><strong>Own 100% of Customer Data:</strong> Unmasked guest phone numbers allow automated Friday night WhatsApp re-order broadcasts that drive repeat sales.</li>
+        </ul>
+      </div>
+
+      <!-- Pillar 2 -->
+      <div class="pillar-box">
+        <div class="pillar-header">
+          <div class="pillar-icon">🚨</div>
+          <div class="pillar-title">Real-Time Anti-Theft AI Hub</div>
+        </div>
+        <ul class="pillar-list">
+          <li><strong>Post-Bill Void Detection:</strong> Prevents cashiers from canceling paid cash orders after food is served and pocketing the cash.</li>
+          <li><strong>Instant WhatsApp & SMS Alerts:</strong> Owner receives an alert immediately when any suspicious refund, discount, or void exceeds ₹500.</li>
+          <li><strong>Peppered HMAC PIN Encryption:</strong> Manager authorization required for all voids and bill edits.</li>
+        </ul>
+      </div>
+
+      <!-- Pillar 3 -->
+      <div class="pillar-box">
+        <div class="pillar-header">
+          <div class="pillar-icon">📐</div>
+          <div class="pillar-title">Interactive 2D Floor Plan & Touch POS</div>
+        </div>
+        <ul class="pillar-list">
+          <li><strong>Visual Layout:</strong> Live floor overview across AC Hall, Rooftop, VIP Lounge, and Bar counter with dining timers.</li>
+          <li><strong>Sub-Second Order Punching:</strong> Designed for high-rush peak hours; punch KOT in 3 taps on any tablet or phone.</li>
+          <li><strong>Live Split-Billing:</strong> Split by person, seat, or equal share in 1 tap with automated GST splitting.</li>
+        </ul>
+      </div>
+
+      <!-- Pillar 4 -->
+      <div class="pillar-box">
+        <div class="pillar-header">
+          <div class="pillar-icon">📈</div>
+          <div class="pillar-title">KDS & Menu Engineering Matrix</div>
+        </div>
+        <ul class="pillar-list">
+          <li><strong>Paperless Color Kitchen Display:</strong> Kitchen staff sees tickets sorted by urgency with auto-escalating color timers.</li>
+          <li><strong>BCG Profit Matrix:</strong> Automatically groups menu into Stars, Plowhorses, Puzzles, and Dogs to optimize food margin.</li>
+          <li><strong>Thermal 80mm/58mm Print Engine:</strong> Plug-and-play with existing ESC/POS USB, Bluetooth, or Network thermal printers.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison-section">
+      <div class="section-title">
+        <span>⚖️</span> The Hard Numbers: RestaurantOS vs Traditional POS
+      </div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th style="width: 28%;">Feature / Capability</th>
+            <th style="width: 24%;">Legacy Desktop POS</th>
+            <th style="width: 24%;">Food Aggregators</th>
+            <th class="highlight" style="width: 24%;">RestaurantOS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hardware Freedom</strong></td>
+            <td class="badge-bad">Proprietary bulky hardware (₹40k+)</td>
+            <td class="badge-bad">Locked aggregator tablet</td>
+            <td class="highlight badge-good">Any Phone, iPad, Android or PC</td>
+          </tr>
+          <tr>
+            <td><strong>Order Commission</strong></td>
+            <td>Annual support AMC fees</td>
+            <td class="badge-bad">22% to 32% per order</td>
+            <td class="highlight badge-good">0% Commission — 100% Yours</td>
+          </tr>
+          <tr>
+            <td><strong>Anti-Theft Protection</strong></td>
+            <td class="badge-bad">Basic EOD reports (Too late)</td>
+            <td>N/A (Delivery only)</td>
+            <td class="highlight badge-good">Real-Time WhatsApp Void Alerts</td>
+          </tr>
+          <tr>
+            <td><strong>Customer Data & Loyalty</strong></td>
+            <td class="badge-bad">Isolated offline DB</td>
+            <td class="badge-bad">Masked numbers (No access)</td>
+            <td class="highlight badge-good">100% Direct Customer Ownership</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pricing & Action Bar -->
+    <div class="footer-action">
+      <div class="offer-details">
+        <h3>Claim Your 14-Day Zero-Risk Free Pilot</h3>
+        <p>We digitize your entire menu and configure your floor plan within 24 hours. No hardware change needed.</p>
+      </div>
+      <div class="pricing-tags">
+        <div class="price-pill">
+          <div class="plan">Silver (Single POS)</div>
+          <div class="cost">₹1,499<span style="font-size: 11px; font-weight: normal; color: #9ca3af;">/mo</span></div>
+        </div>
+        <div class="price-pill" style="border-color: #f59e0b;">
+          <div class="plan" style="color: #f59e0b;">Gold (Most Popular)</div>
+          <div class="cost">₹2,999<span style="font-size: 11px; font-weight: normal; color: #9ca3af;">/mo</span></div>
+        </div>
+        <div class="price-pill">
+          <div class="plan">Enterprise Suite</div>
+          <div class="cost">₹4,999<span style="font-size: 11px; font-weight: normal; color: #9ca3af;">/mo</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Meta -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 11px; color: var(--text-muted); border-top: 1px solid #1f2937; padding-top: 12px;">
+      <div>
+        <strong>RestaurantOS Technologies Pvt Ltd</strong> • Inquiries: sales@restaurantos.in • WhatsApp Direct: +91 98765 43210
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace;">
+        Version 2.4-Production • Made for Indian Hospitality 🇮🇳
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
+

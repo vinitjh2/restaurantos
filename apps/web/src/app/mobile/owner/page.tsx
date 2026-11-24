@@ -108,12 +108,12 @@ export default function OwnerMobileDashboard() {
     <div className="min-h-screen bg-slate-100 text-slate-900 pb-20">
       {/* Mobile Header Bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-600 to-orange-500 text-white shadow-xs">
-            <Store className="h-5 w-5" />
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 border border-amber-500/50 shadow-xs overflow-hidden p-0.5">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-lg" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-900 leading-none">Owner Dashboard</h1>
+            <h1 className="text-sm font-black text-slate-900 leading-none">DineSutra Live Owner</h1>
             <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Bawarchi Royale Group</p>
           </div>
         </div>

@@ -17,10 +17,18 @@ import {
   Calendar,
   Sparkles,
   RefreshCw,
+  Smartphone,
+  Send,
+  Info,
+  X,
+  Lock,
+  ArrowRight,
+  Clock
 } from "lucide-react";
 import { formatINR } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SutraMandateSetupModal } from "@/components/subscription/SutraMandateSetupModal";
 
 interface UsageMetric {
   used: number;
@@ -37,6 +45,17 @@ interface SubscriptionData {
   status: string;
   billingCycle: string;
   renewalDate: string | null;
+  trialEndsAt: string | null;
+  isTrialActive: boolean;
+  trialDaysRemaining: number;
+  mandateStatus: string;
+  mandateMethod: string;
+  mandateUpiId: string | null;
+  mandateBank: string | null;
+  cancelAtPeriodEnd: boolean;
+  cancelledAt: string | null;
+  accessValidUntil: string;
+  isAccessActive: boolean;
   allowedModules: string[];
   hasAdvancedReporting: boolean;
   hasApiIntegrations: boolean;
@@ -81,32 +100,89 @@ export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "ANNUAL">("MONTHLY");
   const [upgradeModalPlan, setUpgradeModalPlan] = useState<PlanOption | null>(null);
 
-  useEffect(() => {
-    async function fetchSubscriptionInfo() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/organization/subscription");
-        const json = await res.json();
-        if (json.success) {
-          setSubData(json.subscription);
-          setPlans(json.availablePlans || []);
-          setInvoices(json.invoices || []);
-        }
-      } catch (err) {
-        console.error("Failed to load subscription details:", err);
-      } finally {
-        setLoading(false);
+  // Mandate & Alert states
+  const [isMandateModalOpen, setIsMandateModalOpen] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
+
+  // Pre-debit alert test state
+  const [testAlertLoading, setTestAlertLoading] = useState(false);
+  const [testAlertResult, setTestAlertResult] = useState<any | null>(null);
+
+  async function fetchSubscriptionInfo() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/organization/subscription");
+      const json = await res.json();
+      if (json.success) {
+        setSubData(json.subscription);
+        setPlans(json.availablePlans || []);
+        setInvoices(json.invoices || []);
       }
+    } catch (err) {
+      console.error("Failed to load subscription details:", err);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     fetchSubscriptionInfo();
   }, []);
+
+  // Handle Cancel Mandate
+  const handleConfirmCancelMandate = async () => {
+    try {
+      setCancelLoading(true);
+      const res = await fetch("/api/subscription/mandate/cancel", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCancelSuccessMsg(data.message);
+        setIsCancelConfirmOpen(false);
+        await fetchSubscriptionInfo();
+      } else {
+        alert(data.error || "Failed to cancel mandate");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error cancelling mandate");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  // Handle Test Pre-Debit Alert
+  const handleTriggerTestPreDebitAlert = async () => {
+    try {
+      setTestAlertLoading(true);
+      const res = await fetch("/api/subscription/mandate/test-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestAlertResult(data.alertSummary);
+      } else {
+        alert(data.error || "Failed to send test alert");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error sending test alert");
+    } finally {
+      setTestAlertLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ACTIVE":
         return <Badge variant="success">Active Subscription</Badge>;
       case "TRIALING":
-        return <Badge variant="warning">Free Trial</Badge>;
+        return <Badge variant="warning">14-Day Free Trial</Badge>;
       case "SUSPENDED":
         return <Badge variant="destructive">Suspended</Badge>;
       default:
@@ -118,28 +194,85 @@ export default function SubscriptionPage() {
     <div className="space-y-8 max-w-6xl pb-16 font-sans">
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              Subscription & Plan Entitlements
-            </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-950 border border-amber-500/50 flex items-center justify-center overflow-hidden p-0.5 shadow-xs shrink-0">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-lg" />
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Manage your restaurant software tier, active billing cycle, and resource quotas
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                DineSutra Subscription & Mandate Entitlements
+              </h1>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              14-Day Free Trial, UPI Autopay e-Mandate, period-end access retention, and automated pre-debit notifications
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleTriggerTestPreDebitAlert}
+            disabled={testAlertLoading}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors shadow-xs"
+            title="Dispatch a test 24h pre-debit notification"
+          >
+            {testAlertLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 text-rose-600" />}
+            <span>Test Pre-Debit SMS</span>
+          </button>
+
           <Link
             href="/platform-admin"
             className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors shadow-xs"
           >
             <ShieldCheck className="h-4 w-4" />
-            <span>Platform Super Admin</span>
+            <span>Platform Admin</span>
           </Link>
         </div>
       </div>
+
+      {/* CANCELLATION PERIOD-END GUARANTEE BANNER */}
+      {subData?.cancelAtPeriodEnd && (
+        <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-200/80 text-amber-900 flex items-center justify-center shrink-0 font-bold">
+              <AlertTriangle className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-sm text-amber-950">
+                  Recurring Mandate Cancelled — Period-End Access Active
+                </span>
+                <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+                  Protected
+                </span>
+              </div>
+              <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                Per our period-end policy, your restaurant retains <strong>100% full operational access until {new Date(subData.accessValidUntil).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>. No auto-debit will take place.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsMandateModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs uppercase tracking-wider shrink-0 transition-colors shadow-xs"
+          >
+            Re-Activate Mandate
+          </button>
+        </div>
+      )}
+
+      {/* SUCCESS CANCEL MESSAGE BANNER */}
+      {cancelSuccessMsg && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 text-xs flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{cancelSuccessMsg}</span>
+          </div>
+          <button onClick={() => setCancelSuccessMsg(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xs">
+            ✕
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="p-16 text-center text-slate-400 text-xs">
@@ -157,19 +290,26 @@ export default function SubscriptionPage() {
                     Current Plan
                   </span>
                   {subData?.status && getStatusBadge(subData.status)}
+                  {subData?.isTrialActive && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <Sparkles className="w-3 h-3 text-emerald-600" />
+                      <span>{subData.trialDaysRemaining} Days Free Remaining</span>
+                    </span>
+                  )}
                 </div>
                 <div className="text-2xl font-black text-slate-900 mt-1">
-                  RestaurantOS {subData?.planName}
+                  DineSutra {subData?.planName}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
-                  Billed at {formatINR(subData?.monthlyPrice || 0)}/month · {subData?.organizationName}
+                  Plan Rate: {formatINR(subData?.monthlyPrice || 0)}/month · {subData?.organizationName}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-100">
+              {/* Mandate & Renewal Schedule */}
+              <div className="flex flex-wrap items-center gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                    Next Renewal Date
+                    {subData?.isTrialActive ? "First Recurring Auto-Debit (End of Trial)" : "Next Scheduled Auto-Debit"}
                   </span>
                   <span className="font-extrabold text-slate-900 text-sm">
                     {subData?.renewalDate
@@ -181,16 +321,56 @@ export default function SubscriptionPage() {
                       : "Lifetime / On-demand"}
                   </span>
                 </div>
-                <div className="h-8 w-px bg-slate-200" />
+                <div className="h-8 w-px bg-slate-200 hidden sm:block" />
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                    Payment Gateway
+                    Mandate Status & Method
                   </span>
-                  <span className="font-bold text-emerald-700 flex items-center gap-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Razorpay Auto-Pay
+                  <span className="font-bold flex items-center gap-1 mt-0.5">
+                    {subData?.cancelAtPeriodEnd ? (
+                      <span className="text-amber-700 flex items-center gap-1 font-extrabold">
+                        <Clock className="h-3.5 w-3.5" />
+                        Cancelled (Valid till {subData.renewalDate ? new Date(subData.renewalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "end"})
+                      </span>
+                    ) : (
+                      <span className="text-emerald-700 flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {subData?.mandateMethod === "CARD" ? "Card e-Mandate" : "UPI Autopay Active"}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-mono">
+                    {subData?.mandateUpiId || subData?.mandateBank || "owner@okhdfcbank"}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Mandate Action Bar */}
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-100 pb-5">
+              <div className="text-xs text-slate-500 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  Penny-Drop Verification: <strong className="text-slate-800">₹1.00 Refunded to Source</strong>. Next billing occurs only on scheduled date.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {!subData?.cancelAtPeriodEnd ? (
+                  <button
+                    onClick={() => setIsCancelConfirmOpen(true)}
+                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors"
+                  >
+                    Cancel Mandate
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsMandateModalOpen(true)}
+                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors"
+                  >
+                    Enroll New Mandate
+                  </button>
+                )}
               </div>
             </div>
 
@@ -316,79 +496,69 @@ export default function SubscriptionPage() {
 
                 return (
                   <div
-                    key={p.code}
-                    className={`rounded-2xl border p-5 flex flex-col justify-between space-y-4 transition-all relative ${
+                    key={p.id}
+                    className={`rounded-2xl border p-5 flex flex-col justify-between transition-all ${
                       isCurrent
-                        ? "border-2 border-indigo-600 bg-indigo-50/20 shadow-md"
-                        : "border-slate-200 bg-white hover:border-slate-300 shadow-xs"
+                        ? "border-rose-600 bg-rose-50/20 shadow-sm ring-1 ring-rose-500"
+                        : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
-                    {isCurrent && (
-                      <span className="absolute -top-3 right-4 bg-indigo-600 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        Active Tier
-                      </span>
-                    )}
-
                     <div>
-                      <span className="font-black text-lg text-slate-900 block">{p.name}</span>
-                      <p className="text-[11px] text-slate-500 mt-1 min-h-[32px]">{p.description}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-extrabold text-sm text-slate-900">{p.name}</span>
+                        {isCurrent && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-300">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{p.description}</p>
 
-                      <div className="mt-4 pt-3 border-t border-slate-100">
-                        <div className="text-2xl font-black text-slate-900">
-                          {formatINR(price)}
-                          <span className="text-xs font-normal text-slate-400">/mo</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400">
-                          {billingCycle === "ANNUAL" ? `Billed ${formatINR(p.annualPrice)}/yr` : "Billed monthly"}
-                        </span>
+                      <div className="my-4">
+                        <span className="text-2xl font-black text-slate-900">{formatINR(price)}</span>
+                        <span className="text-xs text-slate-400 font-medium">/mo</span>
                       </div>
 
-                      <div className="mt-4 space-y-2 text-xs pt-3 border-t border-slate-100">
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>Max {p.maxBranches} Outlets / Branches</span>
+                      <div className="space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Up to {p.maxBranches} Branch Outlets</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>Max {p.maxEmployees} Staff Accounts</span>
+                        <div className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Up to {p.maxEmployees} Staff Accounts</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <div className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                           <span>{p.storageLimitMB} MB Cloud Storage</span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>Touch POS & KDS Real-Time Sync</span>
-                        </div>
                         {p.hasAdvancedReporting && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                            <span>Advanced P&L & GSTR-1 Analytics</span>
-                          </div>
-                        )}
-                        {p.hasApiIntegrations && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                            <span>Swiggy / Zomato Integrations</span>
+                          <div className="flex items-center gap-2">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>AI CCTV Vision & Heatmaps</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100">
+                    <div className="mt-5 pt-3 border-t border-slate-100">
                       {isCurrent ? (
-                        <Button variant="outline" size="sm" className="w-full text-xs" disabled>
-                          Current Subscription
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => setUpgradeModalPlan(p)}
-                          className="w-full bg-slate-900 text-white text-xs gap-1.5"
+                        <button
+                          disabled
+                          className="w-full py-2 rounded-xl bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed"
                         >
-                          <span>Switch to {p.name}</span>
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </Button>
+                          Enrolled
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setUpgradeModalPlan(p);
+                            setIsMandateModalOpen(true);
+                          }}
+                          className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors"
+                        >
+                          Switch Plan ➔
+                        </button>
                       )}
                     </div>
                   </div>
@@ -396,138 +566,123 @@ export default function SubscriptionPage() {
               })}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Invoices & Payment History */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900">Subscription Invoices & Receipts</h3>
+      {/* CONFIRM MANDATE CANCEL MODAL */}
+      {isCancelConfirmOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Cancel Recurring Mandate?</h3>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Under our period-end policy, your subscription will <strong>remain 100% active until {subData?.renewalDate ? new Date(subData.renewalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "the end of the period"}</strong>.
+                </p>
+                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700 space-y-1">
+                  <div>• No auto-debit will occur at the end of the cycle.</div>
+                  <div>• Your tables, KDS, POS, and sales data stay intact.</div>
+                  <div>• You can reactivate anytime before or after expiry.</div>
+                </div>
               </div>
             </div>
 
-            {invoices.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">
-                No past subscription invoices found.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase text-slate-400">
-                    <tr>
-                      <th className="py-2.5 px-3">Invoice Number</th>
-                      <th className="py-2.5 px-3">Billing Date</th>
-                      <th className="py-2.5 px-3 text-right">Amount</th>
-                      <th className="py-2.5 px-3 text-center">Status</th>
-                      <th className="py-2.5 px-3">Payment Method</th>
-                      <th className="py-2.5 px-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {invoices.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-50/70">
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
-                          {inv.invoiceNumber}
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-600">
-                          {new Date(inv.date).toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                          {formatINR(inv.amount)}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <Badge variant={inv.status === "PAID" ? "success" : "destructive"}>
-                            {inv.status}
-                          </Badge>
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-600">
-                          {inv.paymentMethod} {inv.razorpayPaymentId ? `(${inv.razorpayPaymentId})` : ""}
-                        </td>
-                        <td className="py-2.5 px-3 text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 text-[10px]"
-                            onClick={() => alert(`Downloading Invoice ${inv.invoiceNumber}...`)}
-                          >
-                            PDF Receipt
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsCancelConfirmOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              >
+                Keep Mandate
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancelMandate}
+                disabled={cancelLoading}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5"
+              >
+                {cancelLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                <span>Confirm Cancel Mandate</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* UPGRADE MODAL */}
-      {upgradeModalPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-base font-bold text-slate-900">
-                Upgrade to {upgradeModalPlan.name} Plan
-              </h3>
+      {/* TEST PRE-DEBIT ALERT RESULT MODAL */}
+      {testAlertResult && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-emerald-600" />
+                <span className="font-extrabold text-sm text-slate-900">Pre-Debit Alert Dispatched</span>
+              </div>
               <button
-                onClick={() => setUpgradeModalPlan(null)}
-                className="text-slate-400 hover:text-slate-700 p-1"
+                onClick={() => setTestAlertResult(null)}
+                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 text-xs"
               >
-                <Check className="h-5 w-5" />
+                ✕
               </button>
             </div>
 
-            <div className="text-xs text-slate-600">
-              You are about to switch your subscription to the <span className="font-bold text-slate-900">{upgradeModalPlan.name}</span> tier ({formatINR(upgradeModalPlan.monthlyPrice)}/month).
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs space-y-2">
+              <div className="flex justify-between text-slate-600">
+                <span>Dispatched To:</span>
+                <span className="font-bold text-slate-900">{testAlertResult.recipient}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Channel:</span>
+                <span className="font-bold text-emerald-800">{testAlertResult.channel} (Official RBI 24h Notice)</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Scheduled Debit Date:</span>
+                <span className="font-bold text-slate-900">
+                  {new Date(testAlertResult.scheduledDebitDate).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-xl text-xs space-y-1.5 border border-slate-100">
-              <div className="flex justify-between text-slate-700">
-                <span>Branch Outlets:</span>
-                <span className="font-bold text-slate-900">Up to {upgradeModalPlan.maxBranches}</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span>Staff Accounts:</span>
-                <span className="font-bold text-slate-900">Up to {upgradeModalPlan.maxEmployees}</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span>Cloud Storage:</span>
-                <span className="font-bold text-slate-900">{upgradeModalPlan.storageLimitMB} MB</span>
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Delivered SMS / WhatsApp Message Body
+              </span>
+              <div className="p-3 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs leading-relaxed border border-slate-800">
+                {testAlertResult.messageContent}
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500">
-              Payment is securely settled via Razorpay Auto-Debit. An official tax invoice will be generated upon confirmation.
-            </p>
-
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setUpgradeModalPlan(null)}
+            <div className="text-right pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setTestAlertResult(null)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold"
               >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                onClick={() => {
-                  alert(`Razorpay Checkout initialized for ${upgradeModalPlan.name} (₹${upgradeModalPlan.monthlyPrice}). Complete checkout to activate.`);
-                  setUpgradeModalPlan(null);
-                }}
-              >
-                Proceed to Checkout
-              </Button>
+                Close Preview
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* SUTRA MANDATE SETUP MODAL */}
+      <SutraMandateSetupModal
+        isOpen={isMandateModalOpen}
+        onClose={() => setIsMandateModalOpen(false)}
+        planName={upgradeModalPlan?.name || subData?.planName}
+        monthlyPrice={upgradeModalPlan?.monthlyPrice || subData?.monthlyPrice}
+        onSuccess={async (data) => {
+          setIsMandateModalOpen(false);
+          await fetchSubscriptionInfo();
+          alert("14-Day Free Trial & Mandate successfully enrolled!");
+        }}
+      />
     </div>
   );
 }

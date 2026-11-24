@@ -20,9 +20,71 @@ export async function GET() {
       ];
     }
 
+    // Query active/recent orders linked to tables
+    let orders: any[] = [];
+    try {
+      orders = await prisma.order.findMany({
+        where: { tableNumber: { not: null } },
+        include: {
+          items: true,
+          invoice: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (e) {
+      console.warn("Failed to query table orders:", e);
+    }
+
+    const enrichedTables = tables.map((t) => {
+      const tableOrders = orders.filter((o) => o.tableNumber === t.tableNumber);
+      const active =
+        tableOrders.find((o) => ["OPEN", "KOT_SENT", "PREPARING", "BILLED"].includes(o.status)) ||
+        (t.status !== "AVAILABLE" ? tableOrders[0] : null);
+
+      let activeOrder = null;
+      if (active && active.items && active.items.length > 0) {
+        activeOrder = {
+          id: active.id,
+          orderNumber: active.orderNumber,
+          orderType: active.orderType,
+          status: active.status,
+          customerName: active.customerName || `Guest (${t.tableNumber})`,
+          customerPhone: active.customerPhone || null,
+          guestCount: active.guestCount || t.capacity,
+          subtotal: active.subtotal,
+          taxAmount: active.taxAmount,
+          grandTotal: active.grandTotal,
+          paymentMethod: active.invoice?.paymentMethod || (active.status === "PAID" ? "UPI / Card" : "UNPAID"),
+          invoiceNumber: active.invoice?.invoiceNumber || null,
+          createdAt: active.createdAt.toISOString(),
+          items: active.items.map((i: any) => ({
+            id: i.id,
+            itemName: i.itemName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            subtotal: i.subtotal,
+            taxAmount: i.taxAmount,
+            cookingNotes: i.cookingNotes || null,
+          })),
+        };
+      }
+
+      return {
+        id: t.id,
+        tableNumber: t.tableNumber,
+        floor: t.floor,
+        capacity: t.capacity,
+        status: t.status,
+        currentOrderId: active?.id || t.currentOrderId || null,
+        activeOrder,
+        estimatedTotal: activeOrder ? activeOrder.grandTotal : 0,
+        createdAt: (t as any).createdAt ? new Date((t as any).createdAt).toISOString() : undefined,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      tables,
+      tables: enrichedTables,
     });
   } catch (error: any) {
     console.error("Failed to fetch tables:", error);

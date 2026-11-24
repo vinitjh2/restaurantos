@@ -200,19 +200,23 @@ export default function KitchenPage() {
 
       {/* Top Header & Kitchen Mode Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <ChefHat className="h-6 w-6 text-orange-600" />
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              Kitchen Display System (KDS)
-            </h1>
-            <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
-              Touch Terminal
-            </span>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-slate-950 border border-amber-500/50 flex items-center justify-center overflow-hidden shadow-sm p-0.5 shrink-0">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-xl" />
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Real-time station order queue with auditory alerts, item bump checks, and live timers
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                DineSutra KDS
+              </h1>
+              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                Touch Terminal
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Real-time station order queue with auditory alerts, item bump checks, and live timers
+            </p>
+          </div>
         </div>
 
         {/* Action Controls */}

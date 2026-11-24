@@ -158,6 +158,34 @@ export default function SettingsPage() {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Brand Seal & Logo Section */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-amber-600" />
+                <h3 className="text-sm font-bold text-slate-900">Brand Identity & Official Seal</h3>
+              </div>
+              <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 font-bold">
+                Active Master Seal
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-4 text-xs">
+              <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-amber-500/50 flex items-center justify-center overflow-hidden p-1 shadow-md shrink-0">
+                <img src="/dinesutra-logo.svg" alt="DineSutra Seal" className="h-full w-full object-cover scale-125 rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-extrabold text-slate-900 text-sm">DineSutra Royal Seal</h4>
+                <p className="text-slate-500 text-[11px]">
+                  Applied automatically to Customer QR menus, 80mm thermal receipts, Captain handheld terminals, and live CCTV HUD overlays.
+                </p>
+                <div className="text-[10px] font-mono text-amber-700 font-semibold">
+                  Path: /public/dinesutra-logo.svg (Master High Definition)
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Statutory Compliance Section */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">

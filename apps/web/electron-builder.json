@@ -1,0 +1,34 @@
+{
+  "appId": "com.sutrauniverse.dinesutra",
+  "productName": "DineSutra Restaurant OS",
+  "copyright": "Copyright © 2026 SutraUniverse Inc.",
+  "directories": {
+    "output": "dist_electron"
+  },
+  "files": [
+    "electron/**/*",
+    "public/**/*",
+    "package.json"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "public/icon-512.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "DineSutra Restaurant OS",
+    "uninstallDisplayName": "DineSutra Restaurant POS"
+  }
+}

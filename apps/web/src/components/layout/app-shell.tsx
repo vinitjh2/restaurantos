@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
+import { DineSutraAIChatBot } from "@/components/chat/DineSutraAIChatBot";
 import { useRestaurantStore } from "@/stores/restaurant-store";
 
 interface AppShellProps {
@@ -14,16 +15,28 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const { setSessionData } = useRestaurantStore();
 
-  const isAuthOrStandalone =
+  const isStandaloneView =
+    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/landing" ||
+    pathname.startsWith("/landing") ||
+    pathname.startsWith("/about") ||
+    pathname.startsWith("/contact") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/refund") ||
     pathname.startsWith("/cfd") ||
     pathname.startsWith("/qr-order") ||
-    pathname.startsWith("/downloads");
+    pathname.startsWith("/downloads") ||
+    pathname.startsWith("/waiter") ||
+    pathname.startsWith("/mobile");
+
+  const isPureAuth = pathname === "/login" || pathname === "/register";
 
   // Proactively hydrate user session from /api/auth/me for fresh browser profiles
   useEffect(() => {
-    if (!isAuthOrStandalone) {
+    if (!isPureAuth) {
       let isMounted = true;
       fetch("/api/auth/me")
         .then((res) => {
@@ -46,13 +59,30 @@ export function AppShell({ children }: AppShellProps) {
         isMounted = false;
       };
     }
-  }, [pathname, isAuthOrStandalone, setSessionData]);
+  }, [pathname, isPureAuth, setSessionData]);
 
-  // Clean full-screen presentation for login, registration, and customer displays
-  if (isAuthOrStandalone) {
+  // Clean full-screen presentation for standalone views (waiter, mobile, customer display, login)
+  if (isStandaloneView) {
+    const isDarkBg =
+      pathname === "/login" ||
+      pathname === "/register" ||
+      pathname.startsWith("/cfd");
+
+    const hideChatBot =
+      pathname.startsWith("/qr-order") ||
+      pathname.startsWith("/cfd") ||
+      pathname.startsWith("/waiter") ||
+      pathname.startsWith("/mobile");
+
     return (
-      <div className="min-h-screen w-full bg-slate-950" suppressHydrationWarning>
+      <div
+        className={`min-h-screen w-full ${
+          isDarkBg ? "bg-slate-950" : "bg-slate-100"
+        }`}
+        suppressHydrationWarning
+      >
         {children}
+        {!hideChatBot && <DineSutraAIChatBot />}
       </div>
     );
   }
@@ -70,6 +100,7 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+      <DineSutraAIChatBot />
     </div>
   );
 }

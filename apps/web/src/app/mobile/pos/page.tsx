@@ -75,9 +75,14 @@ export default function MobilePOSPage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 p-4 pb-24 text-slate-900">
       <header className="flex items-center justify-between border-b border-slate-200 pb-3">
-        <div>
-          <h1 className="text-base font-bold text-slate-900">Handheld POS</h1>
-          <p className="text-[11px] text-slate-500">Android & Mobile Register</p>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 border border-amber-500/50 shadow-xs overflow-hidden p-0.5">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-lg" />
+          </div>
+          <div>
+            <h1 className="text-base font-black text-slate-900 leading-none">DineSutra Handheld POS</h1>
+            <p className="text-[11px] text-slate-500 mt-0.5">Mobile Register & Speed Billing</p>
+          </div>
         </div>
         <Badge variant="outline" className="text-xs font-semibold">
           Table T-03

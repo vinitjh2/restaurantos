@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { checkLateArrival, calculateShiftHours } from "@/lib/server/workforce-engine";
+import { findStaffByPin } from "@/lib/server/pin-security";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +12,7 @@ export async function POST(req: NextRequest) {
 
     let targetStaff = null;
     if (pinCode) {
-      targetStaff = await prisma.staff.findFirst({
-        where: { pinCode: String(pinCode).trim(), isActive: true },
-      });
+      targetStaff = await findStaffByPin(pinCode);
     } else if (staffId) {
       targetStaff = await prisma.staff.findUnique({
         where: { id: staffId },

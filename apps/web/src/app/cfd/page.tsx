@@ -20,12 +20,12 @@ export default function CustomerFacingDisplayPage() {
     <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-8 font-sans">
       {/* Top Banner */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-orange-600 flex items-center justify-center shadow-lg shadow-orange-600/30">
-            <Utensils className="w-7 h-7 text-white" />
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-amber-500/50 flex items-center justify-center overflow-hidden p-0.5 shadow-xl shadow-amber-500/10">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-xl" />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-white">RESTAURANT<span className="text-orange-500">OS</span></h1>
+            <h1 className="text-3xl font-black tracking-tight text-white">DINE<span className="text-amber-500">SUTRA</span></h1>
             <p className="text-sm text-slate-400">Welcome to our dining experience</p>
           </div>
         </div>
@@ -41,10 +41,10 @@ export default function CustomerFacingDisplayPage() {
       <div className="flex-1 grid grid-cols-12 gap-8 my-8">
         {data.type === 'IDLE' ? (
           <div className="col-span-12 flex flex-col items-center justify-center text-center p-12">
-            <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-6">
-              <Utensils className="w-12 h-12 text-slate-600 animate-pulse" />
+            <div className="w-28 h-28 rounded-full bg-slate-900 border-2 border-amber-500/40 flex items-center justify-center mb-6 shadow-2xl p-1 overflow-hidden">
+              <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-full" />
             </div>
-            <h2 className="text-4xl font-extrabold text-slate-200 mb-2">Welcome!</h2>
+            <h2 className="text-4xl font-extrabold text-slate-100 mb-2">Welcome!</h2>
             <p className="text-lg text-slate-400 max-w-md">Your order items will appear here as the cashier enters them.</p>
           </div>
         ) : data.type === 'ORDER_COMPLETED' ? (

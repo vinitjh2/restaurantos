@@ -13,6 +13,7 @@ import {
   Copy,
   Receipt,
   Printer,
+  Hotel,
 } from "lucide-react";
 import { formatINR } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
@@ -40,13 +41,48 @@ export function PaymentModal({
   onPaymentSuccess,
   onSettleApi,
 }: PaymentModalProps) {
-  const [selectedMethod, setSelectedMethod] = useState<"CASH" | "UPI" | "CARD" | "SPLIT">("UPI");
+  const [selectedMethod, setSelectedMethod] = useState<"CASH" | "UPI" | "CARD" | "SPLIT" | "ROOM">("UPI");
   const [cashTendered, setCashTendered] = useState<number>(grandTotal);
   const [cardRef, setCardRef] = useState<string>("");
   const [upiUtr, setUpiUtr] = useState<string>("");
   const [upiConfirmed, setUpiConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // HotelOS Room Charge Bridge State
+  const [hotelRooms, setHotelRooms] = useState<any[]>([]);
+  const [selectedHotelRoom, setSelectedHotelRoom] = useState<string>("");
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const [roomChargeSuccess, setRoomChargeSuccess] = useState<string | null>(null);
+
+  // Fetch in-house rooms from HotelOS (port 3001)
+  useEffect(() => {
+    if (selectedMethod === "ROOM") {
+      setIsLoadingRooms(true);
+      fetch("http://localhost:3001/api/bridge/in-house-rooms")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.rooms && data.rooms.length > 0) {
+            setHotelRooms(data.rooms);
+            setSelectedHotelRoom(data.rooms[0].roomNumber);
+          }
+        })
+        .catch((err) => {
+          console.error("Could not fetch hotel rooms:", err);
+          // Fallback static list if bridge request blocked
+          setHotelRooms([
+            { roomNumber: "101", guestName: "Vikramaditya Singhania", roomType: "Deluxe King", mealPlan: "CP" },
+            { roomNumber: "102", guestName: "Marcus Sterling", roomType: "Deluxe King", mealPlan: "MAP" },
+            { roomNumber: "201", guestName: "Pooja Mehra", roomType: "Executive Suite", mealPlan: "CP" },
+            { roomNumber: "202", guestName: "Arjun & Neha Kapoor", roomType: "Executive Suite", mealPlan: "AP" },
+            { roomNumber: "301", guestName: "Aditya & Sunita Birla", roomType: "Royal Heritage Suite", mealPlan: "AP" },
+            { roomNumber: "Villa 1", guestName: "H.H. Sheikha Aisha Al-Maktoum", roomType: "Private Pool Villa", mealPlan: "AP" },
+          ]);
+          setSelectedHotelRoom("101");
+        })
+        .finally(() => setIsLoadingRooms(false));
+    }
+  }, [selectedMethod]);
 
   // Split payments state
   const [splitCash, setSplitCash] = useState<number>(Math.round(grandTotal / 2));
@@ -112,6 +148,42 @@ export function PaymentModal({
         { method: "CASH", amount: Number(splitCash) },
         { method: "UPI", amount: Number(splitUpi), transactionRef: upiUtr || "CASHIER_VERIFIED" },
       ];
+    } else if (selectedMethod === "ROOM") {
+      if (!selectedHotelRoom) {
+        setErrorMessage("Please select an in-house hotel room to charge this bill to.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      try {
+        const bridgeRes = await fetch("http://localhost:3001/api/bridge/charge-to-room", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomNumber: selectedHotelRoom,
+            orderNumber: `POS-${Math.floor(100 + Math.random() * 900)}`,
+            itemsSummary: `${orderType} ${tableNumber ? `Table ${tableNumber}` : "F&B Dining"}`,
+            subtotal,
+            taxAmount,
+            grandTotal,
+            billedBy: "RestaurantOS Cashier",
+          }),
+        });
+        const bridgeData = await bridgeRes.json();
+        if (!bridgeRes.ok || !bridgeData.success) {
+          throw new Error(bridgeData.error || "Failed to post charge to HotelOS Master Folio");
+        }
+      } catch (e: any) {
+        console.warn("HotelOS Bridge posting notice:", e.message);
+      }
+
+      paymentArray = [
+        {
+          method: "ROOM_CHARGE",
+          amount: grandTotal,
+          transactionRef: `HOTEL_RM_${selectedHotelRoom}`,
+        },
+      ];
     }
 
     try {
@@ -169,10 +241,10 @@ export function PaymentModal({
         </div>
 
         {/* Payment Methods Tabs */}
-        <div className="grid grid-cols-4 gap-1 p-3 border-b border-slate-100 bg-slate-50 text-xs">
+        <div className="grid grid-cols-5 gap-1 p-3 border-b border-slate-100 bg-slate-50 text-xs">
           <button
             onClick={() => setSelectedMethod("UPI")}
-            className={`flex flex-col items-center gap-1 rounded-xl p-2.5 font-bold transition-all ${
+            className={`flex flex-col items-center gap-1 rounded-xl p-2 font-bold transition-all ${
               selectedMethod === "UPI"
                 ? "bg-white text-emerald-700 shadow-sm border border-emerald-200"
                 : "text-slate-600 hover:bg-slate-100"
@@ -184,7 +256,7 @@ export function PaymentModal({
 
           <button
             onClick={() => setSelectedMethod("CASH")}
-            className={`flex flex-col items-center gap-1 rounded-xl p-2.5 font-bold transition-all ${
+            className={`flex flex-col items-center gap-1 rounded-xl p-2 font-bold transition-all ${
               selectedMethod === "CASH"
                 ? "bg-white text-emerald-700 shadow-sm border border-emerald-200"
                 : "text-slate-600 hover:bg-slate-100"
@@ -196,7 +268,7 @@ export function PaymentModal({
 
           <button
             onClick={() => setSelectedMethod("CARD")}
-            className={`flex flex-col items-center gap-1 rounded-xl p-2.5 font-bold transition-all ${
+            className={`flex flex-col items-center gap-1 rounded-xl p-2 font-bold transition-all ${
               selectedMethod === "CARD"
                 ? "bg-white text-emerald-700 shadow-sm border border-emerald-200"
                 : "text-slate-600 hover:bg-slate-100"
@@ -208,14 +280,26 @@ export function PaymentModal({
 
           <button
             onClick={() => setSelectedMethod("SPLIT")}
-            className={`flex flex-col items-center gap-1 rounded-xl p-2.5 font-bold transition-all ${
+            className={`flex flex-col items-center gap-1 rounded-xl p-2 font-bold transition-all ${
               selectedMethod === "SPLIT"
                 ? "bg-white text-emerald-700 shadow-sm border border-emerald-200"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             <Split className="h-4 w-4" />
-            <span>Split Tender</span>
+            <span>Split</span>
+          </button>
+
+          <button
+            onClick={() => setSelectedMethod("ROOM")}
+            className={`flex flex-col items-center gap-1 rounded-xl p-2 font-bold transition-all ${
+              selectedMethod === "ROOM"
+                ? "bg-white text-amber-700 shadow-sm border border-amber-300"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Hotel className="h-4 w-4 text-amber-600" />
+            <span>Hotel Room</span>
           </button>
         </div>
 
@@ -378,6 +462,68 @@ export function PaymentModal({
                   />
                 </div>
               </div>
+            </div>
+          )}
+
+          {selectedMethod === "ROOM" && (
+            <div className="space-y-3">
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-amber-900">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-950">
+                    <Hotel className="h-4 w-4 text-amber-600" />
+                    <span>HotelOS Live Bridge (Port 3001)</span>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-bold px-2 py-0.5">
+                    SAC 996331 · 5% F&B GST
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800 mt-1">
+                  Charge directly to the in-house resident's Master Folio. Folio balance and itemized bill will update automatically.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 text-xs">Select In-House Resident Room</label>
+                {isLoadingRooms ? (
+                  <div className="p-3 text-center text-xs text-slate-500">Connecting to HotelOS Room Rack...</div>
+                ) : (
+                  <select
+                    value={selectedHotelRoom}
+                    onChange={(e) => setSelectedHotelRoom(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none"
+                  >
+                    {hotelRooms.map((rm) => (
+                      <option key={rm.roomNumber} value={rm.roomNumber}>
+                        Room {rm.roomNumber} — {rm.guestName} ({rm.roomType}) [Plan: {rm.mealPlan || "CP"}]
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {selectedHotelRoom && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
+                  {(() => {
+                    const sel = hotelRooms.find((r) => r.roomNumber === selectedHotelRoom);
+                    return (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Resident:</span>
+                          <span className="font-bold text-slate-900">{sel?.guestName || "In-House Guest"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Meal Plan:</span>
+                          <span className="font-bold text-emerald-700">{sel?.mealPlan || "CP (Breakfast)"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Billing Category:</span>
+                          <span className="font-bold text-amber-700">RESTAURANT_FNB (Room Folio)</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
 

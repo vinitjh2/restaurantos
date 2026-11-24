@@ -13,6 +13,7 @@ import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import * as fs from "fs";
 import * as path from "path";
+import crypto from "crypto";
 import { prisma } from "./prisma";
 
 // Attempt to load .env in CLI / script execution environments if not already loaded by Next.js
@@ -45,38 +46,66 @@ const INSECURE_SECRET_PATTERNS = [
   "replace-with-a-cryptographically-secure",
   "change-me",
   "placeholder",
+  "secret",
+  "password",
 ];
 
-const FALLBACK_HARDENED_SECRET = "9f8a3c7b2e1d4a6f8b0c2e4d6f8a0b2c4e6f8a0b2c4e6f8a0b2c4e6f8a0b2c4e";
+// Ephemeral runtime entropy generated in-memory if secret is missing/insecure in production.
+// This prevents offline token forgery attacks against static hardcoded repo keys.
+let ephemeralRuntimeSecret: string | null = null;
+function getEphemeralRuntimeSecret(): string {
+  if (!ephemeralRuntimeSecret) {
+    ephemeralRuntimeSecret = crypto.randomBytes(32).toString("hex");
+  }
+  return ephemeralRuntimeSecret;
+}
 
 /**
  * Authoritatively retrieves and validates the application secret from environment variables.
- * Fallbacks gracefully to hardened 64-character entropy so login is never blocked.
+ * In production:
+ * - Rejects empty, missing, or known placeholder keys.
+ * - Generates high-entropy ephemeral in-memory secret if misconfigured, preventing static forgery.
+ * In development:
+ * - Uses predictable local key to prevent dev session churn.
  */
 export function getJwtSecret(): string {
   const secret = process.env.APP_SECRET || process.env.JWT_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
 
   if (!secret || secret.trim() === "") {
-    return FALLBACK_HARDENED_SECRET;
-  }
-
-  if (secret.length < 32) {
-    return (secret + FALLBACK_HARDENED_SECRET).slice(0, 64);
-  }
-
-  const isProduction = process.env.NODE_ENV === "production";
-  const lowerSecret = secret.toLowerCase();
-
-  if (isProduction) {
-    const isKnownPlaceholder = INSECURE_SECRET_PATTERNS.some(
-      (pattern) => lowerSecret === pattern || (pattern.length > 15 && lowerSecret.includes(pattern))
-    );
-    if (isKnownPlaceholder) {
-      return FALLBACK_HARDENED_SECRET;
+    if (isProduction) {
+      console.error(
+        "🚨 [CRITICAL SECURITY ALERT]: APP_SECRET is missing in production environment! " +
+        "Using an ephemeral in-memory secret. Please configure a strong APP_SECRET (64 hex characters) in your production environment settings."
+      );
+      return getEphemeralRuntimeSecret();
     }
+    return "dev-local-secret-9f8a3c7b2e1d4a6f8b0c2e4d6f8a0b2c4e6f8a0b2c4e6f8a0b2c4e6f8a0b2c4e";
   }
 
-  return secret;
+  const cleanSecret = secret.trim();
+  const lowerSecret = cleanSecret.toLowerCase();
+
+  const isKnownPlaceholder = INSECURE_SECRET_PATTERNS.some(
+    (pattern) => lowerSecret === pattern || (pattern.length >= 10 && lowerSecret.includes(pattern))
+  );
+
+  if (isProduction && isKnownPlaceholder) {
+    console.error(
+      "🚨 [CRITICAL SECURITY ALERT]: APP_SECRET contains a known default or placeholder pattern in production! " +
+      "Refusing to use insecure key. Generating an ephemeral secret."
+    );
+    return getEphemeralRuntimeSecret();
+  }
+
+  if (cleanSecret.length < 32) {
+    if (isProduction) {
+      console.warn("⚠️ [SECURITY WARNING]: APP_SECRET is shorter than 32 characters in production. Consider using a 64-character random hex string.");
+    }
+    return crypto.createHash("sha256").update(cleanSecret).digest("hex");
+  }
+
+  return cleanSecret;
 }
 
 export interface UserSessionPayload {

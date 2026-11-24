@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { hasPermission, PermissionCode } from "@/lib/server/rbac-engine";
+import { getRolePermissionsMap } from "@/lib/server/rbac-service";
+import { findStaffByPin, findSupervisorByPin } from "@/lib/server/pin-security";
 
 export const dynamic = "force-dynamic";
 
@@ -9,28 +11,22 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { pinCode, action, requiredPermission, details } = body;
 
-    if (!pinCode || pinCode.length !== 4) {
+    const cleanPin = String(pinCode || "").trim();
+    if (!cleanPin || cleanPin.length !== 4) {
       return NextResponse.json(
         { success: false, authorized: false, error: "4-digit PIN is required" },
         { status: 400 }
       );
     }
 
-    // 1. Look up staff by PIN code
-    const staff = await prisma.staff.findFirst({
-      where: {
-        pinCode: String(pinCode).trim(),
-        isActive: true,
-      },
-    });
+    // 1. Look up staff by cryptographically verified PIN (with peppered bcrypt & auto-migration)
+    const staff = await findStaffByPin(cleanPin);
 
     if (!staff) {
-      // Check legacy User table fallback
-      const user = await prisma.user.findFirst({
-        where: { pinCode: String(pinCode).trim(), isActive: true },
-      });
+      // Check legacy User supervisor fallback
+      const legacySupervisor = await findSupervisorByPin(cleanPin);
 
-      if (!user) {
+      if (!legacySupervisor) {
         // Log unauthorized attempt
         await prisma.auditLog.create({
           data: {
@@ -49,22 +45,29 @@ export async function POST(req: NextRequest) {
       }
 
       // Legacy user has manager/admin permissions
-      const isAuthorized = ["ADMIN", "MANAGER", "OWNER"].includes(user.role.toUpperCase());
+      const isAuthorized = ["ADMIN", "MANAGER", "OWNER"].includes(legacySupervisor.role.toUpperCase());
       return NextResponse.json({
         success: true,
         authorized: isAuthorized,
         staff: {
-          id: user.id,
-          name: user.name,
-          role: user.role,
+          id: legacySupervisor.id,
+          name: legacySupervisor.name,
+          role: legacySupervisor.role,
         },
       });
     }
 
-    // 2. Check granular permission if specified
-    const isAuthorized = requiredPermission
-      ? hasPermission(staff.role, staff.permissions, requiredPermission as PermissionCode)
-      : true;
+    // 2. Check granular permission if specified (fetching owner's customized role permissions)
+    let isAuthorized = true;
+    if (requiredPermission) {
+      const { activeRoles } = await getRolePermissionsMap();
+      isAuthorized = hasPermission(
+        staff.role,
+        staff.permissions,
+        requiredPermission as PermissionCode,
+        activeRoles
+      );
+    }
 
     // 3. Log Audit Log for sensitive actions
     if (action) {

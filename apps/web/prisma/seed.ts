@@ -232,6 +232,163 @@ async function main() {
     },
   });
 
+  // 5. Seed Realistic Demo Orders with Invoices & Line Items
+  console.log("Seeding demo orders...");
+  const demoOrdersData = [
+    {
+      orderNumber: "ORD-2840",
+      orderType: "DINE_IN",
+      status: "PREPARING",
+      tableNumber: "T-01",
+      customerName: "Vikram Malhotra",
+      customerPhone: "+91 98450 11223",
+      paymentMethod: "UNPAID",
+      items: [
+        { item: butterChicken, name: "Butter Chicken", qty: 2, price: 370 },
+        { item: garlicNaan, name: "Butter Garlic Naan", qty: 4, price: 80 },
+        { item: dalMakhani, name: "Dal Makhani", qty: 1, price: 250 },
+      ],
+    },
+    {
+      orderNumber: "ORD-2841",
+      orderType: "QR_DIGITAL",
+      status: "PREPARING",
+      tableNumber: "T-04",
+      customerName: "Ananya Deshmukh",
+      customerPhone: "+91 97412 88341",
+      paymentMethod: "UPI (Google Pay)",
+      items: [
+        { item: paneerTikka, name: "Paneer Butter Masala", qty: 1, price: 320 },
+        { item: garlicNaan, name: "Butter Garlic Naan", qty: 2, price: 80 },
+        { item: chaas, name: "Masala Chaas", qty: 2, price: 70 },
+      ],
+    },
+    {
+      orderNumber: "ORD-2842",
+      orderType: "DELIVERY",
+      status: "SERVED",
+      tableNumber: null,
+      customerName: "Zomato Partner (#9841)",
+      customerPhone: "+91 98800 23456",
+      customerAddress: "Flat 402, Prestige Palms, Indiranagar",
+      paymentMethod: "Zomato Pay",
+      items: [
+        { item: biryani, name: "Murgh Dum Biryani", qty: 2, price: 350 },
+        { item: gulabJamun, name: "Gulab Jamun (2 Pcs)", qty: 2, price: 110 },
+      ],
+    },
+    {
+      orderNumber: "ORD-2843",
+      orderType: "TAKEAWAY",
+      status: "PAID",
+      tableNumber: null,
+      customerName: "Rohit Verma",
+      customerPhone: "+91 99160 55421",
+      paymentMethod: "Cash",
+      items: [
+        { item: crispyCorn, name: "Crispy Corn Salt & Pepper", qty: 1, price: 240 },
+        { item: paneerTikka, name: "Paneer Butter Masala", qty: 1, price: 320 },
+        { item: garlicNaan, name: "Butter Garlic Naan", qty: 3, price: 80 },
+      ],
+    },
+    {
+      orderNumber: "ORD-2844",
+      orderType: "DINE_IN",
+      status: "PAID",
+      tableNumber: "T-02",
+      customerName: "Priya Nair",
+      customerPhone: "+91 96110 33902",
+      paymentMethod: "Credit Card (HDFC)",
+      items: [
+        { item: tandooriChicken, name: "Tandoori Chicken", qty: 1, price: 260 },
+        { item: biryani, name: "Murgh Dum Biryani", qty: 1, price: 350 },
+        { item: chaas, name: "Masala Chaas", qty: 2, price: 70 },
+      ],
+    },
+    {
+      orderNumber: "ORD-2845",
+      orderType: "DINE_IN",
+      status: "PAID",
+      tableNumber: "T-06",
+      customerName: "Aditya & Family",
+      customerPhone: "+91 98451 99012",
+      paymentMethod: "UPI (PhonePe)",
+      items: [
+        { item: biryani, name: "Murgh Dum Biryani", qty: 3, price: 350 },
+        { item: butterChicken, name: "Butter Chicken", qty: 1, price: 370 },
+        { item: garlicNaan, name: "Butter Garlic Naan", qty: 6, price: 80 },
+        { item: gulabJamun, name: "Gulab Jamun (2 Pcs)", qty: 3, price: 110 },
+      ],
+    },
+  ];
+
+  for (let idx = 0; idx < demoOrdersData.length; idx++) {
+    const o = demoOrdersData[idx];
+    let subtotal = 0;
+    const items = o.items.map((it) => {
+      const line = it.qty * it.price;
+      subtotal += line;
+      return {
+        menuItemId: it.item.id,
+        itemName: it.name,
+        quantity: it.qty,
+        unitPrice: it.price,
+        subtotal: line,
+        taxAmount: Math.round(line * 0.05 * 100) / 100,
+      };
+    });
+    const taxAmount = Math.round(subtotal * 0.05 * 100) / 100;
+    const grandTotal = subtotal + taxAmount;
+    const date = new Date(Date.now() - idx * 20 * 60 * 1000);
+
+    await prisma.order.upsert({
+      where: { orderNumber: o.orderNumber },
+      update: {
+        status: o.status,
+        customerName: o.customerName,
+        grandTotal,
+      },
+      create: {
+        orderNumber: o.orderNumber,
+        branchId: branch.id,
+        orderType: o.orderType,
+        status: o.status,
+        tableNumber: o.tableNumber,
+        customerName: o.customerName,
+        customerPhone: o.customerPhone,
+        customerAddress: o.customerAddress || null,
+        subtotal,
+        taxAmount,
+        grandTotal,
+        createdAt: date,
+        updatedAt: date,
+        items: { create: items },
+        invoice: {
+          create: {
+            invoiceNumber: `INV-IND-${2840 + idx}`,
+            fiscalYear: "2026-27",
+            branchId: branch.id,
+            subtotal,
+            taxableAmount: subtotal,
+            cgstRate: 2.5,
+            cgstAmount: Math.round((taxAmount / 2) * 100) / 100,
+            sgstRate: 2.5,
+            sgstAmount: Math.round((taxAmount / 2) * 100) / 100,
+            grandTotal,
+            paidAmount: o.status === "PAID" ? grandTotal : 0,
+            balanceDue: o.status === "PAID" ? 0 : grandTotal,
+            status: o.status === "PAID" ? "PAID" : "ISSUED",
+            customerName: o.customerName,
+            customerPhone: o.customerPhone,
+            paymentMethod: o.paymentMethod,
+            createdAt: date,
+            settledAt: date,
+          },
+        },
+      },
+    });
+  }
+
   console.log("Seeding completed successfully!");
 }
 

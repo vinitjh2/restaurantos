@@ -145,7 +145,10 @@ export function ThermalReceiptModal({ receiptData, onClose }: ThermalReceiptModa
         {/* 3-Inch Thermal Receipt Container (Styled to match physical 80mm thermal printers) */}
         <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-tight text-slate-800 bg-white border border-slate-100 m-2 rounded-lg shadow-inner">
           {/* Header */}
-          <div className="text-center space-y-1 border-b border-dashed border-slate-300 pb-3">
+          <div className="text-center space-y-1 border-b border-dashed border-slate-300 pb-3 flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-slate-950 border border-amber-500/50 flex items-center justify-center overflow-hidden p-0.5 shadow-xs mb-1">
+              <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-full" />
+            </div>
             <div className="text-sm font-black uppercase tracking-wider">{branch.name}</div>
             <div className="text-[10px] text-slate-600">{branch.address}, {branch.city}</div>
             <div className="text-[10px] text-slate-600">Ph: {branch.phone}</div>
@@ -270,8 +273,8 @@ export function ThermalReceiptModal({ receiptData, onClose }: ThermalReceiptModa
             <div className="text-[9px] text-slate-500 uppercase">
               Thank you for dining with us!
             </div>
-            <div className="text-[8px] text-slate-400">
-              Powered by RestaurantOS · F&B Enterprise
+            <div className="text-[8px] text-slate-500 font-semibold">
+              Powered by DineSutra · SutraUniverse
             </div>
           </div>
         </div>

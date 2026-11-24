@@ -32,7 +32,7 @@ const BUSINESS_TYPES = [
 const SUBSCRIPTION_PLANS = [
   { id: 'STARTER', name: 'Starter Plan', price: '₹999', period: '/ month', desc: 'Single outlet, POS billing, basic stock, 3 staff accounts.' },
   { id: 'PROFESSIONAL', name: 'Professional Plan', price: '₹2,499', period: '/ month', desc: 'Single outlet, POS, full KDS, BOM recipes, payroll, unlimited staff.', recommended: true },
-  { id: 'ENTERPRISE', name: 'Enterprise Multi-Branch', price: '₹4,999', period: '/ month', desc: 'Multi-branch chain, cross-branch transfers, centralized analytics, offline sync.' },
+  { id: 'ENTERPRISE', name: 'Enterprise Multi-Branch', price: '₹3,999', period: '/ month', desc: 'Multi-branch chain, cross-branch transfers, centralized analytics, offline sync.' },
 ];
 
 export default function RegisterRestaurantPage() {
@@ -107,12 +107,12 @@ export default function RegisterRestaurantPage() {
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-6 max-w-4xl mx-auto w-full">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-bold">
-            <Utensils className="w-5 h-5 text-white" />
+          <div className="w-11 h-11 rounded-xl bg-slate-950 border border-amber-500/40 flex items-center justify-center font-bold overflow-hidden p-0.5">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-lg" />
           </div>
           <div>
-            <h1 className="text-xl font-black">RESTAURANT<span className="text-orange-500">OS</span></h1>
-            <p className="text-xs text-slate-400">Commercial SaaS Onboarding Wizard</p>
+            <h1 className="text-xl font-black">Dine<span className="text-amber-500">Sutra</span></h1>
+            <p className="text-xs text-slate-400">Commercial SaaS Onboarding Wizard · SutraUniverse</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

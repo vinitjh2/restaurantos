@@ -91,3 +91,26 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.7);
 }
+
+/* Bento and Glassmorphism design tokens */
+.bento-card {
+  @apply relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md;
+}
+
+.bento-card-hero {
+  @apply relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-white via-white to-amber-50/50 p-6 shadow-sm shadow-amber-500/5 transition-all duration-300 hover:border-amber-400 hover:shadow-md;
+}
+
+.bento-dark-card {
+  @apply relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-5 text-white shadow-xl backdrop-blur-md;
+}
+
+.radial-mesh {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.radial-mesh-dark {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

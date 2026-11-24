@@ -15,6 +15,7 @@ import {
   LogOut,
   ExternalLink,
   CreditCard,
+  Hotel,
 } from "lucide-react";
 import { useRestaurantStore } from "@/stores/restaurant-store";
 import { formatIndianDate } from "@/lib/formatters";
@@ -157,6 +158,19 @@ export function TopNav() {
 
         {/* PWA One-Click Install */}
         <PwaInstallButton />
+
+        {/* Ecosystem Cross-Link: StaySutra Hotel PMS */}
+        <a
+          href="http://localhost:3001"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden xl:flex items-center gap-1.5 rounded-lg border border-indigo-200/90 bg-indigo-50/70 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-all shadow-2xs"
+          title="Switch to StaySutra Hotel PMS (Port 3001)"
+        >
+          <Hotel className="h-3.5 w-3.5 text-indigo-600" />
+          <span>StaySutra PMS</span>
+          <span className="rounded bg-indigo-200/80 px-1 py-0.2 text-[9px] font-bold text-indigo-900">3001 ↗</span>
+        </a>
 
         {/* Quick Launch POS Button */}
         <Link

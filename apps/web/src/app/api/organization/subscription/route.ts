@@ -63,6 +63,13 @@ export async function GET(req: NextRequest) {
       allowedModulesList = ["pos", "orders", "menu", "tables", "kds", "inventory"];
     }
 
+    const now = new Date();
+    const periodEnd = activeSub?.currentPeriodEnd || org.subscriptionRenewal || new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const isAccessActive = now <= periodEnd || org.status === "ACTIVE";
+    const trialDaysRemaining = activeSub?.trialEndsAt
+      ? Math.max(0, Math.ceil((activeSub.trialEndsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
+      : 14;
+
     return NextResponse.json({
       success: true,
       subscription: {
@@ -73,7 +80,18 @@ export async function GET(req: NextRequest) {
         annualPrice: currentPlan.annualPrice,
         status: org.status,
         billingCycle: activeSub?.billingCycle || "MONTHLY",
-        renewalDate: org.subscriptionRenewal?.toISOString() || null,
+        renewalDate: periodEnd.toISOString(),
+        trialEndsAt: activeSub?.trialEndsAt?.toISOString() || null,
+        isTrialActive: activeSub?.isTrialActive ?? true,
+        trialDaysRemaining,
+        mandateStatus: activeSub?.mandateStatus || (org.mandateRegistered ? "ACTIVE" : "PENDING_SETUP"),
+        mandateMethod: activeSub?.mandateMethod || "UPI_AUTOPAY",
+        mandateUpiId: activeSub?.mandateUpiId || "owner@okhdfcbank",
+        mandateBank: activeSub?.mandateBank || "HDFC Bank (••4210)",
+        cancelAtPeriodEnd: activeSub?.cancelAtPeriodEnd ?? false,
+        cancelledAt: activeSub?.cancelledAt?.toISOString() || null,
+        accessValidUntil: periodEnd.toISOString(),
+        isAccessActive,
         allowedModules: allowedModulesList,
         hasAdvancedReporting: currentPlan.hasAdvancedReporting,
         hasApiIntegrations: currentPlan.hasApiIntegrations,

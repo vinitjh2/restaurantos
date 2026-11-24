@@ -18,13 +18,15 @@ import {
   RefreshCw,
   Table as TableIcon,
   Filter,
+  Sparkles,
 } from "lucide-react";
 import { formatINR } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MenuEngineeringMatrix } from "@/components/reports/menu-engineering-matrix";
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState<"SALES" | "GST" | "PNL" | "AUDITS">("SALES");
+  const [activeTab, setActiveTab] = useState<"SALES" | "GST" | "PNL" | "AUDITS" | "MENU_MATRIX">("SALES");
   const [timeRange, setTimeRange] = useState("30d");
   const [selectedBranch, setSelectedBranch] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -237,6 +239,18 @@ export default function ReportsPage() {
         >
           <AlertTriangle className="h-3.5 w-3.5" />
           <span>Audits, Voids & Refunds</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("MENU_MATRIX")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            activeTab === "MENU_MATRIX"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <span>Menu Engineering (BCG Matrix)</span>
         </button>
       </div>
 
@@ -513,6 +527,9 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {/* TAB 5: MENU ENGINEERING & BCG PROFITABILITY MATRIX */}
+      {activeTab === "MENU_MATRIX" && <MenuEngineeringMatrix />}
     </div>
   );
 }

@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { findSupervisorByPin } from "@/lib/server/pin-security";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { invoiceNumber, amount, reason, paymentMethod, supervisorPin } = body;
 
-    // Validate Supervisor PIN
-    const supervisor = await prisma.user.findFirst({
-      where: {
-        pinCode: supervisorPin,
-        role: { in: ["ADMIN", "MANAGER"] },
-      },
-    });
+    // Validate Supervisor PIN cryptographically with peppered bcrypt
+    const supervisor = await findSupervisorByPin(supervisorPin);
 
     if (!supervisor) {
       return NextResponse.json(

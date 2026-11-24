@@ -12,14 +12,19 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "RestaurantOS — Enterprise F&B Operating System & POS",
+  title: "DineSutra — Enterprise Restaurant & Bar Operating System · By SutraUniverse",
   description:
-    "Production-ready multi-tenant restaurant management, high-speed touch POS, kitchen display system, recipe inventory, and Indian GST billing engine.",
+    "Production-ready multi-tenant restaurant management, high-speed touch POS, AI CCTV Vision, kitchen display system, recipe inventory, and Indian GST billing engine. Part of the SutraUniverse business suite.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/dinesutra-logo.svg",
+    shortcut: "/dinesutra-logo.svg",
+    apple: "/dinesutra-logo.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "RestaurantOS",
+    title: "DineSutra",
   },
 };
 

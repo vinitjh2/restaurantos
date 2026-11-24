@@ -23,6 +23,8 @@ model Organization {
   status           String        @default("ACTIVE") // ACTIVE, TRIALING, SUSPENDED
   subscriptionPlan String        @default("PROFESSIONAL") // STARTER, PROFESSIONAL, ENTERPRISE
   subscriptionRenewal DateTime?
+  trialEndsAt         DateTime?
+  mandateRegistered   Boolean       @default(false)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   branches         Branch[]
@@ -77,6 +79,15 @@ model TenantSubscription {
   startDate              DateTime              @default(now())
   currentPeriodStart     DateTime              @default(now())
   currentPeriodEnd       DateTime
+  trialEndsAt            DateTime?
+  isTrialActive          Boolean               @default(false)
+  mandateStatus          String                @default("ACTIVE") // PENDING_SETUP, ACTIVE, PAUSED, CANCELLED
+  mandateMethod          String?               // UPI_AUTOPAY, CARD, NETBANKING
+  mandateUpiId           String?
+  mandateBank            String?
+  pennyDropRefunded      Boolean               @default(true)
+  preDebitAlertSent      Boolean               @default(false)
+  preDebitAlertDate      DateTime?
   cancelAtPeriodEnd      Boolean               @default(false)
   cancelledAt            DateTime?
   razorpaySubscriptionId String?
@@ -683,6 +694,19 @@ model Staff {
   attendance     AttendanceRecord[]
   leaves         StaffLeave[]
   payrolls       StaffPayroll[]
+}
+
+model RolePermissionConfig {
+  id             String   @id @default(uuid())
+  organizationId String?  @default("org-bawarchi")
+  role           String
+  permissions    String   // Serialized JSON array of PermissionCode strings
+  isCustomized   Boolean  @default(true)
+  updatedBy      String?  @default("Restaurant Owner")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, role])
 }
 
 model ShiftSchedule {

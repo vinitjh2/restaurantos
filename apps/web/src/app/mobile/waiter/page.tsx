@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   UtensilsCrossed,
   Plus,
@@ -29,7 +30,7 @@ import { offlineStorage, generateOfflineSyncId } from "@/lib/offline/offline-sto
 interface MobileMenuItem {
   id: string;
   name: string;
-  shortCode: string;
+  shortCode?: string;
   category: string;
   dietType: "VEG" | "NON_VEG";
   price: number;
@@ -63,7 +64,7 @@ interface LiveTableKOT {
 
 export default function MobileWaiterPage() {
   const [activeTab, setActiveTab] = useState<"MENU" | "STATUS">("MENU");
-  const [tables] = useState(["T-01", "T-02", "T-03", "T-04", "T-05", "T-06", "T-07", "T-08", "T-09", "T-10"]);
+  const [tables, setTables] = useState(["T-01", "T-02", "T-03", "T-04", "T-05", "T-06", "T-07", "T-08", "T-09", "T-10"]);
   const [selectedTable, setSelectedTable] = useState("T-01");
   const [guestCount, setGuestCount] = useState(2);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -83,7 +84,7 @@ export default function MobileWaiterPage() {
   const [loadingKOTs, setLoadingKOTs] = useState(false);
 
   // Menu catalog with modifiers
-  const [menuItems] = useState<MobileMenuItem[]>([
+  const [menuItems, setMenuItems] = useState<MobileMenuItem[]>([
     {
       id: "item-pbm",
       name: "Paneer Butter Masala",
@@ -149,7 +150,37 @@ export default function MobileWaiterPage() {
     },
   ]);
 
-  const categories = ["All", "Starters", "Mains", "Biryani", "Breads", "Beverages", "Desserts"];
+  const categories = ["All", ...Array.from(new Set(menuItems.map((i) => i.category)))];
+
+  // Fetch live tables and menu
+  useEffect(() => {
+    fetch("/api/pos/tables")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.tables) && data.tables.length > 0) {
+          setTables(data.tables.map((t: any) => t.tableNumber));
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/pos/menu")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.items) && data.items.length > 0) {
+          const mapped: MobileMenuItem[] = data.items.map((it: any) => ({
+            id: it.id,
+            name: it.name,
+            shortCode: it.shortCode || it.name.substring(0, 3).toUpperCase(),
+            category: it.category || "Mains",
+            dietType: it.dietary === "NON_VEG" || it.dietType === "NON_VEG" ? "NON_VEG" : "VEG",
+            price: Number(it.basePrice || it.price || 120),
+            availableModifiers: ["Less Spicy", "Extra Ghee/Butter", "Jain Prep"],
+          }));
+          setMenuItems(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -261,8 +292,9 @@ export default function MobileWaiterPage() {
   const filteredItems = menuItems.filter((i) => {
     const matchCat = selectedCategory === "All" || i.category === selectedCategory;
     const matchSearch =
+      searchQuery.trim() === "" ||
       i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      i.shortCode.toLowerCase().includes(searchQuery.toLowerCase());
+      Boolean(i.shortCode && i.shortCode.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCat && matchSearch;
   });
 
@@ -321,17 +353,24 @@ export default function MobileWaiterPage() {
     <div className="flex min-h-screen flex-col bg-slate-100 pb-24 text-slate-900">
       {/* Mobile Top Bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-600 to-orange-500 text-white shadow-xs">
-            <UtensilsCrossed className="h-5 w-5" />
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 border border-amber-500/50 shadow-xs overflow-hidden p-0.5">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-lg" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-900 leading-none">Waiter Ordering</h1>
-            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">RestaurantOS Mobile</p>
+            <h1 className="text-sm font-black text-slate-900 leading-none">DineSutra Waiter</h1>
+            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Handheld Table Service</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <Link
+            href="/waiter"
+            className="hidden sm:inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100"
+          >
+            Tablet View
+          </Link>
+
           {isOnline ? (
             <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               <Wifi className="h-3 w-3" /> Online

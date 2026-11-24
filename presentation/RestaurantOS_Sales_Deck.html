@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS — Executive Client Pitch Presentation Deck</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+      user-select: none;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .slide {
+      display: none;
+      min-height: calc(100vh - 80px);
+    }
+    .slide.active {
+      display: flex;
+    }
+    @media print {
+      body {
+        background-color: #ffffff;
+        color: #0f172a;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .slide {
+        display: flex !important;
+        page-break-after: always;
+        min-height: 100vh;
+        padding: 40px !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+      .print-dark {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border-radius: 16px;
+      }
+    }
+  </style>
+</head>
+<body class="overflow-x-hidden">
+
+  <!-- TOP APP / NAVIGATION BAR (Screen only) -->
+  <header class="no-print sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950/90 px-6 backdrop-blur-md">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 text-slate-950 font-black shadow-lg shadow-amber-500/20">
+          🔥
+        </div>
+        <div>
+          <span class="text-sm font-black tracking-tight text-white">Restaurant<span class="text-amber-500">OS</span></span>
+          <span class="ml-2 rounded-full bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">Client Pitch Deck</span>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-semibold text-slate-400">Slide</span>
+      <span id="currentSlideNumber" class="text-sm font-extrabold text-amber-400 mono">01</span>
+      <span class="text-xs text-slate-600">/</span>
+      <span id="totalSlidesCount" class="text-xs font-semibold text-slate-500 mono">11</span>
+    </div>
+
+    
+    <div class="flex items-center gap-2.5">
+      <button onclick="prevSlide()" class="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+        ← Prev
+      </button>
+      <button onclick="nextSlide()" class="rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-1.5 text-xs font-bold text-slate-950 transition-all shadow-md shadow-amber-500/20">
+        Next →
+      </button>
+      <button onclick="toggleFullscreen()" class="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white" title="Toggle Fullscreen (F)">
+        ⛶ Fullscreen
+      </button>
+      <button onclick="window.print()" class="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-1.5 text-xs font-semibold text-white" title="Save as PDF">
+        📄 Save as PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- SLIDES CONTAINER -->
+  <div class="mx-auto max-w-7xl p-6 sm:p-10">
+
+    <!-- =========================================================================
+         SLIDE 1: COVER & ELEVATOR PITCH
+         ========================================================================= -->
+    <section id="slide-1" class="slide active flex-col justify-center items-center text-center py-12">
+      <div class="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/30 px-4 py-1.5 text-xs font-bold text-amber-400 mb-6">
+        <span>🚀 Enterprise F&B Operating System & Touch POS</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-4xl leading-tight">
+        Stop Losing <span class="bg-gradient-to-r from-rose-500 to-amber-500 bg-clip-text text-transparent">30% to Aggregators.</span><br>
+        Take Total Control of Your Restaurant.
+      </h1>
+
+      <p class="mt-6 text-base sm:text-xl text-slate-400 max-w-2xl leading-relaxed">
+        High-speed cloud billing, dynamic UPI QR receipts, 2D floor management, luxury QR ordering, and anti-theft owner surveillance. Built specifically for high-growth Indian restaurants and cafes.
+      </p>
+
+      <div class="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-3xl text-left">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+          <div class="text-2xl font-black text-emerald-400">0%</div>
+          <div class="text-xs font-bold text-slate-300 mt-1">Aggregator Fees</div>
+          <div class="text-[11px] text-slate-500">Direct WhatsApp & QR orders</div>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+          <div class="text-2xl font-black text-amber-400">1.8s</div>
+          <div class="text-xs font-bold text-slate-300 mt-1">Speed Billing</div>
+          <div class="text-[11px] text-slate-500">Auto-settle via dynamic UPI</div>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+          <div class="text-2xl font-black text-blue-400">100%</div>
+          <div class="text-xs font-bold text-slate-300 mt-1">Theft Protection</div>
+          <div class="text-[11px] text-slate-500">Owner WhatsApp void alerts</div>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+          <div class="text-2xl font-black text-violet-400">+18%</div>
+          <div class="text-xs font-bold text-slate-300 mt-1">Gross Margin</div>
+          <div class="text-[11px] text-slate-500">Menu Engineering matrix</div>
+        </div>
+      </div>
+
+      <div class="mt-12 text-xs text-slate-500">
+        Press <kbd class="rounded border border-slate-700 bg-slate-800 px-2 py-0.5 font-mono text-slate-300">Right Arrow →</kbd> to explore features
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 2: THE 4 SILENT PROFIT KILLERS
+         ========================================================================= -->
+    <section id="slide-2" class="slide flex-col justify-center py-6">
+      <div class="mb-6">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-rose-400">The Problem</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-1">
+          Where Is Your Restaurant Secretly Losing Money Every Day?
+        </h2>
+        <p class="text-sm text-slate-400 mt-1">Every restaurant owner deals with these 4 silent margin killers:</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="rounded-3xl border border-rose-950/80 bg-rose-950/20 p-6 flex items-start gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-500/20 text-rose-400 text-xl font-black">
+            💸
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Aggregator Commission Siphon (25%–30%)</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              On every ₹1,000 delivery order, Swiggy/Zomato takes ₹250–₹300. After food cost, packaging, and GST, you barely make ₹50–₹70 profit while they keep your customer data.
+            </p>
+            <div class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-400">
+              ➔ Solved in Slide 4: 0% Commission Direct Online & WhatsApp Engine
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-amber-950/80 bg-amber-950/20 p-6 flex items-start gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-400 text-xl font-black">
+            🕵️
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Counter Theft & Unaudited Bill Voids</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Cashiers collect cash, give food to the customer, and then cancel or void the bill in the system after the customer leaves. Without real-time owner alerts, cash walks out the door.
+            </p>
+            <div class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-400">
+              ➔ Solved in Slide 8: Real-Time Anti-Theft AI Hub & WhatsApp Alerts
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-blue-950/80 bg-blue-950/20 p-6 flex items-start gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-500/20 text-blue-400 text-xl font-black">
+            ⏳
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Slow Peak-Hour Table Turnover</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              During Friday/Saturday rush, customers wait 10–12 minutes just to ask for the bill, wait for the card machine, and pay. That slashes table turnover by 1 full dining cycle per table.
+            </p>
+            <div class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-400">
+              ➔ Solved in Slide 5 & 6: 2D Floor Plan & Pay-at-Table UPI
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-violet-950/80 bg-violet-950/20 p-6 flex items-start gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/20 text-violet-400 text-xl font-black">
+            🥬
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Raw Material Spoilage & Blind Pricing</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Most menus have "Dog" dishes that barely sell but require perishable ingredients (paneer, cream, exotic veg). Food expires in cold storage, and low-margin items are sold at a loss.
+            </p>
+            <div class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-400">
+              ➔ Solved in Slide 9: Automated Menu Engineering BCG Matrix
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-950/30 p-4 text-center">
+        <span class="text-xs font-bold text-emerald-400">
+          ✨ RestaurantOS eliminates all 4 problems out of the box with one unified operating system.
+        </span>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 3: SCREENSHOT SHOWCASE 1 — TOUCH POS & DYNAMIC UPI
+         ========================================================================= -->
+    <section id="slide-3" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Core Engine</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            1.8-Second Touch POS & Dynamic UPI QR Billing
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Eliminates counter bottlenecks. Cashiers punch bills in seconds. Thermal bills print with an auto-generated dynamic UPI QR code with the exact order amount.
+          </p>
+
+          <div class="space-y-2.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>No manual soundbox check:</strong> Bill auto-settles when customer scans QR.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>80mm Thermal Receipt Spooler:</strong> Pairs with USB/LAN ESC/POS printers.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Statutory Split GST:</strong> Automatic CGST 2.5% + SGST 2.5% calculation.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Offline Protection:</strong> Keep punching orders even if internet cuts out.</span>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="w-full max-w-xl rounded-3xl border-2 border-slate-700 bg-slate-900 p-4 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="h-3 w-3 rounded-full bg-rose-500"></span>
+              <span class="h-3 w-3 rounded-full bg-amber-500"></span>
+              <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
+              <span class="font-bold text-slate-300 ml-2">RestaurantOS Touch Terminal</span>
+            </div>
+            <span class="rounded bg-emerald-500/20 px-2 py-0.5 font-mono text-[10px] text-emerald-300">Port 9100 Connected</span>
+          </div>
+
+          <div class="grid grid-cols-5 gap-3">
+            
+            <div class="col-span-3 space-y-2">
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl border border-slate-800 bg-slate-800/80 p-2 text-left">
+                  <div class="text-[11px] font-bold text-white">Murgh Biryani</div>
+                  <div class="text-xs font-black text-amber-400">₹350</div>
+                </div>
+                <div class="rounded-xl border border-slate-800 bg-slate-800/80 p-2 text-left">
+                  <div class="text-[11px] font-bold text-white">Butter Chicken</div>
+                  <div class="text-xs font-black text-amber-400">₹370</div>
+                </div>
+                <div class="rounded-xl border border-slate-800 bg-slate-800/80 p-2 text-left">
+                  <div class="text-[11px] font-bold text-white">Paneer Butter</div>
+                  <div class="text-xs font-black text-amber-400">₹320</div>
+                </div>
+                <div class="rounded-xl border border-slate-800 bg-slate-800/80 p-2 text-left">
+                  <div class="text-[11px] font-bold text-white">Garlic Naan</div>
+                  <div class="text-xs font-black text-amber-400">₹65</div>
+                </div>
+              </div>
+              <div class="rounded-xl bg-amber-500/10 border border-amber-500/30 p-2 text-[10px] text-amber-300">
+                ⚡ 1-Tap Supervisor Override PIN · Split Bill Supported
+              </div>
+            </div>
+
+            
+            <div class="col-span-2 rounded-xl bg-white p-3 text-slate-900 shadow-md font-mono text-[9px] space-y-1">
+              <div class="text-center font-bold text-[10px] border-b pb-1">BAWARCHI ROYALE</div>
+              <div class="text-[8px] text-slate-500 text-center">FSSAI: 11223344000123</div>
+              <div class="flex justify-between pt-1"><span>Table T-01</span><span>INV #00285</span></div>
+              <div class="border-b border-dashed my-1"></div>
+              <div class="flex justify-between"><span>1x Murgh Biryani</span><span>₹350.00</span></div>
+              <div class="flex justify-between"><span>2x Garlic Naan</span><span>₹130.00</span></div>
+              <div class="flex justify-between text-slate-600"><span>5% GST (SAC 996331)</span><span>₹24.00</span></div>
+              <div class="flex justify-between font-bold border-t pt-1"><span>TOTAL</span><span>₹504.00</span></div>
+              <div class="flex flex-col items-center justify-center p-1.5 border border-dashed rounded mt-1 bg-slate-50">
+                <div class="text-[8px] font-bold">SCAN TO PAY UPI</div>
+                <div class="h-12 w-12 bg-slate-800 rounded mt-0.5 flex items-center justify-center text-white text-[7px]">UPI QR</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <!-- =========================================================================
+         SLIDE 4: THE D2C SOLUTION — 0% COMMISSION DIRECT ONLINE ORDERING
+         ========================================================================= -->
+    <section id="slide-4" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <div class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-400">
+            <span>🛡️ Solves Problem #1: Aggregator Siphon</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            0% Commission Direct Online & WhatsApp Ordering
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Stop giving away 25%–30% on every order. Give your customers an instant web storefront via Google Maps, your Instagram bio, and WhatsApp. Keep 100% of your earnings.
+          </p>
+
+          <div class="space-y-2.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Zero Commission Forever:</strong> Keep the full ₹1,000 on every ₹1,000 order.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Instant Direct-to-Bank UPI:</strong> Money lands directly in your current account.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Own 100% of Customer Data:</strong> Unmasked guest phone numbers for automated WhatsApp marketing.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>On-Demand Rider Dispatch:</strong> 1-click dispatch to Dunzo, Shadowfax, Porter, or your in-house staff.</span>
+            </div>
+          </div>
+
+          <!-- Hard ROI Comparison Box -->
+          <div class="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 space-y-2">
+            <div class="flex justify-between items-center text-xs font-bold">
+              <span class="text-slate-400">Monthly Commission Bleed (100 orders/day @ ₹500):</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
+              <div class="rounded-xl bg-rose-950/40 border border-rose-500/30 p-2.5 text-center">
+                <div class="text-[10px] text-rose-300 uppercase font-bold">Swiggy / Zomato (27%)</div>
+                <div class="text-lg font-black text-rose-400 font-mono mt-0.5">-₹4,05,000</div>
+                <div class="text-[9px] text-slate-400">Lost in commission every month</div>
+              </div>
+              <div class="rounded-xl bg-emerald-950/40 border border-emerald-500/40 p-2.5 text-center">
+                <div class="text-[10px] text-emerald-300 uppercase font-bold">RestaurantOS Direct</div>
+                <div class="text-lg font-black text-emerald-400 font-mono mt-0.5">₹0 Commission</div>
+                <div class="text-[9px] text-emerald-200">100% pure profit retained</div>
+              </div>
+            </div>
+            <div class="text-[10px] text-emerald-400 text-center font-bold pt-1">
+              💡 Moving just 25 regular orders/day to your direct link saves ₹1,01,250 in cash every single month!
+            </div>
+          </div>
+        </div>
+
+        <!-- MOCKUP CONTAINER -->
+        <div class="w-full max-w-md space-y-3">
+          <!-- Web Storefront Mockup -->
+          <div class="rounded-3xl border-2 border-slate-700 bg-slate-900 p-4 shadow-2xl space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+                <span class="font-bold text-white text-[11px]">bawarchiroyale.order.restaurantos.in</span>
+              </div>
+              <span class="rounded bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300">0% Commission</span>
+            </div>
+
+            <!-- Direct Store Banner -->
+            <div class="rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-2.5 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-black text-amber-300">Direct From Bawarchi Kitchen</div>
+                <div class="text-[9px] text-slate-300">Free delivery & ₹50 flat discount applied!</div>
+              </div>
+              <span class="text-xs">⚡ 28 Mins</span>
+            </div>
+
+            <!-- Cart Preview -->
+            <div class="space-y-1.5 text-xs text-slate-200 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+              <div class="flex justify-between items-center text-[11px]">
+                <span>1x Murgh Dum Biryani (Handi)</span>
+                <span class="font-mono font-bold text-white">₹350</span>
+              </div>
+              <div class="flex justify-between items-center text-[11px]">
+                <span>2x Butter Garlic Naan</span>
+                <span class="font-mono font-bold text-white">₹130</span>
+              </div>
+              <div class="border-t border-slate-800 pt-1.5 flex justify-between items-center text-xs font-bold">
+                <span class="text-slate-400">Total Direct Bill:</span>
+                <span class="text-amber-400 font-mono text-sm">₹480 <span class="text-[9px] text-emerald-400 font-normal">(Saved ₹120 vs Swiggy)</span></span>
+              </div>
+            </div>
+
+            <!-- Direct UPI Button -->
+            <button class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+              <span>Pay ₹480 via UPI (GPay / PhonePe / Paytm)</span>
+              <span>➔</span>
+            </button>
+          </div>
+
+          <!-- Automated WhatsApp Marketing Card -->
+          <div class="rounded-2xl border border-emerald-500/30 bg-emerald-950/50 p-3 text-xs space-y-1.5">
+            <div class="flex items-center justify-between text-[10px] text-emerald-400 font-bold">
+              <div class="flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                <span>AUTOMATED WHATSAPP RE-ORDER ENGINE</span>
+              </div>
+              <span>Friday 7:30 PM</span>
+            </div>
+            <p class="text-[11px] text-slate-200 leading-relaxed font-sans bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
+              <em>"Namaste Ananya ji! 🙏 Friday dinner sorted? Re-order your favorite <strong>Murgh Dum Biryani</strong> directly from our kitchen and get ₹50 off tonight! Tap: <span class="text-emerald-400 underline">bawarchi.order/friday</span>"</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 5: SCREENSHOT SHOWCASE 2 — 2D VISUAL FLOOR PLAN
+         ========================================================================= -->
+    <section id="slide-5" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-blue-400">Dining Room Management</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Interactive 2D Floor Plan & Live Table Status
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Replaces old boring table lists with an architectural 2D visual layout. See exactly which tables are dining, waiting for bill, or need cleaning in real-time.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-2.5 text-emerald-300">
+              <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+              <span><strong>Green:</strong> Available & Ready</span>
+            </div>
+            <div class="flex items-center gap-2 rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-amber-300">
+              <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
+              <span><strong>Yellow:</strong> Seated & Dining</span>
+            </div>
+            <div class="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/30 p-2.5 text-rose-300">
+              <span class="h-2.5 w-2.5 rounded-full bg-rose-400"></span>
+              <span><strong>Red:</strong> Billed / Awaiting Pay</span>
+            </div>
+            <div class="flex items-center gap-2 rounded-xl bg-blue-500/10 border border-blue-500/30 p-2.5 text-blue-300">
+              <span class="h-2.5 w-2.5 rounded-full bg-blue-400"></span>
+              <span><strong>Blue:</strong> Needs Cleaning</span>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="w-full max-w-xl rounded-3xl border-2 border-slate-700 bg-slate-950 p-6 shadow-2xl">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4 text-xs">
+            <span class="font-bold text-white">Ground Floor · AC Dining Hall (18/24 Tables Active)</span>
+            <span class="rounded-full bg-emerald-500/20 text-emerald-400 px-2 py-0.5 text-[10px] font-bold">75% Occupancy</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-3 py-2">
+            <div class="rounded-2xl border border-emerald-500/40 bg-emerald-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold flex items-center justify-center text-sm">T-01</div>
+              <div class="text-[10px] text-emerald-400 mt-1 font-bold">Ready</div>
+            </div>
+            <div class="rounded-2xl border border-amber-500/50 bg-amber-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-2xl bg-amber-500/20 text-amber-300 font-extrabold flex items-center justify-center text-sm">T-02</div>
+              <div class="text-[10px] text-amber-300 mt-1 font-bold">₹1,450 (24m)</div>
+            </div>
+            <div class="rounded-2xl border border-rose-500/50 bg-rose-950/30 p-3 text-center animate-pulse">
+              <div class="h-10 w-10 mx-auto rounded-2xl bg-rose-500/20 text-rose-300 font-extrabold flex items-center justify-center text-sm">T-03</div>
+              <div class="text-[10px] text-rose-300 mt-1 font-bold">Billed: ₹2,150</div>
+            </div>
+            <div class="rounded-2xl border border-blue-500/40 bg-blue-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-full bg-blue-500/20 text-blue-300 font-extrabold flex items-center justify-center text-sm">T-04</div>
+              <div class="text-[10px] text-blue-400 mt-1 font-bold">Cleaning</div>
+            </div>
+            <div class="rounded-2xl border border-amber-500/50 bg-amber-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-2xl bg-amber-500/20 text-amber-300 font-extrabold flex items-center justify-center text-sm">T-05</div>
+              <div class="text-[10px] text-amber-300 mt-1 font-bold">₹890 (12m)</div>
+            </div>
+            <div class="rounded-2xl border border-emerald-500/40 bg-emerald-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold flex items-center justify-center text-sm">T-06</div>
+              <div class="text-[10px] text-emerald-400 mt-1 font-bold">Ready</div>
+            </div>
+            <div class="rounded-2xl border border-amber-500/50 bg-amber-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-2xl bg-amber-500/20 text-amber-300 font-extrabold flex items-center justify-center text-sm">T-07</div>
+              <div class="text-[10px] text-amber-300 mt-1 font-bold">₹2,840 (38m)</div>
+            </div>
+            <div class="rounded-2xl border border-emerald-500/40 bg-emerald-950/30 p-3 text-center">
+              <div class="h-10 w-10 mx-auto rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold flex items-center justify-center text-sm">T-08</div>
+              <div class="text-[10px] text-emerald-400 mt-1 font-bold">Ready</div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between text-[11px] text-slate-400">
+            <span>🚪 Host Stand: Front Left</span>
+            <span>👨‍🍳 Kitchen Pass: Rear Center</span>
+            <span>🍸 Bar: Right</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 6: SCREENSHOT SHOWCASE 3 — LUXURY CUSTOMER QR MENU & PAY-AT-TABLE
+         ========================================================================= -->
+    <section id="slide-6" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">Direct Customer Experience</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Mouth-Watering QR Menu & Pay-at-Table UPI
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Customers scan table tent card QR code on their own smartphone. No app download required. Browse high-res dish photos, place order directly to kitchen, and pay with 1-tap UPI.
+          </p>
+
+          <div class="space-y-2.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Cut Wait Times by 15 Mins:</strong> Diners pay right at the table without waiting for waiters.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>1-Tap UPI Apps:</strong> Direct buttons for Google Pay, PhonePe, and Paytm.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Instant Service Buttons:</strong> Call Waiter and Request Water right from their phone.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Higher Ticket Size (+14%):</strong> High-definition photography triggers cravings.</span>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="w-full max-w-xs rounded-[40px] border-4 border-slate-700 bg-slate-900 p-3 shadow-2xl">
+          <div class="h-4 w-28 bg-slate-800 rounded-full mx-auto mb-2"></div>
+          <div class="rounded-[32px] overflow-hidden bg-slate-100 text-slate-900 p-3 space-y-3">
+            
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="text-[11px] font-black">Bawarchi Royale</div>
+                <div class="text-[9px] text-slate-500">Table T-01 · Dine-In</div>
+              </div>
+              <span class="rounded bg-amber-100 text-amber-800 text-[9px] font-extrabold px-1.5 py-0.5">★ 4.9</span>
+            </div>
+
+            
+            <div class="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-xs flex items-center justify-between">
+              <div class="space-y-0.5">
+                <span class="h-2 w-2 rounded-full bg-rose-500 inline-block"></span>
+                <div class="text-[10px] font-bold text-slate-900">Murgh Dum Biryani</div>
+                <div class="text-[10px] font-black text-slate-900">₹350</div>
+                <div class="text-[8px] text-slate-400">Serves 1-2 · ~15m</div>
+              </div>
+              <div class="h-14 w-14 rounded-xl bg-amber-100 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&auto=format&fit=crop&q=80" alt="Biryani" class="h-full w-full object-cover">
+              </div>
+            </div>
+
+            
+            <div class="rounded-2xl border border-emerald-300 bg-emerald-50 p-2.5 text-center space-y-1">
+              <div class="text-[9px] font-bold text-emerald-800">TABLE RUNNING CHECK</div>
+              <div class="text-xs font-black text-slate-900">₹1,145 (incl. 5% GST)</div>
+              <div class="flex justify-center gap-1 pt-1">
+                <span class="rounded bg-white border px-1.5 py-0.5 text-[8px] font-bold">GPay</span>
+                <span class="rounded bg-white border px-1.5 py-0.5 text-[8px] font-bold">PhonePe</span>
+                <span class="rounded bg-white border px-1.5 py-0.5 text-[8px] font-bold">Paytm</span>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-slate-900 text-white text-center py-2 text-[10px] font-extrabold">
+              Confirm Order (2 Items) · ₹765 ➔
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 7: SCREENSHOT SHOWCASE 4 — KITCHEN DISPLAY SYSTEM (KDS)
+         ========================================================================= -->
+    <section id="slide-7" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Kitchen Operations</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Multi-Station Kitchen Display System (KDS)
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Eliminates lost paper KOT tickets, grease stains, and screaming waitstaff. Orders instantly route to dedicated screens: Tandoor Screen, Curry Screen, and Bar Counter.
+          </p>
+
+          <div class="space-y-2.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Visual Aging Timers:</strong> Tickets turn flashing amber at 10m and flashing red at 15m.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Station Auto-Routing:</strong> Naan sends to Tandoor; Cocktails send to Bar.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Audio Chime:</strong> Loud audio chime triggers whenever a new ticket arrives.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Run on Any Tablet:</strong> Runs in fullscreen kiosk mode on any cheap Android tablet.</span>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="w-full max-w-xl rounded-3xl border-2 border-slate-700 bg-slate-950 p-4 shadow-2xl">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3 text-xs">
+            <span class="font-extrabold text-amber-400">KDS Station: Main Kitchen (4 Pending Tickets)</span>
+            <span class="text-slate-400 font-mono text-[10px]">Avg Speed: 12m 30s</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-2xl border border-amber-500/50 bg-slate-900 p-3 space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-black text-white">KOT #142 · Table T-02</span>
+                <span class="rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold px-1.5">08:14</span>
+              </div>
+              <div class="text-xs space-y-1 text-slate-300">
+                <div class="flex justify-between"><span>2x Murgh Dum Biryani</span><span class="text-amber-400">Spicy</span></div>
+                <div class="flex justify-between"><span>1x Butter Chicken</span><span>Boneless</span></div>
+              </div>
+              <button class="w-full py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">
+                Mark Ready ✓
+              </button>
+            </div>
+
+            <div class="rounded-2xl border border-rose-500/60 bg-slate-900 p-3 space-y-2 animate-pulse">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-black text-white">KOT #143 · Table T-07</span>
+                <span class="rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold px-1.5">16:42 ⚠️</span>
+              </div>
+              <div class="text-xs space-y-1 text-slate-300">
+                <div class="flex justify-between"><span>1x Paneer Butter Masala</span><span class="text-amber-400">Jain</span></div>
+                <div class="flex justify-between"><span>4x Garlic Naan</span><span>Crispy</span></div>
+              </div>
+              <button class="w-full py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs">
+                Rush Expedite ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 8: SCREENSHOT SHOWCASE 5 — OWNER ANTI-THEFT WHATSAPP ALERTS
+         ========================================================================= -->
+    <section id="slide-8" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-rose-400">Owner Security Guard</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Real-Time Anti-Theft & WhatsApp Surveillance
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Even when you are not at the restaurant, RestaurantOS acts as your personal detective. Suspicious events trigger an instant WhatsApp message to your phone.
+          </p>
+
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3">
+              <strong class="text-rose-400 block mb-0.5">🚨 Instant Alert: Void After KOT</strong>
+              <span>If staff cancels a ₹1,450 bill after the kitchen cooked the food, your phone buzzes immediately with cashier name & reason.</span>
+            </div>
+            <div class="rounded-xl border border-amber-900/60 bg-amber-950/20 p-3">
+              <strong class="text-amber-400 block mb-0.5">🚨 Instant Alert: High Discounts (> 20%)</strong>
+              <span>Stops unauthorized "friends & family" discounts on tables without your permission.</span>
+            </div>
+            <div class="rounded-xl border border-blue-900/60 bg-blue-950/20 p-3">
+              <strong class="text-blue-400 block mb-0.5">🚨 Instant Alert: Till Cash Variance (> ₹100)</strong>
+              <span>Detects physical drawer shortages at shift close before the cashier clocks out.</span>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="w-full max-w-sm rounded-[36px] border-4 border-slate-700 bg-slate-900 p-4 shadow-2xl">
+          <div class="flex items-center gap-2 border-b border-slate-800 pb-3 mb-3 text-xs">
+            <div class="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold">W</div>
+            <div>
+              <div class="font-bold text-white">RestaurantOS Security Bot</div>
+              <div class="text-[10px] text-emerald-400">Official WhatsApp Dispatch</div>
+            </div>
+          </div>
+
+          <div class="space-y-2.5 font-sans">
+            <div class="rounded-2xl bg-emerald-950/80 border border-emerald-500/30 p-3 text-xs text-slate-200 space-y-1">
+              <div class="flex justify-between text-[10px] text-emerald-400 font-bold">
+                <span>🚨 SECURITY ALERT: VOID AFTER KOT</span>
+                <span>14:32</span>
+              </div>
+              <p class="text-[11px] leading-relaxed">
+                Table <strong>T-03</strong> Bill for <strong>₹1,450</strong> was voided after KOT dispatch.<br>
+                Staff: <strong>Cashier Rahul</strong><br>
+                Supervisor PIN: <strong>Manager Vikram</strong><br>
+                Reason: <em>Customer complained delayed service</em>
+              </p>
+            </div>
+
+            <div class="rounded-2xl bg-slate-800 p-3 text-xs text-slate-200 space-y-1">
+              <div class="flex justify-between text-[10px] text-amber-400 font-bold">
+                <span>⚠️ ALERT: HIGH DISCOUNT APPLIED</span>
+                <span>15:10</span>
+              </div>
+              <p class="text-[11px]">
+                30% Manager Courtesy discount (₹620) applied on Table T-07 by Manager Vikram.
+              </p>
+            </div>
+
+            <div class="rounded-2xl bg-slate-800 p-3 text-xs text-slate-200 space-y-1">
+              <div class="flex justify-between text-[10px] text-blue-400 font-bold">
+                <span>🪙 SHIFT CLOSE: CASH TILL BALANCED</span>
+                <span>17:00</span>
+              </div>
+              <p class="text-[11px]">
+                Shift #44 closed by Manager Vikram. Counted Cash: ₹19,200. Variance: ₹0.00 (Balanced).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 9: SCREENSHOT SHOWCASE 6 — MENU ENGINEERING BCG MATRIX
+         ========================================================================= -->
+    <section id="slide-9" class="slide flex-col justify-center py-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="space-y-4 max-w-lg">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-violet-400">Profit Engineering</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Menu Engineering & BCG Profitability Matrix
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Most restaurants guess their dish prices. RestaurantOS uses the Boston Consulting Group Matrix to analyze every recipe's popularity vs profitability to unlock ₹40,000–₹80,000 in extra monthly profits.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2.5 text-xs">
+            <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-2.5">
+              <div class="font-extrabold text-emerald-400">⭐ Stars</div>
+              <div class="text-[10px] text-slate-300">High Profit & High Sales</div>
+              <div class="text-[9px] text-slate-500 mt-1">Keep quality strictly consistent</div>
+            </div>
+            <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-2.5">
+              <div class="font-extrabold text-amber-400">🐴 Plowhorses</div>
+              <div class="text-[10px] text-slate-300">Low Profit & High Sales</div>
+              <div class="text-[9px] text-slate-500 mt-1">Raise price ₹10–₹20 immediately</div>
+            </div>
+            <div class="rounded-xl border border-violet-500/30 bg-violet-950/20 p-2.5">
+              <div class="font-extrabold text-violet-400">🧩 Puzzles</div>
+              <div class="text-[10px] text-slate-300">High Profit & Low Sales</div>
+              <div class="text-[9px] text-slate-500 mt-1">Train staff to actively upsell</div>
+            </div>
+            <div class="rounded-xl border border-rose-500/30 bg-rose-950/20 p-2.5">
+              <div class="font-extrabold text-rose-400">🐶 Dogs</div>
+              <div class="text-[10px] text-slate-300">Low Profit & Low Sales</div>
+              <div class="text-[9px] text-slate-500 mt-1">Remove to eliminate food waste</div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="w-full max-w-xl rounded-3xl border-2 border-slate-700 bg-slate-950 p-5 shadow-2xl">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3 text-xs">
+            <span class="font-extrabold text-white">Menu Matrix · ₹1,48,650 Food Revenue Audited</span>
+            <span class="rounded bg-violet-500/20 text-violet-300 px-2 py-0.5 text-[10px] font-bold">11 Items Evaluated</span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="rounded-xl border border-slate-800 bg-slate-900 p-2.5 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">
+                  <span>⭐ Murgh Dum Biryani</span>
+                  <span class="rounded bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5">STAR</span>
+                </div>
+                <div class="text-[10px] text-slate-400">Sold: 142 · Food Cost: 28% · Margin: ₹252</div>
+              </div>
+              <span class="text-xs font-black text-emerald-400">+₹35,784 Profit</span>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-900 p-2.5 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">
+                  <span>🐴 Butter Garlic Naan</span>
+                  <span class="rounded bg-amber-500/20 text-amber-400 text-[9px] px-1.5">PLOWHORSE</span>
+                </div>
+                <div class="text-[10px] text-slate-400">Sold: 240 · Margin: ₹37 (Raise price ₹10)</div>
+              </div>
+              <span class="rounded bg-amber-500 text-slate-950 font-bold px-2 py-0.5 text-[10px]">+₹2,400 if +₹10</span>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-900 p-2.5 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">
+                  <span>🧩 Mutton Rogan Josh</span>
+                  <span class="rounded bg-violet-500/20 text-violet-400 text-[9px] px-1.5">PUZZLE</span>
+                </div>
+                <div class="text-[10px] text-slate-400">Sold: 24 · Huge Margin: ₹360/dish</div>
+              </div>
+              <span class="rounded border border-violet-400/40 text-violet-300 font-bold px-2 py-0.5 text-[10px]">Upsell Priority</span>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-900 p-2.5 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">
+                  <span>🐶 Mixed Veg Clear Soup</span>
+                  <span class="rounded bg-rose-500/20 text-rose-400 text-[9px] px-1.5">DOG</span>
+                </div>
+                <div class="text-[10px] text-slate-400">Sold: 14 · Margin: ₹65 · High spoilage</div>
+              </div>
+              <span class="rounded bg-rose-500/20 text-rose-300 font-bold px-2 py-0.5 text-[10px]">Remove Item</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 10: STATUTORY COMPLIANCE & HARDWARE ECOSYSTEM
+         ========================================================================= -->
+    <section id="slide-10" class="slide flex-col justify-center py-6">
+      <div class="text-center max-w-3xl mx-auto mb-8">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Indian Compliance</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-1">
+          100% Audit-Proof Indian GST & FSSAI Compliance
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-2">
+          Your Chartered Accountant (CA) will love you. Every bill conforms strictly to statutory food service guidelines.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 space-y-3">
+          <div class="text-2xl">🏛️</div>
+          <h3 class="text-base font-bold text-white">Section 9(1) GST Split</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Strict split 2.5% CGST + 2.5% SGST = 5.0% composite restaurant service tax under SAC Code <strong class="text-slate-200 font-mono">996331</strong>.
+          </p>
+          <div class="rounded-xl bg-slate-950 p-2 text-[11px] font-mono text-emerald-400">
+            Prefix: IND/2026-27/00285
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 space-y-3">
+          <div class="text-2xl">🖨️</div>
+          <h3 class="text-base font-bold text-white">14-Digit FSSAI Mandatory Printing</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            FSSAI license automatically printed on all customer thermal receipts and invoices, avoiding food safety compliance penalties.
+          </p>
+          <div class="rounded-xl bg-slate-950 p-2 text-[11px] font-mono text-amber-300">
+            FSSAI: 11223344000123
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 space-y-3">
+          <div class="text-2xl">📊</div>
+          <h3 class="text-base font-bold text-white">1-Click GSTR-1 & Tally Export</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Directly export monthly sales register and B2B/B2C GST breakdown into Excel/CSV formatted for direct upload to the GST Offline Portal.
+          </p>
+          <div class="rounded-xl bg-slate-950 p-2 text-[11px] font-mono text-blue-400">
+            Format: GSTR-1 JSON / Excel
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SLIDE 11: PRICING & ZERO-RISK PILOT OFFER
+         ========================================================================= -->
+    <section id="slide-11" class="slide flex-col justify-center items-center text-center py-8">
+      <div class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-4 py-1.5 text-xs font-bold text-emerald-400 mb-4">
+        <span>🤝 Simple, Transparent & High-ROI Pricing</span>
+      </div>
+
+      <h2 class="text-3xl sm:text-5xl font-black text-white max-w-2xl">
+        Start Free for 14 Days. Zero Risk.
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl">
+        No setup fees. No long-term lock-in. If RestaurantOS doesn't speed up your billing and save you money in 14 days, you pay nothing.
+      </p>
+
+      
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl text-left">
+        
+        <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6 space-y-4">
+          <div>
+            <div class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Starter</div>
+            <div class="text-3xl font-black text-white mt-1">₹999<span class="text-xs font-normal text-slate-400">/month</span></div>
+            <p class="text-[11px] text-slate-500 mt-1">Perfect for cafes, bakeries & quick service stalls.</p>
+          </div>
+          <ul class="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
+            <li>✓ Touch POS & Speed Billing</li>
+            <li>✓ Dynamic UPI QR on thermal bills</li>
+            <li>✓ 1 Branch · 5 Staff Accounts</li>
+            <li>✓ GST Compliant Invoices</li>
+          </ul>
+        </div>
+
+        
+        <div class="relative rounded-3xl border-2 border-amber-500 bg-gradient-to-b from-slate-900 to-slate-950 p-6 space-y-4 shadow-xl shadow-amber-500/10">
+          <span class="absolute -top-3 right-6 rounded-full bg-amber-500 px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-950">
+            Most Popular
+          </span>
+          <div>
+            <div class="text-xs font-extrabold text-amber-400 uppercase tracking-wider">Professional</div>
+            <div class="text-3xl font-black text-white mt-1">₹1,999<span class="text-xs font-normal text-slate-400">/month</span></div>
+            <p class="text-[11px] text-slate-400 mt-1">For casual dine-in restaurants & bars.</p>
+          </div>
+          <ul class="text-xs text-slate-200 space-y-2 border-t border-slate-800 pt-3">
+            <li>✓ <strong>Everything in Starter, plus:</strong></li>
+            <li>✓ 2D Interactive Floor Plan Layout</li>
+            <li>✓ Multi-Station Kitchen Display (KDS)</li>
+            <li>✓ Luxury QR Menu & Pay-at-Table</li>
+            <li>✓ Owner Anti-Theft WhatsApp Alerts</li>
+            <li>✓ Recipe Inventory & BOM Deduction</li>
+          </ul>
+        </div>
+
+        
+        <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6 space-y-4">
+          <div>
+            <div class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Enterprise Multi-Outlet</div>
+            <div class="text-3xl font-black text-white mt-1">₹3,499<span class="text-xs font-normal text-slate-400">/month</span></div>
+            <p class="text-[11px] text-slate-500 mt-1">For growing chains & multi-outlet franchises.</p>
+          </div>
+          <ul class="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
+            <li>✓ Multi-Branch Consolidated Analytics</li>
+            <li>✓ Central Commissary & Warehouse Transfers</li>
+            <li>✓ Menu Engineering Matrix & P&L</li>
+            <li>✓ Dedicated WhatsApp Account Manager</li>
+          </ul>
+        </div>
+      </div>
+
+      
+      <div class="mt-10 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 max-w-2xl text-center space-y-2">
+        <h3 class="text-sm font-extrabold text-white">Our 24-Hour Free Onboarding Guarantee:</h3>
+        <p class="text-xs text-slate-300">
+          Hand us your physical paper menu or photo. Our team will digitize your entire menu, categories, GST rates, and setup your floor plan within 24 hours for free.
+        </p>
+        <div class="pt-2 text-xs font-bold text-amber-400">
+          Ready for a live 5-minute counter demo? Let's punch Table 1 together!
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- SCRIPT FOR SLIDE CONTROLS & KEYBOARD SHORTCUTS -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 11;
+
+    function updateSlide() {
+      for (let i = 1; i <= totalSlides; i++) {
+        const el = document.getElementById('slide-' + i);
+        if (el) {
+          if (i === currentSlide) {
+            el.classList.add('active');
+          } else {
+            el.classList.remove('active');
+          }
+        }
+      }
+      document.getElementById('currentSlideNumber').innerText = currentSlide < 10 ? '0' + currentSlide : currentSlide;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    });
+  </script>
+</body>
+</html>
+

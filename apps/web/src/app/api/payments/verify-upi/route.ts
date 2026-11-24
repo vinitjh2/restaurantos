@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { findStaffByPin } from "@/lib/server/pin-security";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,7 @@ export async function POST(req: NextRequest) {
     // Optional cashier PIN verification if provided
     let verifiedByName = cashierName || "Cashier Verified";
     if (cashierPin) {
-      const staff = await prisma.staff.findFirst({
-        where: { pinCode: cashierPin, isActive: true },
-      });
+      const staff = await findStaffByPin(cashierPin);
       if (!staff) {
         return NextResponse.json(
           { success: false, error: "Invalid Cashier PIN for payment authorization" },

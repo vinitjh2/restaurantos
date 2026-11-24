@@ -1,13 +1,19 @@
 {
   "name": "@restaurantos/web",
   "version": "1.0.0",
+  "description": "DineSutra — Restaurant Operating System & POS (Desktop Terminal)",
+  "author": "SutraUniverse Inc.",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start -H 0.0.0.0",
     "seed": "tsx scripts/seed-all.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron:dev": "electron electron/main.js",
+    "electron:build": "electron-builder --win",
+    "mobile:sync": "cap sync"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
@@ -20,6 +26,7 @@
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.468.0",
+    "motion": "^14.12.0",
     "next": "^14.2.23",
     "pdfkit": "^0.20.2",
     "qrcode": "^1.5.4",
@@ -37,6 +44,8 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "postcss": "^8.4.49",
     "prisma": "^6.4.1",
     "tailwindcss": "^3.4.16",

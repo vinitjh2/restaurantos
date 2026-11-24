@@ -106,6 +106,7 @@ export default function WaiterTerminalPage() {
   const [isSendingKOT, setIsSendingKOT] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [activeViewTab, setActiveViewTab] = useState<"NEW_ORDER" | "ACTIVE_KOTS">("NEW_ORDER");
+  const [mobileSection, setMobileSection] = useState<"TABLES" | "MENU">("TABLES");
   const [liveKOTs, setLiveKOTs] = useState<LiveKOT[]>([
     {
       id: "kot-1",
@@ -268,40 +269,57 @@ export default function WaiterTerminalPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] space-y-4">
-      {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+    <div className="flex flex-col h-screen p-3 sm:p-4 bg-slate-100 space-y-3 overflow-hidden">
+      {/* Top Header Bar (No Sidebar - Dedicated Captain View) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-600/20">
-            <UtensilsCrossed className="h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 border border-amber-500/50 shadow-xs overflow-hidden p-0.5">
+            <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-lg" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                Waiter & Captain Floor Terminal
+              <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
+                DineSutra Captain Station
               </h1>
               <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-[10px]">
-                Floor Service Station
+                Floor Service Terminal
               </Badge>
+              <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                KDS Connected
+              </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              High-speed table ordering, modifiers, and instant kitchen ticket (KOT) routing
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Dedicated staff view · Speed table ordering, modifier customization & kitchen KOT firing
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Switch to Phone View */}
           <Link
             href="/mobile/waiter"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition-colors"
           >
             <Smartphone className="h-3.5 w-3.5 text-amber-600" />
-            <span>Switch to Phone Handheld</span>
+            <span>Mobile Phone View</span>
           </Link>
-          <div className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
+
+          {/* Captain Badge */}
+          <div className="flex items-center gap-1.5 rounded-xl bg-slate-100 border border-slate-200/80 px-3 py-1.5 text-xs font-bold text-slate-700">
             <Users className="h-3.5 w-3.5 text-slate-500" />
             <span>{captainName}</span>
           </div>
+
+          {/* Cashier POS Link for Managers */}
+          <Link
+            href="/pos"
+            className="inline-flex items-center gap-1 rounded-xl bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors"
+            title="Switch to Cashier POS"
+          >
+            <Receipt className="h-3.5 w-3.5 text-amber-400" />
+            <span>Cashier POS</span>
+          </Link>
         </div>
       </div>
 
@@ -320,10 +338,44 @@ export default function WaiterTerminalPage() {
         </div>
       )}
 
+      {/* Mobile Tab Switcher (< lg screens) */}
+      <div className="flex lg:hidden bg-white rounded-2xl border border-slate-200 p-1 shadow-2xs">
+        <button
+          onClick={() => setMobileSection("TABLES")}
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            mobileSection === "TABLES"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>🪑 Select Table</span>
+          <span className="rounded-md bg-slate-800 px-1.5 py-0.5 text-[10px] text-amber-300 font-mono">
+            {selectedTable.tableNumber}
+          </span>
+        </button>
+        <button
+          onClick={() => setMobileSection("MENU")}
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            mobileSection === "MENU"
+              ? "bg-indigo-600 text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>🍽️ Menu & KOT Cart</span>
+          {cart.length > 0 && (
+            <span className="rounded-full bg-white text-indigo-700 text-[10px] font-black px-1.5 py-0.5">
+              {cart.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
         {/* Left Column: Tables Floor Map (4 cols) */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs overflow-hidden">
+        <div className={`col-span-12 lg:col-span-4 flex-col bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs overflow-hidden ${
+          mobileSection === "TABLES" ? "flex" : "hidden lg:flex"
+        }`}>
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -364,6 +416,7 @@ export default function WaiterTerminalPage() {
                   onClick={() => {
                     setSelectedTable(t);
                     setCart([]);
+                    setMobileSection("MENU");
                   }}
                   className={`text-left p-3 rounded-xl border transition-all relative ${
                     isSelected
@@ -419,10 +472,19 @@ export default function WaiterTerminalPage() {
         </div>
 
         {/* Right Column: Menu Catalog & KOT Cart (8 cols) */}
-        <div className="col-span-12 lg:col-span-8 flex flex-col bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs overflow-hidden">
+        <div className={`col-span-12 lg:col-span-8 flex-col bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs overflow-hidden ${
+          mobileSection === "MENU" ? "flex" : "hidden lg:flex"
+        }`}>
           {/* Active Table Status Banner */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white p-3.5 rounded-xl shadow-xs">
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileSection("TABLES")}
+                className="lg:hidden inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-2 py-1 text-[10px] font-bold text-amber-300 border border-slate-700"
+                title="Change Table"
+              >
+                <span>← Tables</span>
+              </button>
               <div className="rounded-lg bg-indigo-600 px-2.5 py-1 text-sm font-black text-white">
                 {selectedTable.tableNumber}
               </div>
