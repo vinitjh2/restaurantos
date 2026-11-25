@@ -109,7 +109,7 @@ export default function PrivacyPage() {
                 In compliance with the Information Technology Act, 2000 and Rule 5(9) of the IT Rules, 2011, you may direct any data privacy inquiries, consent withdrawals, or deletion requests to our Grievance Officer:
               </p>
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 font-mono text-xs text-slate-300">
-                <p><strong className="text-white">Grievance Officer:</strong> Data Privacy Cell</p>
+                <p><strong className="text-white">Grievance Officer:</strong> Vinit Kumar Jha (Data Privacy Desk)</p>
                 <p><strong className="text-white">Organization:</strong> SutraUniverse Technologies</p>
                 <p><strong className="text-white">Email:</strong> support@sutrauniverse.com</p>
                 <p><strong className="text-white">Phone / WhatsApp:</strong> +91 6289450230</p>

@@ -58,6 +58,17 @@ export default function ContactPage() {
               <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-6">
                 <h3 className="text-lg font-bold text-white">Official Communication</h3>
 
+                {/* Merchant / Legal Entity Badge for Payment Gateway Compliance */}
+                <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-xs">
+                  <span className="block font-bold text-indigo-400 uppercase text-[10px] tracking-wider mb-1">
+                    Merchant Legal Entity &amp; Operating Name
+                  </span>
+                  <p className="text-white font-extrabold text-sm">Vinit Kumar Jha</p>
+                  <p className="text-slate-400 text-[11px] mt-0.5">
+                    Operating trade brand: <span className="text-amber-400 font-semibold">SutraUniverse</span> (DineSutra)
+                  </p>
+                </div>
+
                 <div className="space-y-4 text-xs">
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">

@@ -116,7 +116,7 @@ export default function AboutPage() {
           <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-8 space-y-4 text-center">
             <h3 className="text-xl font-bold text-white">About the Organization</h3>
             <p className="text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              DineSutra is an operating system by <strong className="text-white">SutraUniverse Technologies</strong>, registered and operated in Kolkata, West Bengal, India. We are committed to building resilient, beautiful, and accessible software for India&apos;s culinary entrepreneurs.
+              DineSutra is an operating system by <strong className="text-white">Vinit Kumar Jha</strong> (operating as <strong className="text-amber-400 font-bold">SutraUniverse Technologies</strong>), registered and operated in Kolkata, West Bengal, India. We are committed to building resilient, beautiful, and accessible software for India&apos;s culinary entrepreneurs.
             </p>
             <div className="flex flex-wrap justify-center gap-6 pt-4 text-xs font-semibold text-slate-300">
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Kolkata Headquarters</span>

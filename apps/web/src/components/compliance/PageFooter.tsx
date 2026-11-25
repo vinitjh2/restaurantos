@@ -16,7 +16,7 @@ export const PageFooter: React.FC = () => {
               <DineSutraLogo variant="full" className="h-8 w-auto" />
             </Link>
             <p className="text-xs text-slate-400 leading-relaxed max-w-md mb-4 font-medium">
-              Enterprise Restaurant &amp; Bar Operating System engineered in Kolkata. High-speed touch POS, AI CCTV Vision radar, multi-station KDS, and direct QR ordering. 100% direct revenue with zero aggregator commission.
+              Enterprise Restaurant &amp; Bar Operating System engineered in Kolkata. Owned and operated by <strong className="text-white font-bold">Vinit Kumar Jha</strong> (operating under brand <strong className="text-amber-400 font-bold">SutraUniverse</strong>). High-speed touch POS, AI CCTV Vision radar, multi-station KDS, and direct QR ordering. 100% direct revenue with zero aggregator commission.
             </p>
             <div className="flex flex-col gap-1.5 text-xs text-slate-300">
               <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export const PageFooter: React.FC = () => {
             <span>DPDP Act 2023 · IT Act 2000 · SAC 996331/996332 GST · RBI e-Mandate Compliant</span>
           </div>
           <div>
-            <span>© {new Date().getFullYear()} SutraUniverse Technologies. All rights reserved. Kolkata, India.</span>
+            <span>© {new Date().getFullYear()} Vinit Kumar Jha (Operating as SutraUniverse / DineSutra). All rights reserved. Kolkata, India.</span>
           </div>
         </div>
       </div>

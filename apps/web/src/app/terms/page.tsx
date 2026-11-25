@@ -27,7 +27,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
-              Effective Date: November 1, 2026 · Governing Entity: SutraUniverse Technologies, Kolkata, India.
+              Effective Date: November 1, 2026 · Governing Entity: Vinit Kumar Jha (Trading as SutraUniverse Technologies), Kolkata, India.
             </p>
           </div>
 
@@ -39,7 +39,7 @@ export default function TermsPage() {
                 <span>1. Acceptance of Terms</span>
               </h2>
               <p>
-                By creating an account, launching a restaurant tenant, or subscribing to <strong>DineSutra</strong> (accessible at dinesutra.sutrauniverse.com or authorized mobile/desktop clients), you enter into a legally binding contract with <strong>SutraUniverse Technologies</strong> (&quot;SutraUniverse&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), headquartered in Kolkata, West Bengal, India.
+                By creating an account, launching a restaurant tenant, or subscribing to <strong>DineSutra</strong> (accessible at dinesutra.sutrauniverse.com or authorized mobile/desktop clients), you enter into a legally binding contract with <strong>Vinit Kumar Jha</strong> operating under the trade name <strong>SutraUniverse Technologies</strong> (&quot;SutraUniverse&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), headquartered in Kolkata, West Bengal, India.
               </p>
               <p>
                 If you are registering on behalf of a restaurant, cafe, bar, hotel, or culinary enterprise, you represent and warrant that you hold full legal authority to bind that business entity to these Terms.
