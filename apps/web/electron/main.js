@@ -50,7 +50,7 @@ async function createWindow() {
   const hasLocalServer = await checkLocalServerRunning(3000);
   const targetUrl = hasLocalServer
     ? "http://localhost:3000/dashboard?source=desktop_terminal"
-    : "https://dinesutra.sutrauniverse.com/dashboard?source=desktop_terminal";
+    : "https://dine.sutrauniverse.com/dashboard?source=desktop_terminal";
 
   console.log(`[DineSutra Desktop Hub] Loading target URL: ${targetUrl}`);
   mainWindow.loadURL(targetUrl);

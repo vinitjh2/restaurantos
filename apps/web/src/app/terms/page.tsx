@@ -39,7 +39,7 @@ export default function TermsPage() {
                 <span>1. Acceptance of Terms</span>
               </h2>
               <p>
-                By creating an account, launching a restaurant tenant, or subscribing to <strong>DineSutra</strong> (accessible at dinesutra.sutrauniverse.com or authorized mobile/desktop clients), you enter into a legally binding contract with <strong>Vinit Kumar Jha</strong> operating under the trade name <strong>SutraUniverse (DineSutra)</strong> (&quot;SutraUniverse&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), headquartered in Kolkata, West Bengal, India.
+                By creating an account, launching a restaurant tenant, or subscribing to <strong>DineSutra</strong> (accessible at dine.sutrauniverse.com or authorized mobile/desktop clients), you enter into a legally binding contract with <strong>Vinit Kumar Jha</strong> operating under the trade name <strong>SutraUniverse (DineSutra)</strong> (&quot;SutraUniverse&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), headquartered in Kolkata, West Bengal, India.
               </p>
               <p>
                 If you are registering on behalf of a restaurant, cafe, bar, hotel, or culinary enterprise, you represent and warrant that you hold full legal authority to bind that business entity to these Terms.

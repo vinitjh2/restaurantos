@@ -101,10 +101,10 @@ const KNOWLEDGE_RESPONSES: Array<{
   {
     keywords: ["contact", "human", "call", "whatsapp", "support", "talk", "phone", "number"],
     reply:
-      "You can connect directly with our engineering and support leads anytime:\n\n📞 Phone: +91 80 4123 4567\n💬 WhatsApp: +91 98765 43210\n📧 Email: care@dinesutra.sutrauniverse.com\n\nOur restaurant specialists are available 24/7 during operational dinner hours.",
+      "You can connect directly with our engineering and support leads anytime:\n\n📞 Phone: +91 6289450230\n💬 WhatsApp: +91 6289450230\n📧 Email: support@sutrauniverse.com\n\nOur restaurant specialists are available 24/7 during operational dinner hours.",
     actionLinks: [
-      { label: "Chat on WhatsApp", href: "https://wa.me/918041234567?text=Hi%20DineSutra%20Support", isExternal: true },
-      { label: "Call Support Helpline", href: "tel:+918041234567" },
+      { label: "Chat on WhatsApp", href: "https://wa.me/916289450230?text=Hi%20DineSutra%20Support", isExternal: true },
+      { label: "Call Support Helpline", href: "tel:+916289450230" },
     ],
   },
 ];
