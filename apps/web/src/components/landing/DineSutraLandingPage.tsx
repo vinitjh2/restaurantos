@@ -1275,7 +1275,7 @@ export function DineSutraLandingPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 pt-4 border-t border-slate-800/40">
-              <span>© {new Date().getFullYear()} SutraUniverse Technologies. All rights reserved. Kolkata, India.</span>
+              <span>© {new Date().getFullYear()} Vinit Kumar Jha — SutraUniverse (DineSutra). All rights reserved. Kolkata, India.</span>
               <div className="flex items-center gap-4">
                 <Link href="/" className="hover:text-slate-300">Staff Portal</Link>
                 <Link href="/tables/cctv" className="hover:text-slate-300">AI CCTV Radar</Link>

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRestaurantStore } from '@/stores/restaurant-store';
 import { offlineStorage } from '@/lib/offline/offline-storage';
@@ -19,6 +19,15 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDineAdminHost, setIsDineAdminHost] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hostname.toLowerCase().includes('dineadmin')) {
+      setIsDineAdminHost(true);
+    }
+  }, []);
+
+  const isAdminPortal = isDineAdminHost || redirectPath.startsWith('/platform-admin');
 
   const { setOrganization, setBranch } = useRestaurantStore();
 
@@ -98,27 +107,54 @@ function LoginForm() {
       {/* Brand Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl mb-2">
-          <DineSutraLogo variant="icon" className="w-12 h-12" />
+          {isAdminPortal ? (
+            <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+          ) : (
+            <DineSutraLogo variant="icon" className="w-12 h-12" />
+          )}
         </div>
         <div className="flex items-center justify-center gap-1.5">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Dine<span className="text-amber-500">Sutra</span>
-          </h1>
-          <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
-            POS
-          </span>
+          {isAdminPortal ? (
+            <>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white">
+                Dine<span className="text-indigo-400">Admin</span>
+              </h1>
+              <span className="rounded-full bg-indigo-500/20 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-bold text-indigo-300">
+                CONTROL
+              </span>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white">
+                Dine<span className="text-amber-500">Sutra</span>
+              </h1>
+              <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                POS
+              </span>
+            </>
+          )}
         </div>
         <p className="text-xs text-slate-400">
-          Enterprise Cloud Multi-Tenant Restaurant Platform · Part of <span className="text-amber-400 font-semibold">SutraUniverse</span>
+          {isAdminPortal ? (
+            <>Restricted Platform Management &amp; Audit Console · <span className="text-amber-400 font-semibold">SutraUniverse</span></>
+          ) : (
+            <>Enterprise Cloud Multi-Tenant Restaurant Platform · <span className="text-amber-400 font-semibold">SutraUniverse (DineSutra)</span></>
+          )}
         </p>
       </div>
 
       {/* Main Card */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl shadow-2xl space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-white">Sign In to Dashboard</h2>
+          <h2 className="text-xl font-bold text-white">
+            {isAdminPortal ? 'Admin & Auditor Sign In' : 'Sign In to Dashboard'}
+          </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Access your restaurant branch, POS terminals, and live orders
+            {isAdminPortal
+              ? 'Enter your authorized Super Admin or Auditor credentials'
+              : 'Access your restaurant branch, POS terminals, and live orders'}
           </p>
         </div>
 
@@ -135,11 +171,12 @@ function LoginForm() {
               <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
                 type="email"
+                name="work-email"
                 required
                 autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@restaurant.com"
+                placeholder="name@company.com"
                 className="w-full bg-slate-950/70 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
               />
             </div>
@@ -151,6 +188,7 @@ function LoginForm() {
               <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
                 type="password"
+                name="account-password"
                 required
                 autoComplete="new-password"
                 value={password}
@@ -173,12 +211,14 @@ function LoginForm() {
       </div>
 
       {/* Register CTA */}
-      <div className="text-center text-xs text-slate-400">
-        Want to register a new restaurant?{' '}
-        <Link href="/register" className="text-orange-400 font-bold hover:underline">
-          Register your business here
-        </Link>
-      </div>
+      {!isAdminPortal && (
+        <div className="text-center text-xs text-slate-400">
+          Want to register a new restaurant?{' '}
+          <Link href="/register" className="text-orange-400 font-bold hover:underline">
+            Register your business here
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

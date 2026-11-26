@@ -26,6 +26,7 @@ export function TopNav() {
   const {
     organizations,
     branches,
+    currentUser,
     currentOrgId,
     currentBranchId,
     setOrganization,
@@ -226,30 +227,50 @@ export function TopNav() {
 
         {/* User Profile */}
         <div className="relative">
-          <button
-            onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-100 transition-colors"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white shadow-xs">
-              AR
-            </div>
-            <div className="hidden xl:flex flex-col text-left">
-              <span className="text-xs font-semibold text-slate-900 leading-none">Ananya Roy</span>
-              <span className="text-[10px] text-slate-400 font-medium mt-0.5">General Manager</span>
-            </div>
-            <ChevronDown className="h-3 w-3 text-slate-400" />
-          </button>
+          {(() => {
+            const displayName = currentUser?.name || "Authorized Staff";
+            const displayEmail = currentUser?.email || "Authenticated Session";
+            const displayRole =
+              currentUser?.role === "TENANT_OWNER"
+                ? "Restaurant Owner"
+                : currentUser?.role === "BRANCH_MANAGER"
+                ? "Branch Manager"
+                : currentUser?.role === "STAFF"
+                ? "POS Cashier / Staff"
+                : currentUser?.role || "Restaurant Team";
+            const initials = displayName
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((w) => w[0]?.toUpperCase() || "")
+              .join("") || "DS";
 
-          {profileOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 animate-in fade-in-50 zoom-in-95 text-xs">
-              <div className="px-3 py-2 border-b border-slate-100">
-                <div className="font-semibold text-slate-900">Ananya Roy</div>
-                <div className="text-[11px] text-slate-400">manager@bawarchiroyale.in</div>
-                <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-600 font-semibold">
-                  <ShieldCheck className="h-3 w-3" />
-                  <span>Admin & Tax Authority</span>
-                </div>
-              </div>
+            return (
+              <>
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white shadow-xs">
+                    {initials}
+                  </div>
+                  <div className="hidden xl:flex flex-col text-left">
+                    <span className="text-xs font-semibold text-slate-900 leading-none">{displayName}</span>
+                    <span className="text-[10px] text-slate-400 font-medium mt-0.5">{displayRole}</span>
+                  </div>
+                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                </button>
+
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 animate-in fade-in-50 zoom-in-95 text-xs">
+                    <div className="px-3 py-2 border-b border-slate-100">
+                      <div className="font-semibold text-slate-900">{displayName}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{displayEmail}</div>
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-600 font-semibold">
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>{displayRole}</span>
+                      </div>
+                    </div>
               <div className="py-1">
                 <Link
                   href="/settings"
@@ -289,8 +310,11 @@ export function TopNav() {
                   <span>Lock Terminal / Logout</span>
                 </button>
               </div>
-            </div>
-          )}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
     </header>

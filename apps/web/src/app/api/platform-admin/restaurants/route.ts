@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const plan = searchParams.get("plan");
 
     const where: any = {
-      slug: { not: "platform-hq" },
+      slug: { notIn: ["platform-hq", "sutrauniverse-hq"] },
     };
 
     if (status && status !== "ALL") {

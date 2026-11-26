@@ -47,6 +47,7 @@ export function AppShell({ children }: AppShellProps) {
         .then((data) => {
           if (isMounted && data?.success && data.organization) {
             setSessionData({
+              user: data.user || null,
               organization: data.organization,
               branches: data.organization.branches,
             });

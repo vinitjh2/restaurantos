@@ -110,7 +110,7 @@ export default function PrivacyPage() {
               </p>
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 font-mono text-xs text-slate-300">
                 <p><strong className="text-white">Grievance Officer:</strong> Vinit Kumar Jha (Data Privacy Desk)</p>
-                <p><strong className="text-white">Organization:</strong> SutraUniverse Technologies</p>
+                <p><strong className="text-white">Organization:</strong> SutraUniverse (DineSutra)</p>
                 <p><strong className="text-white">Email:</strong> support@sutrauniverse.com</p>
                 <p><strong className="text-white">Phone / WhatsApp:</strong> +91 6289450230</p>
                 <p><strong className="text-white">Location:</strong> Kolkata, West Bengal, India</p>

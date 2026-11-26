@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     console.error("Fetch plans error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: error.statusCode || 500 }
     );
   }
 }

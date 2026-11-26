@@ -113,6 +113,7 @@ interface InvoiceRecord {
 export default function PlatformAdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "restaurants" | "plans" | "invoices" | "razorpay">("overview");
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ email: string; name: string; role: string } | null>(null);
   const isAuditor = currentUser?.role === "PLATFORM_AUDITOR";
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
@@ -140,11 +141,14 @@ export default function PlatformAdminPage() {
   };
 
   const handleLogout = async () => {
+    const isAdminHost =
+      typeof window !== "undefined" && window.location.hostname.toLowerCase().includes("dineadmin");
+    const dest = isAdminHost ? "/login?redirect=/platform-admin" : "/login";
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
+      window.location.href = dest;
     } catch {
-      window.location.href = "/login";
+      window.location.href = dest;
     }
   };
 
@@ -159,6 +163,13 @@ export default function PlatformAdminPage() {
         fetch("/api/auth/me"),
       ]);
 
+      if (meRes.status === 401 || ovRes.status === 401) {
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?redirect=/platform-admin";
+        }
+        return;
+      }
+
       const [ovData, restData, plansData, invData, meData] = await Promise.all([
         ovRes.json(),
         restRes.json(),
@@ -167,11 +178,25 @@ export default function PlatformAdminPage() {
         meRes.json(),
       ]);
 
+      if (meData?.success && meData?.user) {
+        setCurrentUser(meData.user);
+        const role = meData.user.role;
+        if (role !== "PLATFORM_OWNER" && role !== "PLATFORM_AUDITOR") {
+          setAccessDenied(true);
+          return;
+        }
+      }
+
+      if (ovRes.status === 403 || (!ovData.success && ovData.error?.toLowerCase().includes("requires"))) {
+        setAccessDenied(true);
+        return;
+      }
+
+      setAccessDenied(false);
       if (ovData.success) setMetrics(ovData.metrics);
       if (restData.success) setRestaurants(restData.restaurants);
       if (plansData.success) setPlans(plansData.plans);
       if (invData.success) setInvoices(invData.invoices);
-      if (meData?.success && meData?.user) setCurrentUser(meData.user);
     } catch (err) {
       console.error("Failed to load platform admin telemetry:", err);
     } finally {
@@ -277,6 +302,37 @@ export default function PlatformAdminPage() {
 
     return matchesSearch && matchesStatus && matchesPlan;
   });
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100 font-sans">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-xl text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-black text-slate-900">Restricted Admin Portal</h1>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Signed in as <span className="font-mono font-semibold">{currentUser?.email || "restaurant user"}</span> ({currentUser?.role || "UNAUTHORIZED"}). This console requires authorized Super Admin or Platform Auditor credentials.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <Button
+              onClick={handleLogout}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold gap-1.5"
+            >
+              <Power className="w-3.5 h-3.5" />
+              <span>Sign Out &amp; Switch Account</span>
+            </Button>
+            <Link
+              href="/dashboard"
+              className="flex-1 inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Back to Restaurant
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto px-4 sm:px-6 pt-6">
@@ -569,7 +625,38 @@ export default function PlatformAdminPage() {
               <div className="space-y-2.5 text-xs">
                 {plans.map((p) => {
                   const subscriberCount = restaurants.filter((r) => r.subscriptionPlan === p.code).length;
-                  return (
+                  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100 font-sans">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-xl text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-black text-slate-900">Restricted Admin Portal</h1>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Signed in as <span className="font-mono font-semibold">{currentUser?.email || "restaurant user"}</span> ({currentUser?.role || "UNAUTHORIZED"}). This console requires authorized Super Admin or Platform Auditor credentials.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <Button
+              onClick={handleLogout}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold gap-1.5"
+            >
+              <Power className="w-3.5 h-3.5" />
+              <span>Sign Out &amp; Switch Account</span>
+            </Button>
+            <Link
+              href="/dashboard"
+              className="flex-1 inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Back to Restaurant
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
                     <div key={p.code} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
                       <div>
                         <span className="font-bold text-slate-900 block">{p.name}</span>

@@ -117,7 +117,7 @@ export default function RefundPage() {
                 If you encounter duplicate transactions, technical billing anomalies, or have questions regarding your invoices, contact our Kolkata billing team directly:
               </p>
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 font-mono text-xs text-slate-300">
-                <p><strong className="text-white">Billing Support:</strong> SutraUniverse Technologies</p>
+                <p><strong className="text-white">Billing Support:</strong> Vinit Kumar Jha — SutraUniverse (DineSutra)</p>
                 <p><strong className="text-white">Email:</strong> support@sutrauniverse.com (Subject: Billing / Refund Request)</p>
                 <p><strong className="text-white">Phone / WhatsApp:</strong> +91 6289450230</p>
                 <p><strong className="text-white">Operating Hours:</strong> Monday – Saturday, 10:00 AM – 7:00 PM IST</p>

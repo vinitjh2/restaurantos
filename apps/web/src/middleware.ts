@@ -9,13 +9,16 @@ export function middleware(request: NextRequest) {
   if (isDineAdmin) {
     if (pathname === "/" || pathname === "/landing") {
       const sessionToken = request.cookies.get("restaurantos_session")?.value;
-      if (sessionToken) {
-        return NextResponse.redirect(new URL("/platform-admin", request.url));
-      } else {
-        const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("redirect", "/platform-admin");
-        return NextResponse.redirect(loginUrl);
-      }
+      const dest = sessionToken
+        ? new URL("/platform-admin", request.url)
+        : (() => {
+            const loginUrl = new URL("/login", request.url);
+            loginUrl.searchParams.set("redirect", "/platform-admin");
+            return loginUrl;
+          })();
+      const res = NextResponse.redirect(dest);
+      res.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate");
+      return res;
     }
   }
 

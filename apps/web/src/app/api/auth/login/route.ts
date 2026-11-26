@@ -156,7 +156,8 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        let branch = org.branches.find((b) => b.code === (matchedSystemAccount.branchCode || "IND"));
+        let branch: (typeof org.branches)[number] | null =
+          org.branches.find((b) => b.code === (matchedSystemAccount.branchCode || "IND")) ?? null;
         if (!branch) {
           branch = await prisma.branch.findFirst({
             where: { code: matchedSystemAccount.branchCode || "IND" },

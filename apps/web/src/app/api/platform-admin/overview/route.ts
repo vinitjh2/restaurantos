@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
     // Exclude the platform HQ organization itself from metrics
     const restaurantWhere = {
-      slug: { not: "platform-hq" },
+      slug: { notIn: ["platform-hq", "sutrauniverse-hq"] },
     };
 
     const [

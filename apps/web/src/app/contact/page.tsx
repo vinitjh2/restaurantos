@@ -65,7 +65,7 @@ export default function ContactPage() {
                   </span>
                   <p className="text-white font-extrabold text-sm">Vinit Kumar Jha</p>
                   <p className="text-slate-400 text-[11px] mt-0.5">
-                    Operating trade brand: <span className="text-amber-400 font-semibold">SutraUniverse</span> (DineSutra)
+                    Operating trade brand: <span className="text-amber-400 font-semibold">SutraUniverse (DineSutra)</span>
                   </p>
                 </div>
 
