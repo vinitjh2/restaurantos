@@ -96,7 +96,7 @@ const PLATFORM_DETAILS: Record<string, PlatformDetail> = {
       { label: "KOT Routing", value: "Multi-Station" },
       { label: "GST Compliance", value: "SAC 996331" },
     ],
-    liveUrl: "https://dinesutra.sutrauniverse.com",
+    liveUrl: "https://dine.sutrauniverse.com",
   },
   staysutra: {
     id: "staysutra",
@@ -409,7 +409,7 @@ export const SutraUniversePortal: React.FC<SutraUniversePortalProps> = ({ onNavi
 
             <div className="mt-8 pt-4 border-t border-slate-100 flex items-center gap-3">
               <a
-                href="https://dinesutra.sutrauniverse.com"
+                href="https://dine.sutrauniverse.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider text-center transition-all inline-flex items-center justify-center gap-1.5"
@@ -806,7 +806,7 @@ export const SutraUniversePortal: React.FC<SutraUniversePortalProps> = ({ onNavi
                   </a>
                 </li>
                 <li>
-                  <a href="https://dinesutra.sutrauniverse.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900">
+                  <a href="https://dine.sutrauniverse.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900">
                     DineSutra (Restaurant OS)
                   </a>
                 </li>

@@ -59,7 +59,7 @@ export const PageFooter: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://dinesutra.sutrauniverse.com"
+                  href="https://dine.sutrauniverse.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-rose-600 flex items-center gap-1.5"
