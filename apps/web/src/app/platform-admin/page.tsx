@@ -30,7 +30,16 @@ import {
   Edit2,
   Power,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
+
+const DEMO_RESTAURANT_SLUGS = [
+  "bawarchi-royale",
+  "himalayan-momo",
+  "cafe-mocha",
+  "spice-route",
+  "suspended-eats",
+];
 import { formatINR } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -129,6 +138,8 @@ export default function PlatformAdminPage() {
   const [editingPlan, setEditingPlan] = useState<PlanRecord | null>(null);
   const [assignPlanModalOrg, setAssignPlanModalOrg] = useState<RestaurantRecord | null>(null);
   const [selectedPlanToAssign, setSelectedPlanToAssign] = useState("GROWTH");
+  const [deleteConfirmOrg, setDeleteConfirmOrg] = useState<RestaurantRecord | null>(null);
+  const [confirmPurgeDemos, setConfirmPurgeDemos] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -289,6 +300,65 @@ export default function PlatformAdminPage() {
       setActionLoading(false);
     }
   };
+
+  const handleDeleteRestaurant = async () => {
+    if (isAuditor) {
+      showToast("Action blocked: Read-Only Auditor Mode cannot delete restaurants.");
+      return;
+    }
+    if (!deleteConfirmOrg) return;
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/platform-admin/restaurants/${deleteConfirmOrg.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Deleted restaurant "${deleteConfirmOrg.name}" permanently.`);
+        if (selectedRestaurant?.id === deleteConfirmOrg.id) {
+          setSelectedRestaurant(null);
+        }
+        setDeleteConfirmOrg(null);
+        loadData();
+      } else {
+        showToast(data.error || "Failed to delete restaurant");
+      }
+    } catch (err) {
+      console.error("Failed to delete restaurant:", err);
+      showToast("Failed to delete restaurant");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePurgeDemoRestaurants = async () => {
+    if (isAuditor) {
+      showToast("Action blocked: Read-Only Auditor Mode cannot delete demo restaurants.");
+      return;
+    }
+    try {
+      setActionLoading(true);
+      const res = await fetch("/api/platform-admin/restaurants/purge-demos", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Removed ${data.deletedCount} demo restaurant(s) from database.`);
+        setConfirmPurgeDemos(false);
+        setSelectedRestaurant(null);
+        loadData();
+      } else {
+        showToast(data.error || "Failed to purge demo restaurants");
+      }
+    } catch (err) {
+      console.error("Failed to purge demo restaurants:", err);
+      showToast("Failed to purge demo restaurants");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const demoRestaurants = restaurants.filter((r) => DEMO_RESTAURANT_SLUGS.includes(r.slug));
 
   const filteredRestaurants = restaurants.filter((r) => {
     const matchesSearch =
@@ -625,38 +695,7 @@ export default function PlatformAdminPage() {
               <div className="space-y-2.5 text-xs">
                 {plans.map((p) => {
                   const subscriberCount = restaurants.filter((r) => r.subscriptionPlan === p.code).length;
-                  if (accessDenied) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100 font-sans">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-xl text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
-            <Lock className="w-6 h-6" />
-          </div>
-          <h1 className="text-xl font-black text-slate-900">Restricted Admin Portal</h1>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Signed in as <span className="font-mono font-semibold">{currentUser?.email || "restaurant user"}</span> ({currentUser?.role || "UNAUTHORIZED"}). This console requires authorized Super Admin or Platform Auditor credentials.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Button
-              onClick={handleLogout}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold gap-1.5"
-            >
-              <Power className="w-3.5 h-3.5" />
-              <span>Sign Out &amp; Switch Account</span>
-            </Button>
-            <Link
-              href="/dashboard"
-              className="flex-1 inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Back to Restaurant
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+                  return (
                     <div key={p.code} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
                       <div>
                         <span className="font-bold text-slate-900 block">{p.name}</span>
@@ -727,7 +766,24 @@ export default function PlatformAdminPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {demoRestaurants.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={actionLoading || isAuditor}
+                  title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Remove all seeded demo restaurants"}
+                  onClick={() => {
+                    if (isAuditor) return;
+                    setConfirmPurgeDemos(true);
+                  }}
+                  className="h-9 text-xs border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 gap-1.5 font-bold"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Demo Restaurants ({demoRestaurants.length})</span>
+                </Button>
+              )}
+
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -850,10 +906,31 @@ export default function PlatformAdminPage() {
                         >
                           {r.status === "SUSPENDED" ? "Reactivate" : "Suspend"}
                         </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (isAuditor) return;
+                            setDeleteConfirmOrg(r);
+                          }}
+                          className="h-7 px-2 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                          disabled={actionLoading || isAuditor}
+                          title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Delete Restaurant Permanently"}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ))}
+                {filteredRestaurants.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-10 text-center text-xs text-slate-400">
+                      No restaurants registered yet matching current filters.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -1165,7 +1242,21 @@ export default function PlatformAdminPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t">
+            <div className="flex justify-between gap-2 pt-2 border-t">
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={actionLoading || isAuditor}
+                title={isAuditor ? "Disabled in Read-Only Auditor Mode" : "Delete Restaurant Permanently"}
+                onClick={() => {
+                  if (isAuditor) return;
+                  setDeleteConfirmOrg(selectedRestaurant);
+                }}
+                className="gap-1.5 text-xs"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Delete Restaurant</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1384,6 +1475,113 @@ export default function PlatformAdminPage() {
               </Button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MODAL 4: CONFIRM SINGLE RESTAURANT DELETION */}
+      {deleteConfirmOrg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold text-rose-700 flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                <span>Delete Restaurant Permanently?</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOrg(null)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <p>
+                This will permanently remove <strong className="text-slate-900">{deleteConfirmOrg.name}</strong> (<span className="font-mono">{deleteConfirmOrg.slug}</span>) and all associated branches ({deleteConfirmOrg.branchCount}), staff accounts ({deleteConfirmOrg.userCount}), orders ({deleteConfirmOrg.orderCount}), subscriptions, and invoices.
+              </p>
+              <p className="text-rose-600 font-semibold">This action cannot be undone.</p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteConfirmOrg(null)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={actionLoading || isAuditor}
+                onClick={handleDeleteRestaurant}
+              >
+                {actionLoading ? "Deleting..." : "Delete Permanently"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: CONFIRM PURGE ALL DEMO RESTAURANTS */}
+      {confirmPurgeDemos && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold text-rose-700 flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                <span>Delete All Demo Restaurants?</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setConfirmPurgeDemos(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <p>
+                The following <strong>{demoRestaurants.length}</strong> seeded demo restaurant(s) will be permanently deleted from the Admin Panel:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-slate-800 font-medium">
+                {demoRestaurants.map((d) => (
+                  <li key={d.id}>
+                    {d.name} <span className="text-slate-400 font-mono">({d.slug})</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-emerald-700 font-medium pt-1">
+                Real registered customer restaurants will NOT be affected.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmPurgeDemos(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={actionLoading || isAuditor}
+                onClick={handlePurgeDemoRestaurants}
+              >
+                {actionLoading ? "Removing Demos..." : `Delete ${demoRestaurants.length} Demo Restaurant(s)`}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

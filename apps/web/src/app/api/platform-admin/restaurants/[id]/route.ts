@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { getTenantContext, requireRole } from "@/lib/server/auth-context";
+import { deleteRestaurantOrganization } from "@/lib/server/platform-admin-cleanup";
 
 export const dynamic = "force-dynamic";
 
@@ -161,6 +162,29 @@ export async function PATCH(
     });
   } catch (error: any) {
     console.error("Update restaurant error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: error.statusCode || 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const tenantCtx = await getTenantContext(req);
+    requireRole(tenantCtx, ["PLATFORM_OWNER"]);
+
+    const deleted = await deleteRestaurantOrganization(params.id, tenantCtx.email);
+
+    return NextResponse.json({
+      success: true,
+      deleted,
+    });
+  } catch (error: any) {
+    console.error("Delete restaurant error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: error.statusCode || 500 }
