@@ -110,6 +110,14 @@ export default function SubscriptionPage() {
   const [testAlertLoading, setTestAlertLoading] = useState(false);
   const [testAlertResult, setTestAlertResult] = useState<any | null>(null);
 
+  // PhonePe PG Checkout states
+  const [payingPlanCode, setPayingPlanCode] = useState<string | null>(null);
+  const [paymentBanner, setPaymentBanner] = useState<{
+    type: "success" | "pending" | "error";
+    title: string;
+    message: string;
+  } | null>(null);
+
   async function fetchSubscriptionInfo() {
     try {
       setLoading(true);
@@ -127,9 +135,99 @@ export default function SubscriptionPage() {
     }
   }
 
+  const verifyPhonePeReturnOrder = async (merchantOrderId: string) => {
+    try {
+      setPaymentBanner({
+        type: "pending",
+        title: "Verifying PhonePe Payment...",
+        message: `Checking official status for order ${merchantOrderId}.`,
+      });
+      const res = await fetch(
+        `/api/payments/phonepe/status?merchantOrderId=${encodeURIComponent(merchantOrderId)}`
+      );
+      const data = await res.json();
+      if (res.ok && data.success && data.status === "PAID") {
+        setPaymentBanner({
+          type: "success",
+          title: "PhonePe Payment Successful & Subscription Activated",
+          message: `Order ${merchantOrderId} confirmed (Txn: ${data.transactionId || "verified"}). Your invoice and plan dates have been updated.`,
+        });
+        await fetchSubscriptionInfo();
+      } else if (res.ok && data.status === "PENDING") {
+        setPaymentBanner({
+          type: "pending",
+          title: "PhonePe Payment Processing",
+          message: `Order ${merchantOrderId} is currently pending confirmation. Click Refresh in a few seconds.`,
+        });
+      } else {
+        setPaymentBanner({
+          type: "error",
+          title: "PhonePe Payment Not Completed",
+          message: data.error || `Order ${merchantOrderId} status: ${data.status || "FAILED"}.`,
+        });
+      }
+    } catch (err: any) {
+      setPaymentBanner({
+        type: "error",
+        title: "Payment Verification Error",
+        message: err.message || "Could not verify PhonePe payment status.",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchSubscriptionInfo();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get("phonepeOrderId");
+      if (orderId) {
+        verifyPhonePeReturnOrder(orderId);
+        params.delete("phonepeOrderId");
+        const cleanQuery = params.toString();
+        window.history.replaceState(
+          {},
+          "",
+          window.location.pathname + (cleanQuery ? `?${cleanQuery}` : "")
+        );
+      }
+    }
   }, []);
+
+  const handlePayWithPhonePe = async (targetPlanCode: string) => {
+    try {
+      setPayingPlanCode(targetPlanCode);
+      setPaymentBanner(null);
+      const res = await fetch("/api/payments/phonepe/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planCode: targetPlanCode,
+          billingCycle,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return;
+      }
+      setPaymentBanner({
+        type: "error",
+        title:
+          data.code === "PHONEPE_NOT_CONFIGURED"
+            ? "PhonePe Credentials Pending in Server .env"
+            : "Unable to Start PhonePe Checkout",
+        message: data.error || "Please try again or contact SutraUniverse support.",
+      });
+    } catch (err: any) {
+      setPaymentBanner({
+        type: "error",
+        title: "Checkout Request Failed",
+        message: err.message || "Network error contacting PhonePe gateway.",
+      });
+    } finally {
+      setPayingPlanCode(null);
+    }
+  };
 
   // Handle Cancel Mandate
   const handleConfirmCancelMandate = async () => {
@@ -253,6 +351,30 @@ export default function SubscriptionPage() {
         </div>
       )}
 
+      {/* PHONEPE CHECKOUT / VERIFICATION BANNER */}
+      {paymentBanner && (
+        <div
+          className={`rounded-2xl border p-4 text-xs flex items-start justify-between gap-3 shadow-2xs ${
+            paymentBanner.type === "success"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-950"
+              : paymentBanner.type === "pending"
+              ? "border-amber-300 bg-amber-50 text-amber-950"
+              : "border-rose-300 bg-rose-50 text-rose-950"
+          }`}
+        >
+          <div className="space-y-0.5">
+            <div className="font-extrabold text-sm">{paymentBanner.title}</div>
+            <p className="leading-relaxed opacity-90">{paymentBanner.message}</p>
+          </div>
+          <button
+            onClick={() => setPaymentBanner(null)}
+            className="text-slate-500 hover:text-slate-800 font-bold text-xs shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* SUCCESS CANCEL MESSAGE BANNER */}
       {cancelSuccessMsg && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 text-xs flex items-center justify-between shadow-2xs">
@@ -347,20 +469,33 @@ export default function SubscriptionPage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => handlePayWithPhonePe(subData?.planCode || "GROWTH")}
+                  disabled={Boolean(payingPlanCode)}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  {payingPlanCode === (subData?.planCode || "GROWTH") ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-3.5 w-3.5" />
+                  )}
+                  <span>Pay / Renew via PhonePe</span>
+                </button>
+
                 {!subData?.cancelAtPeriodEnd ? (
                   <button
                     onClick={() => setIsCancelConfirmOpen(true)}
-                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors"
+                    className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors"
                   >
                     Cancel Mandate
                   </button>
                 ) : (
                   <button
                     onClick={() => setIsMandateModalOpen(true)}
-                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors"
+                    className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors"
                   >
-                    Enroll New Mandate
+                    Enroll Trial Mandate
                   </button>
                 )}
               </div>
@@ -533,29 +668,105 @@ export default function SubscriptionPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-slate-100">
-                      {isCurrent ? (
-                        <button
-                          disabled
-                          className="w-full py-2 rounded-xl bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed"
-                        >
-                          Enrolled
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setUpgradeModalPlan(p);
-                            setIsMandateModalOpen(true);
-                          }}
-                          className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors"
-                        >
-                          Switch Plan ➔
-                        </button>
-                      )}
+                    <div className="mt-5 pt-3 border-t border-slate-100 space-y-2">
+                      <button
+                        onClick={() => handlePayWithPhonePe(p.code)}
+                        disabled={Boolean(payingPlanCode)}
+                        className={`w-full py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                          isCurrent
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                            : "bg-slate-900 hover:bg-slate-800 text-white"
+                        }`}
+                      >
+                        {payingPlanCode === p.code && (
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        )}
+                        <span>
+                          {payingPlanCode === p.code
+                            ? "Opening PhonePe..."
+                            : isCurrent
+                            ? "Renew with PhonePe"
+                            : "Pay with PhonePe ➔"}
+                        </span>
+                      </button>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Subscription Invoices & Payment History */}
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">
+                  Subscription Invoices &amp; PhonePe Receipts
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Verified payments settled to SutraUniverse (DineSutra)
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[10px]">
+                {invoices.length} Records
+              </Badge>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <tr>
+                    <th className="py-3 px-4">Order / Invoice #</th>
+                    <th className="py-3 px-4">Method</th>
+                    <th className="py-3 px-4">Gateway Ref</th>
+                    <th className="py-3 px-4 text-right">Amount</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {invoices.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-slate-50/70">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                        {inv.invoiceNumber}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600">{inv.paymentMethod}</td>
+                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500">
+                        {inv.razorpayPaymentId || "—"}
+                      </td>
+                      <td className="py-3 px-4 text-right font-bold text-slate-900">
+                        {formatINR(inv.amount)}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge
+                          variant={
+                            inv.status === "PAID"
+                              ? "success"
+                              : inv.status === "FAILED"
+                              ? "destructive"
+                              : "warning"
+                          }
+                        >
+                          {inv.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right text-slate-500">
+                        {new Date(inv.date).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                  {invoices.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        No subscription invoices recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -667,6 +878,7 @@ export default function SubscriptionPage() {
       <SutraMandateSetupModal
         isOpen={isMandateModalOpen}
         onClose={() => setIsMandateModalOpen(false)}
+        planCode={upgradeModalPlan?.code || subData?.planCode || "GROWTH"}
         planName={upgradeModalPlan?.name || subData?.planName}
         monthlyPrice={upgradeModalPlan?.monthlyPrice || subData?.monthlyPrice}
         onSuccess={async (data) => {

@@ -3,12 +3,33 @@ import { whatsappService } from "@/lib/integrations/whatsapp";
 import { zomatoService } from "@/lib/integrations/zomato";
 import { swiggyService } from "@/lib/integrations/swiggy";
 import { accountingService } from "@/lib/integrations/accounting";
+import { getPhonePeConfig } from "@/lib/server/phonepe";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Razorpay Status Check
+    // 1. PhonePe Payment Gateway Status Check
+    const ppCfg = getPhonePeConfig(req.nextUrl.origin);
+    const phonePeConfigured = ppCfg.mode !== "unconfigured";
+    const phonePeStatus = {
+      provider: "PHONEPE",
+      name: `PhonePe Payment Gateway (${ppCfg.env === "production" ? "Live" : "Sandbox"})`,
+      category: "PAYMENTS",
+      status: phonePeConfigured
+        ? ppCfg.env === "production"
+          ? "OPERATIONAL"
+          : "SANDBOX_VERIFIED"
+        : "DISCONNECTED",
+      isLiveOperational: phonePeConfigured && ppCfg.env === "production",
+      credentialsPresent: phonePeConfigured,
+      endpoint: `${ppCfg.apiBaseUrl}${ppCfg.mode === "v1" ? "/pg/v1/pay" : "/checkout/v2/pay"}`,
+      message: phonePeConfigured
+        ? `PhonePe PG (${ppCfg.mode.toUpperCase()} / ${ppCfg.env}) active. Webhook URL: /api/webhooks/phonepe`
+        : "Add PHONEPE_CLIENT_ID & PHONEPE_CLIENT_SECRET (or v1 Merchant ID & Salt Key) in server .env.",
+    };
+
+    // 2. Razorpay Status Check
     const rzpKey = process.env.RAZORPAY_KEY_ID;
     const rzpSecret = process.env.RAZORPAY_KEY_SECRET;
     const razorpayStatus = {
@@ -24,19 +45,20 @@ export async function GET(req: NextRequest) {
         : "Razorpay API Key ID and Secret not configured in environment.",
     };
 
-    // 2. WhatsApp Status Check
+    // 3. WhatsApp Status Check
     const whatsappStatus = await whatsappService.checkHealth();
 
-    // 3. Zomato Status Check
+    // 4. Zomato Status Check
     const zomatoStatus = await zomatoService.checkHealth();
 
-    // 4. Swiggy Status Check
+    // 5. Swiggy Status Check
     const swiggyStatus = await swiggyService.checkHealth();
 
-    // 5. Accounting Status Check
+    // 6. Accounting Status Check
     const accountingStatus = await accountingService.checkHealth();
 
     const integrations = [
+      phonePeStatus,
       razorpayStatus,
       whatsappStatus,
       zomatoStatus,

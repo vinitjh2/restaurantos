@@ -22,6 +22,7 @@ interface SutraMandateSetupModalProps {
   isOpen: boolean;
   onClose?: () => void;
   onSuccess: (mandateData: any) => void;
+  planCode?: string;
   planName?: string;
   monthlyPrice?: number;
 }
@@ -30,6 +31,7 @@ export const SutraMandateSetupModal: React.FC<SutraMandateSetupModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  planCode = "GROWTH",
   planName = "Growth Plan",
   monthlyPrice = 1499,
 }) => {
@@ -64,7 +66,7 @@ export const SutraMandateSetupModal: React.FC<SutraMandateSetupModalProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          planCode: "GROWTH",
+          planCode,
           paymentMethod: selectedMethod,
           upiId: selectedMethod === "UPI_AUTOPAY" ? upiId : undefined,
           cardNumber: selectedMethod === "CARD" ? cardNumber : undefined,
