@@ -191,21 +191,21 @@ export function Sidebar() {
         ))}
       </div>
 
-      {/* Ecosystem Cross-Link: StaySutra PMS */}
+      {/* Ecosystem Cross-Link: Stay Sutra Website */}
       {!isSidebarCollapsed && (
         <div className="px-3 pt-2">
           <a
-            href="http://localhost:3001"
+            href="https://staysutra.sutrauniverse.com"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between rounded-xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50/80 to-purple-50/60 p-2.5 text-xs font-semibold text-indigo-900 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition-all group"
           >
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="font-bold">StaySutra PMS</span>
+              <span className="font-bold">Stay Sutra</span>
             </div>
-            <span className="rounded bg-indigo-100/90 px-1.5 py-0.5 text-[9px] font-bold text-indigo-800 font-mono group-hover:bg-indigo-200 transition-colors">
-              Port 3001 ↗
+            <span className="rounded bg-indigo-100/90 px-1.5 py-0.5 text-[9px] font-bold text-indigo-800 group-hover:bg-indigo-200 transition-colors">
+              Website ↗
             </span>
           </a>
         </div>

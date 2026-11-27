@@ -162,16 +162,16 @@ export function TopNav() {
         {/* PWA One-Click Install */}
         <PwaInstallButton />
 
-        {/* Ecosystem Cross-Link: StaySutra Hotel PMS */}
+        {/* Ecosystem Cross-Link: Stay Sutra Website */}
         <a
           href="https://staysutra.sutrauniverse.com"
           target="_blank"
           rel="noopener noreferrer"
           className="hidden xl:flex items-center gap-1.5 rounded-lg border border-indigo-200/90 bg-indigo-50/70 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-all shadow-2xs"
-          title="Switch to StaySutra Hotel PMS"
+          title="Open Stay Sutra Website"
         >
           <Hotel className="h-3.5 w-3.5 text-indigo-600" />
-          <span>StaySutra PMS</span>
+          <span>Stay Sutra</span>
         </a>
 
         {/* Quick Launch POS Button */}
