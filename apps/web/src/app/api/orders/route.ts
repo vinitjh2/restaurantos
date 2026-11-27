@@ -162,20 +162,7 @@ const FALLBACK_DEMO_ORDERS = [
 
 export async function GET(req: NextRequest) {
   try {
-    let tenantCtx: any = null;
-    try {
-      tenantCtx = await getTenantContext(req);
-    } catch {
-      // In development or preview, resolve default demo tenant
-      tenantCtx = {
-        userId: "demo-user",
-        organizationId: "fc670ad4-0f06-4368-8c50-5017a4e6464c",
-        organizationSlug: "bawarchi-royale",
-        email: "owner@bawarchiroyale.com",
-        name: "Demo Manager",
-        role: "TENANT_OWNER",
-      };
-    }
+    const tenantCtx = await getTenantContext(req);
 
     const { searchParams } = new URL(req.url);
 
@@ -186,22 +173,16 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
 
-    // Determine target branch filter
+    // Determine target branch filter scoped strictly to authenticated tenant
     let targetBranchIds: string[] = [];
 
     if (branchParam) {
-      try {
-        const verifiedBranch = await verifyBranchOwnership(tenantCtx, branchParam);
-        targetBranchIds = [verifiedBranch.id];
-      } catch {
-        // Fallback to direct lookup
-        const b = await prisma.branch.findFirst({
-          where: { OR: [{ id: branchParam }, { code: branchParam }] }
-        });
-        if (b) targetBranchIds = [b.id];
-      }
+      const verifiedBranch = await verifyBranchOwnership(tenantCtx, branchParam);
+      targetBranchIds = [verifiedBranch.id];
+    } else if (tenantCtx.role === "PLATFORM_OWNER") {
+      const allBranches = await prisma.branch.findMany({ select: { id: true } });
+      targetBranchIds = allBranches.map((b) => b.id);
     } else {
-      // Find all branches owned by this tenant
       const tenantBranches = await prisma.branch.findMany({
         where: { organizationId: tenantCtx.organizationId },
         select: { id: true },
@@ -209,17 +190,19 @@ export async function GET(req: NextRequest) {
       targetBranchIds = tenantBranches.map((b) => b.id);
     }
 
-    // Platform owners or tenants without dedicated branches can see all branches
-    if (tenantCtx.role === "PLATFORM_OWNER" || targetBranchIds.length === 0) {
-      const allBranches = await prisma.branch.findMany({ select: { id: true } });
-      targetBranchIds = allBranches.map((b) => b.id);
+    if (targetBranchIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        orders: [],
+        total: 0,
+        page: 1,
+        totalPages: 1,
+      });
     }
 
-    // Build filter condition
-    const where: any = {};
-    if (targetBranchIds.length > 0) {
-      where.branchId = { in: targetBranchIds };
-    }
+    const where: any = {
+      branchId: { in: targetBranchIds },
+    };
 
     if (status && status !== "ALL") {
       if (status === "PREPARING") {
@@ -262,34 +245,12 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // If database returned 0 orders, fall back to rich demo dataset
+    // Return empty array cleanly for newly onboarded restaurants with 0 orders
     if (total === 0 || orders.length === 0) {
-      let filteredFallback = FALLBACK_DEMO_ORDERS;
-      if (status && status !== "ALL") {
-        filteredFallback = filteredFallback.filter((o) => {
-          if (status === "PREPARING") return ["PREPARING", "KOT_SENT", "OPEN"].includes(o.status);
-          if (status === "SERVED") return ["SERVED", "BILLED"].includes(o.status);
-          if (status === "CANCELLED") return ["CANCELLED", "REFUNDED"].includes(o.status);
-          return o.status === status;
-        });
-      }
-      if (orderType && orderType !== "ALL") {
-        filteredFallback = filteredFallback.filter((o) => o.orderType === orderType);
-      }
-      if (search) {
-        const s = search.toLowerCase();
-        filteredFallback = filteredFallback.filter(
-          (o) =>
-            o.orderNumber.toLowerCase().includes(s) ||
-            o.customerName.toLowerCase().includes(s) ||
-            (o.tableNumber && o.tableNumber.toLowerCase().includes(s))
-        );
-      }
-
       return NextResponse.json({
         success: true,
-        orders: filteredFallback,
-        total: filteredFallback.length,
+        orders: [],
+        total: 0,
         page: 1,
         totalPages: 1,
       });

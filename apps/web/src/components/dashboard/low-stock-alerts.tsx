@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { DEMO_LOW_STOCK } from "@/lib/demo-data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, ArrowUpRight, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, Plus, RefreshCw, CheckCircle2 } from "lucide-react";
 
 interface LowStockItem {
   id: string;
@@ -18,8 +17,9 @@ interface LowStockItem {
 }
 
 export function LowStockAlerts() {
-  const [items, setItems] = useState<LowStockItem[]>(DEMO_LOW_STOCK);
-  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<LowStockItem[]>([]);
+  const [totalInventoryItems, setTotalInventoryItems] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLowStock() {
@@ -27,23 +27,24 @@ export function LowStockAlerts() {
         setLoading(true);
         const res = await fetch("/api/inventory/items");
         const json = await res.json();
-        if (json.success && json.items) {
+        if (json.success && Array.isArray(json.items)) {
+          setTotalInventoryItems(json.items.length);
           const lowStockOnly: LowStockItem[] = json.items
-            .filter((i: any) => i.currentStock <= i.minStock)
+            .filter((i: any) => i.currentStock <= (i.minimumStock ?? i.minStock ?? 0))
             .slice(0, 5)
-            .map((i: any) => ({
-              id: i.id,
-              name: i.name,
-              category: i.category,
-              currentStock: i.currentStock,
-              reorderLevel: i.minStock,
-              unit: i.unit,
-              status: i.currentStock <= i.minStock * 0.3 ? "CRITICAL" : "LOW",
-            }));
-
-          if (lowStockOnly.length > 0) {
-            setItems(lowStockOnly);
-          }
+            .map((i: any) => {
+              const min = i.minimumStock ?? i.minStock ?? 0;
+              return {
+                id: i.id,
+                name: i.name,
+                category: i.category,
+                currentStock: i.currentStock,
+                reorderLevel: min,
+                unit: i.baseUom || i.unit || "UNIT",
+                status: i.currentStock <= min * 0.3 ? "CRITICAL" : "LOW",
+              };
+            });
+          setItems(lowStockOnly);
         }
       } catch (err) {
         console.error("Failed to load live low stock:", err);
@@ -62,7 +63,7 @@ export function LowStockAlerts() {
             <AlertTriangle className="h-4 w-4 text-rose-500" />
             <CardTitle>Low-Stock Alerts</CardTitle>
           </div>
-          <CardDescription>BOM ingredients below reorder threshold</CardDescription>
+          <CardDescription>Ingredients below reorder threshold</CardDescription>
         </div>
         <Link
           href="/inventory"
@@ -74,9 +75,23 @@ export function LowStockAlerts() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="p-4 text-center text-slate-400 text-xs">
+          <div className="p-6 text-center text-slate-400 text-xs">
             <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-1 text-rose-500" />
             Checking stock levels...
+          </div>
+        ) : items.length === 0 ? (
+          <div className="p-6 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl space-y-1.5">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
+            <div className="font-semibold text-slate-600">
+              {totalInventoryItems > 0
+                ? "All inventory stock healthy"
+                : "No inventory items configured yet"}
+            </div>
+            <div>
+              {totalInventoryItems > 0
+                ? "No ingredients are below reorder threshold."
+                : "Add raw ingredients in Inventory to track alerts."}
+            </div>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">

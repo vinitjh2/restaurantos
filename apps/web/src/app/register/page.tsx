@@ -1,13 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Utensils,
-  Store,
-  ShieldCheck,
-  Building2,
+  CreditCard,
   CheckCircle2,
   Coffee,
   Flame,
@@ -15,10 +12,12 @@ import {
   GitFork,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
+  ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatINR } from '@/lib/formatters';
 import { useRestaurantStore } from '@/stores/restaurant-store';
 
 const BUSINESS_TYPES = [
@@ -29,14 +28,25 @@ const BUSINESS_TYPES = [
   { id: 'MULTI_CHAIN', name: 'Multi-Branch Chain', desc: 'Central base kitchen, branch transfers, master P&L', icon: GitFork },
 ];
 
-const SUBSCRIPTION_PLANS = [
-  { id: 'STARTER', name: 'Starter Plan', price: '₹999', period: '/ month', desc: 'Single outlet, POS billing, basic stock, 3 staff accounts.' },
-  { id: 'PROFESSIONAL', name: 'Professional Plan', price: '₹2,499', period: '/ month', desc: 'Single outlet, POS, full KDS, BOM recipes, payroll, unlimited staff.', recommended: true },
-  { id: 'ENTERPRISE', name: 'Enterprise Multi-Branch', price: '₹3,999', period: '/ month', desc: 'Multi-branch chain, cross-branch transfers, centralized analytics, offline sync.' },
+interface PublicPlan {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  maxBranches: number;
+  maxEmployees: number;
+}
+
+const FALLBACK_PLANS: PublicPlan[] = [
+  { id: 'starter', code: 'STARTER', name: 'Starter', description: 'Ideal for small standalone cafes, food trucks and kiosks', monthlyPrice: 499, annualPrice: 4990, maxBranches: 1, maxEmployees: 5 },
+  { id: 'growth', code: 'GROWTH', name: 'Growth', description: 'Perfect for growing restaurants and busy cloud kitchens', monthlyPrice: 999, annualPrice: 9990, maxBranches: 3, maxEmployees: 20 },
+  { id: 'pro', code: 'PRO', name: 'Pro', description: 'Full-scale restaurant management with multi-branch, accounting & KDS', monthlyPrice: 2499, annualPrice: 23990, maxBranches: 10, maxEmployees: 100 },
+  { id: 'enterprise', code: 'ENTERPRISE', name: 'Enterprise', description: 'Unlimited scale for enterprise restaurant chains & large franchises', monthlyPrice: 3999, annualPrice: 38390, maxBranches: 999, maxEmployees: 9999 },
 ];
 
 export default function RegisterRestaurantPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
 
   // Form state
@@ -47,18 +57,37 @@ export default function RegisterRestaurantPage() {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [branchName, setBranchName] = useState('');
-  const [city, setCity] = useState('Bengaluru');
-  const [state, setState] = useState('Karnataka');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [gstin, setGstin] = useState('');
   const [fssaiNumber, setFssaiNumber] = useState('');
-  const [subscriptionPlan, setSubscriptionPlan] = useState('PROFESSIONAL');
+  const [plans, setPlans] = useState<PublicPlan[]>(FALLBACK_PLANS);
+  const [subscriptionPlan, setSubscriptionPlan] = useState('GROWTH');
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { setOrganization, setBranch } = useRestaurantStore();
 
-  const handleRegister = async () => {
+  useEffect(() => {
+    fetch('/api/plans/public')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.plans) && data.plans.length > 0) {
+          setPlans(data.plans);
+          const hasGrowth = data.plans.some((p: PublicPlan) => p.code === 'GROWTH');
+          if (!hasGrowth) setSubscriptionPlan(data.plans[0].code);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const selectedPlanObj = plans.find((p) => p.code === subscriptionPlan) || plans[0];
+  const payableAmount =
+    billingCycle === 'ANNUAL' ? selectedPlanObj.annualPrice : selectedPlanObj.monthlyPrice;
+
+  const handleRegisterAndPay = async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -73,12 +102,13 @@ export default function RegisterRestaurantPage() {
           email,
           password,
           phone,
-          branchName: branchName || `${restaurantName} — Flagship`,
-          city,
-          state,
-          gstin: gstin || '29AABCU9603R1ZM',
-          fssaiNumber: fssaiNumber || '11223344000123',
+          branchName: branchName.trim() || `${restaurantName.trim()} — Main Outlet`,
+          city: city.trim(),
+          state: state.trim(),
+          gstin: gstin.trim(),
+          fssaiNumber: fssaiNumber.trim(),
           subscriptionPlan,
+          billingCycle,
         }),
       });
 
@@ -87,11 +117,12 @@ export default function RegisterRestaurantPage() {
       if (res.ok && data.success) {
         if (data.organization?.id) setOrganization(data.organization.id);
         if (data.branch?.id) setBranch(data.branch.id);
-        if (typeof window !== 'undefined') {
-          window.location.href = '/';
-        } else {
-          router.push('/');
+
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
         }
+        window.location.href = data.fallbackUrl || '/subscription?paymentRequired=1';
       } else {
         setErrorMessage(data.error || 'Failed to register restaurant');
       }
@@ -112,7 +143,7 @@ export default function RegisterRestaurantPage() {
           </div>
           <div>
             <h1 className="text-xl font-black">Dine<span className="text-amber-500">Sutra</span></h1>
-            <p className="text-xs text-slate-400">Commercial SaaS Onboarding Wizard · SutraUniverse</p>
+            <p className="text-xs text-slate-400">Commercial SaaS Onboarding · SutraUniverse</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -157,7 +188,7 @@ export default function RegisterRestaurantPage() {
                 required
                 value={restaurantName}
                 onChange={(e) => setRestaurantName(e.target.value)}
-                placeholder="e.g. Copper Chimney or Blue Tokai Roasters"
+                placeholder="e.g. Royal Spice Kitchen or Aroma Cafe"
                 className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
               />
             </div>
@@ -219,7 +250,7 @@ export default function RegisterRestaurantPage() {
                   required
                   value={ownerName}
                   onChange={(e) => setOwnerName(e.target.value)}
-                  placeholder="e.g. Vikram Singhania"
+                  placeholder="Enter owner full name"
                   className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
@@ -241,20 +272,21 @@ export default function RegisterRestaurantPage() {
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="Minimum 8 characters"
                   className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Phone Number (For OTP & Alert SMS)</label>
+                <label className="text-xs font-bold text-slate-300">Mobile Number (10 digits)</label>
                 <input
-                  type="text"
+                  type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 98XXXXXXXX"
                   className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
@@ -269,7 +301,7 @@ export default function RegisterRestaurantPage() {
                 onClick={() => setStep(3)}
                 className="flex-1 h-11 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm gap-2"
               >
-                <span>Continue to Flagship Outlet</span>
+                <span>Continue to Outlet Setup</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
@@ -281,8 +313,8 @@ export default function RegisterRestaurantPage() {
           <div className="space-y-6">
             <div>
               <span className="text-xs uppercase font-bold text-orange-400 tracking-wider">Step 3 of 4</span>
-              <h2 className="text-2xl font-black text-white mt-1">Configure Initial Flagship Outlet</h2>
-              <p className="text-xs text-slate-400 mt-1">Enter your main restaurant location. Additional branches can be added later.</p>
+              <h2 className="text-2xl font-black text-white mt-1">Configure Initial Outlet</h2>
+              <p className="text-xs text-slate-400 mt-1">Enter your main restaurant location. Additional branches can be added anytime.</p>
             </div>
 
             <div className="space-y-3">
@@ -292,7 +324,7 @@ export default function RegisterRestaurantPage() {
                   type="text"
                   value={branchName}
                   onChange={(e) => setBranchName(e.target.value)}
-                  placeholder={`e.g. ${restaurantName || 'Restaurant'} — Flagship Indiranagar`}
+                  placeholder={`${restaurantName || 'Restaurant'} — Main Outlet`}
                   className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
@@ -304,6 +336,7 @@ export default function RegisterRestaurantPage() {
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g. Mumbai / Bengaluru"
                     className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                   />
                 </div>
@@ -313,6 +346,7 @@ export default function RegisterRestaurantPage() {
                     type="text"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
+                    placeholder="e.g. Maharashtra / Karnataka"
                     className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                   />
                 </div>
@@ -325,17 +359,17 @@ export default function RegisterRestaurantPage() {
                     type="text"
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value)}
-                    placeholder="29AABCU9603R1ZM"
+                    placeholder="Enter 15-char GSTIN if registered"
                     className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">FSSAI License (14 Digits)</label>
+                  <label className="text-xs font-bold text-slate-300">FSSAI License (Optional)</label>
                   <input
                     type="text"
                     value={fssaiNumber}
                     onChange={(e) => setFssaiNumber(e.target.value)}
-                    placeholder="11223344000123"
+                    placeholder="14-digit FSSAI number"
                     className="w-full h-11 rounded-xl bg-slate-950 border border-slate-800 px-4 text-sm text-white focus:outline-none focus:border-orange-500"
                   />
                 </div>
@@ -357,23 +391,50 @@ export default function RegisterRestaurantPage() {
           </div>
         )}
 
-        {/* STEP 4: SUBSCRIPTION PLAN */}
+        {/* STEP 4: SUBSCRIPTION PLAN + PHONEPE CHECKOUT */}
         {step === 4 && (
           <div className="space-y-6">
-            <div>
-              <span className="text-xs uppercase font-bold text-orange-400 tracking-wider">Step 4 of 4</span>
-              <h2 className="text-2xl font-black text-white mt-1">Select SaaS Subscription Tier</h2>
-              <p className="text-xs text-slate-400 mt-1">All tiers include a 30-day full access free trial. Cancel or switch anytime.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs uppercase font-bold text-orange-400 tracking-wider">Step 4 of 4</span>
+                <h2 className="text-2xl font-black text-white mt-1">Select Plan &amp; Pay via PhonePe</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Instant platform activation after payment via UPI, PhonePe, Cards, or NetBanking.
+                </p>
+              </div>
+
+              <div className="inline-flex rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs font-bold shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle('MONTHLY')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    billingCycle === 'MONTHLY' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle('ANNUAL')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    billingCycle === 'ANNUAL' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Annual (Save)
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
-              {SUBSCRIPTION_PLANS.map((plan) => {
-                const isSelected = subscriptionPlan === plan.id;
+              {plans.map((plan) => {
+                const isSelected = subscriptionPlan === plan.code;
+                const displayPrice =
+                  billingCycle === 'ANNUAL' ? plan.annualPrice : plan.monthlyPrice;
                 return (
                   <div
-                    key={plan.id}
-                    onClick={() => setSubscriptionPlan(plan.id)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start justify-between ${
+                    key={plan.code}
+                    onClick={() => setSubscriptionPlan(plan.code)}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start justify-between gap-3 ${
                       isSelected
                         ? 'border-orange-500 bg-orange-950/20 shadow-lg shadow-orange-500/10'
                         : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
@@ -382,19 +443,32 @@ export default function RegisterRestaurantPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-white">{plan.name}</span>
-                        {plan.recommended && (
-                          <Badge className="bg-orange-600 text-white text-[10px] px-2 py-0.5">Most Popular</Badge>
+                        {plan.code === 'GROWTH' && (
+                          <Badge className="bg-orange-600 text-white text-[10px] px-2 py-0.5">Popular</Badge>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400">{plan.desc}</p>
+                      <p className="text-xs text-slate-400">{plan.description}</p>
+                      <p className="text-[11px] text-slate-500">
+                        Up to {plan.maxBranches >= 999 ? 'Unlimited' : plan.maxBranches} Outlets ·{' '}
+                        {plan.maxEmployees >= 9999 ? 'Unlimited' : plan.maxEmployees} Staff
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-lg font-black text-white">{plan.price}</span>
-                      <span className="text-xs text-slate-500 block">{plan.period}</span>
+                    <div className="text-right shrink-0">
+                      <span className="text-lg font-black text-white">{formatINR(displayPrice)}</span>
+                      <span className="text-xs text-slate-500 block">
+                        /{billingCycle === 'ANNUAL' ? 'year' : 'month'}
+                      </span>
                     </div>
                   </div>
                 );
               })}
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-3 text-xs text-emerald-300 flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>
+                Secured by <strong>PhonePe Payment Gateway (SutraUniverse)</strong>. Account activates automatically on payment confirmation.
+              </span>
             </div>
 
             <div className="flex gap-3 mt-4">
@@ -403,11 +477,19 @@ export default function RegisterRestaurantPage() {
               </Button>
               <Button
                 disabled={isLoading}
-                onClick={handleRegister}
-                className="flex-1 h-11 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-xl shadow-orange-600/30 gap-2"
+                onClick={handleRegisterAndPay}
+                className="flex-1 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 gap-2"
               >
-                <Sparkles className="w-4 h-4" />
-                <span>{isLoading ? 'Creating Your RestaurantOS Tenant...' : 'Launch My Restaurant Platform'}</span>
+                {isLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CreditCard className="w-4 h-4" />
+                )}
+                <span>
+                  {isLoading
+                    ? 'Opening PhonePe Checkout...'
+                    : `Pay ${formatINR(payableAmount)} via PhonePe & Launch`}
+                </span>
               </Button>
             </div>
           </div>

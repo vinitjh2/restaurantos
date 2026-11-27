@@ -1,16 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
     const itemType = searchParams.get("itemType");
     const search = searchParams.get("search");
 
-    const where: any = {};
+    const tenantBranches = await prisma.branch.findMany({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { id: true, code: true },
+    });
+    const branchKeys = Array.from(
+      new Set(tenantBranches.flatMap((b) => [b.id, b.code]))
+    );
+    if (tenantCtx.organizationSlug === "bawarchi-royale") {
+      branchKeys.push("default");
+    }
+
+    const where: any =
+      tenantCtx.role === "PLATFORM_OWNER"
+        ? {}
+        : branchKeys.length > 0
+        ? { branchId: { in: branchKeys } }
+        : { branchId: "__none__" };
+
     if (category && category !== "All") where.category = category;
     if (itemType && itemType !== "All") where.itemType = itemType;
     if (search) {
@@ -77,7 +96,10 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Inventory fetch error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: error.statusCode || 500 }
+    );
   }
 }
 

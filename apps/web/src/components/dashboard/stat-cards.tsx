@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   IndianRupee,
   TrendingUp,
-  ShoppingBag,
   Receipt,
-  Clock,
   Ban,
-  ArrowDownRight,
   Sparkles,
   ArrowUpRight,
-  UtensilsCrossed,
   ChefHat,
   Smartphone,
   Coins,
@@ -21,50 +16,38 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { formatINR } from "@/lib/formatters";
-import { DEMO_STATS } from "@/lib/demo-data";
-import { cn } from "@/lib/utils";
+import type { DashboardAnalyticsResponse } from "@/types/dashboard";
 
-export function DashboardStatCards() {
-  const [liveData, setLiveData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+interface DashboardStatCardsProps {
+  analytics: DashboardAnalyticsResponse | null;
+  loading?: boolean;
+}
 
-  useEffect(() => {
-    async function fetchAnalytics() {
-      try {
-        const res = await fetch("/api/reports/analytics?timeRange=30d");
-        const json = await res.json();
-        if (json.success) {
-          setLiveData(json);
-        }
-      } catch (err) {
-        console.error("Failed to fetch live stat cards data:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAnalytics();
-  }, []);
-
-  const grossSales = liveData?.summary?.grossSales || DEMO_STATS.grossSalesToday;
-  const netSales = liveData?.summary?.netSales || DEMO_STATS.netSalesToday;
-  const totalOrders = liveData?.summary?.paidInvoicesCount || DEMO_STATS.totalOrdersToday;
-  const avgOrderValue = totalOrders > 0 ? grossSales / totalOrders : DEMO_STATS.avgOrderValue;
-  const totalExpenses = liveData?.pnl?.operatingExpenses || DEMO_STATS.totalExpensesToday;
-  const netProfit = liveData?.pnl?.netProfit || DEMO_STATS.estimatedProfitToday;
+export function DashboardStatCards({ analytics, loading }: DashboardStatCardsProps) {
+  const m = analytics?.metrics;
+  const grossSales = m?.grossSales ?? 0;
+  const netSales = m?.netSales ?? 0;
+  const totalOrders = m?.totalOrders ?? 0;
+  const avgOrderValue = m?.averageOrderValue ?? 0;
+  const totalExpenses = m?.operatingExpenses ?? 0;
+  const netProfit = m?.netOperatingProfit ?? 0;
+  const marginPct = m?.netMarginPercent ?? 0;
+  const activeKots = analytics?.kdsTelemetry?.activeKots ?? 0;
+  const directOrdersCount = analytics?.directSavings?.directOrdersCount ?? 0;
+  const commissionSaved = analytics?.directSavings?.commissionSaved ?? 0;
+  const cashTill = analytics?.cashTillTelemetry;
+  const cancelledCount = m?.cancelledOrdersCount ?? 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-      {/* 1. BENTO HERO TILE: TODAY'S GROSS REVENUE (Col span 2) */}
+      {/* 1. GROSS REVENUE */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="md:col-span-2 relative overflow-hidden rounded-3xl border border-amber-300/80 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-orange-500/10 p-6 sm:p-7 shadow-sm shadow-amber-500/10 backdrop-blur-md transition-all duration-300 hover:border-amber-400 hover:shadow-lg"
+        className="md:col-span-2 relative overflow-hidden rounded-3xl border border-amber-300/80 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-orange-500/10 p-6 sm:p-7 shadow-sm shadow-amber-500/10 backdrop-blur-md"
       >
         <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-amber-400/20 blur-2xl" />
-        <div className="pointer-events-none absolute right-1/4 -bottom-10 h-28 w-28 rounded-full bg-orange-400/15 blur-2xl" />
-
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
@@ -76,13 +59,15 @@ export function DashboardStatCards() {
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800">
                     Executive Revenue Stream
                   </span>
-                  <div className="text-xs font-semibold text-slate-500">Today&apos;s Gross Realization</div>
+                  <div className="text-xs font-semibold text-slate-500">
+                    {loading ? "Syncing live bills..." : "Gross Realization (Selected Range)"}
+                  </div>
                 </div>
               </div>
 
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-700">
                 <TrendingUp className="h-3.5 w-3.5" />
-                +14.8% vs Yesterday
+                {totalOrders > 0 ? "Live DB Synced" : "Ready for First Bill"}
               </span>
             </div>
 
@@ -98,8 +83,8 @@ export function DashboardStatCards() {
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-amber-200/60 pt-4 text-xs">
             <div className="flex items-center gap-4 text-slate-600 font-medium">
-              <span>Net Excl. Tax: <strong className="text-slate-900 font-bold">{formatINR(netSales)}</strong></span>
-              <span>GST 5%: <strong className="text-emerald-700 font-bold">{formatINR(grossSales - netSales)}</strong></span>
+              <span>Net Payable: <strong className="text-slate-900 font-bold">{formatINR(netSales)}</strong></span>
+              <span>GST Collected: <strong className="text-emerald-700 font-bold">{formatINR(m?.totalTaxes ?? 0)}</strong></span>
             </div>
 
             <Link
@@ -114,13 +99,12 @@ export function DashboardStatCards() {
         </div>
       </motion.div>
 
-      {/* 2. OPERATING PROFIT (EBITDA) */}
+      {/* 2. OPERATING PROFIT */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl border border-emerald-200/90 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:border-emerald-300 hover:shadow-md"
+        className="relative overflow-hidden rounded-3xl border border-emerald-200/90 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 p-6 shadow-xs"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -129,34 +113,36 @@ export function DashboardStatCards() {
               {formatINR(netProfit)}
             </div>
           </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600">
             <Sparkles className="h-5 w-5" />
           </div>
         </div>
 
         <div className="mt-4 space-y-1.5">
           <div className="flex justify-between text-xs font-semibold text-slate-600">
-            <span>EBITDA Margin</span>
-            <span className="text-emerald-700 font-bold">26.4% (Healthy)</span>
+            <span>Net Margin</span>
+            <span className="text-emerald-700 font-bold">{marginPct.toFixed(1)}%</span>
           </div>
           <div className="h-2 w-full bg-emerald-100 rounded-full overflow-hidden">
-            <div className="h-full bg-emerald-500 rounded-full" style={{ width: "26.4%" }} />
+            <div
+              className="h-full bg-emerald-500 rounded-full"
+              style={{ width: `${Math.max(0, Math.min(100, marginPct))}%` }}
+            />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-emerald-100 pt-3 text-[11px] text-slate-500">
           <span>Opex: {formatINR(totalExpenses)}</span>
-          <span className="font-bold text-emerald-600">+18.9% MoM</span>
+          <span>COGS: {formatINR(m?.cogs ?? 0)}</span>
         </div>
       </motion.div>
 
-      {/* 3. AVERAGE ORDER VALUE (AOV) */}
+      {/* 3. AVERAGE ORDER VALUE */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -165,56 +151,41 @@ export function DashboardStatCards() {
               {formatINR(avgOrderValue)}
             </div>
           </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 border border-violet-500/30 text-violet-600 shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 border border-violet-500/30 text-violet-600">
             <Receipt className="h-5 w-5" />
           </div>
         </div>
 
-        <div className="mt-4 space-y-1.5">
-          <div className="flex justify-between text-xs font-semibold text-slate-600">
-            <span>Target Progress</span>
-            <span className="text-violet-700 font-bold">108% of ₹500</span>
-          </div>
-          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-violet-500 rounded-full" style={{ width: "100%" }} />
-          </div>
-        </div>
-
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-          <span>Upsell Naan & Dessert</span>
-          <span className="font-bold text-violet-600">+4.2%</span>
+          <span>Settled Invoices</span>
+          <span className="font-bold text-slate-800">{totalOrders}</span>
         </div>
       </motion.div>
 
-      {/* 4. ACTIVE KITCHEN TICKETS (KDS) */}
+      {/* 4. ACTIVE KITCHEN TICKETS */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">KDS Active Tickets</span>
             <div className="text-3xl font-black tracking-tight text-amber-600" suppressHydrationWarning>
-              {DEMO_STATS.pendingOrders} KOTs
+              {activeKots} KOTs
             </div>
           </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-600 shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-600">
             <ChefHat className="h-5 w-5" />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
-          <span className="inline-flex items-center gap-1 text-slate-600 font-semibold">
-            <Clock className="h-3.5 w-3.5 text-amber-500" />
-            Avg Prep: 12m 30s
+          <span className="text-slate-600 font-medium truncate">
+            {analytics?.kdsTelemetry?.stationsSummary || "No pending KOTs"}
           </span>
-          <Link
-            href="/kitchen"
-            className="font-bold text-amber-700 hover:text-amber-800 transition-colors"
-          >
+          <Link href="/kitchen" className="font-bold text-amber-700 hover:text-amber-800 shrink-0">
             Open KDS ↗
           </Link>
         </div>
@@ -225,24 +196,23 @@ export function DashboardStatCards() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl border border-emerald-300/80 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 p-6 shadow-xs transition-all duration-300 hover:border-emerald-400 hover:shadow-md"
+        className="relative overflow-hidden rounded-3xl border border-emerald-300/80 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 p-6 shadow-xs"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Aggregator Fee Saved</span>
             <div className="text-3xl font-black tracking-tight text-emerald-700">
-              ₹18,450
+              {formatINR(commissionSaved)}
             </div>
           </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-700">
             <Smartphone className="h-5 w-5" />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-emerald-100 pt-3 text-xs">
-          <span className="text-slate-600 font-medium">74 QR / WhatsApp Direct</span>
-          <span className="font-bold text-emerald-700">0% Swiggy Fee</span>
+          <span className="text-slate-600 font-medium">{directOrdersCount} QR / Direct Orders</span>
+          <span className="font-bold text-emerald-700">0% Aggregator Fee</span>
         </div>
       </motion.div>
 
@@ -251,53 +221,51 @@ export function DashboardStatCards() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Shift Cash In Till</span>
             <div className="text-3xl font-black tracking-tight text-slate-900">
-              ₹38,200
+              {formatINR(cashTill?.expectedCash ?? 0)}
             </div>
           </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-600 shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-600">
             <Coins className="h-5 w-5" />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
-          <span className="text-slate-500">Opening: ₹5,000</span>
+          <span className="text-slate-500">Opening: {formatINR(cashTill?.openingBalance ?? 0)}</span>
           <span className="inline-flex items-center gap-1 font-bold text-emerald-600">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Audited
+            {cashTill?.shiftLabel || "No Shift"}
           </span>
         </div>
       </motion.div>
 
-      {/* 7. AUDITED VOIDS & DISCOUNTS */}
+      {/* 7. AUDITED VOIDS */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.3, ease: "easeOut" }}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+        className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tamper-Proof Audit</span>
             <div className="text-3xl font-black tracking-tight text-slate-800">
-              {liveData?.summary?.cancelledOrdersCount ?? DEMO_STATS.cancelledOrders} <span className="text-sm font-normal text-slate-500">Voids</span>
+              {cancelledCount} <span className="text-sm font-normal text-slate-500">Voids</span>
             </div>
           </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-600 shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-600">
             <Ban className="h-5 w-5" />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
-          <span className="text-slate-500">Supervisor PIN override</span>
-          <span className="font-bold text-slate-700">Logged</span>
+          <span className="text-slate-500">Refunds Issued</span>
+          <span className="font-bold text-slate-700">{formatINR(m?.totalRefunds ?? 0)}</span>
         </div>
       </motion.div>
     </div>

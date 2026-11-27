@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRestaurantStore } from "@/stores/restaurant-store";
 import { DashboardStatCards } from "@/components/dashboard/stat-cards";
@@ -15,7 +15,6 @@ import { LowStockAlerts } from "@/components/dashboard/low-stock-alerts";
 import { RecentActivityFeed } from "@/components/dashboard/recent-activity";
 import {
   Store,
-  FileDown,
   Sparkles,
   ArrowUpRight,
   ShieldAlert,
@@ -25,26 +24,56 @@ import {
   Coins,
   CheckCircle2,
   RefreshCw,
-  Flame,
   AlertTriangle,
-  Layers,
   Smartphone,
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/formatters";
+import type { DashboardAnalyticsResponse } from "@/types/dashboard";
 
 type TimeRange = "today" | "yesterday" | "7d" | "30d";
 
 export default function DashboardOverviewPage() {
-  const { getActiveBranch } = useRestaurantStore();
+  const { currentUser, getActiveBranch } = useRestaurantStore();
   const activeBranch = getActiveBranch();
 
   const [timeRange, setTimeRange] = useState<TimeRange>("today");
+  const [analytics, setAnalytics] = useState<DashboardAnalyticsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState("Just now");
   const [currentTime, setCurrentTime] = useState("");
   const [greeting, setGreeting] = useState("Good morning");
+
+  const loadAnalytics = useCallback(async (range: TimeRange) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/reports/analytics?timeRange=${range}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setAnalytics(json);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard analytics:", err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+      setLastRefreshed(
+        new Date().toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAnalytics(timeRange);
+  }, [timeRange, loadAnalytics]);
 
   // Real-time clock and dynamic greeting
   useEffect(() => {
@@ -72,24 +101,36 @@ export default function DashboardOverviewPage() {
 
   const handleManualRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setLastRefreshed(
-        new Date().toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
-    }, 600);
+    loadAnalytics(timeRange);
   };
+
+  const floor = analytics?.floorTelemetry || {
+    occupiedTables: 0,
+    billedTables: 0,
+    cleaningTables: 0,
+    availableTables: 0,
+    totalTables: 0,
+  };
+  const usedTables = floor.occupiedTables + floor.billedTables;
+  const occupancyPct = floor.totalTables > 0 ? Math.round((usedTables / floor.totalTables) * 100) : 0;
+  const kds = analytics?.kdsTelemetry || { activeKots: 0, avgPrepSeconds: 0, stationsSummary: "No pending KOTs" };
+  const savings = analytics?.directSavings || { directOrdersCount: 0, commissionSaved: 0 };
+  const cash = analytics?.cashTillTelemetry || {
+    hasOpenShift: false,
+    shiftLabel: "No Shift Started",
+    expectedCash: 0,
+    openingBalance: 0,
+    cashDrops: 0,
+    cashVariance: 0,
+  };
+  const topDish = analytics?.topSellingDishes?.[0];
+  const fssaiLabel = activeBranch.fssaiNumber || activeBranch.fssai || "Not configured";
+  const gstinLabel = activeBranch.gstin || "Not configured";
 
   return (
     <div className="space-y-8 pb-16">
       {/* 1. EXECUTIVE HERO COMMAND BAR */}
-      <div
-        className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 text-white shadow-2xl shadow-slate-950/20 sm:p-8"
-      >
-        {/* Ambient background decoration */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 text-white shadow-2xl shadow-slate-950/20 sm:p-8">
         <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 right-1/3 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
 
@@ -109,11 +150,11 @@ export default function DashboardOverviewPage() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                   </span>
-                  Live Shift #44 · Active Service
+                  {cash.shiftLabel}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-300 backdrop-blur-md">
                   <Clock className="h-3.5 w-3.5 text-amber-400" />
-                  <span suppressHydrationWarning>{currentTime || "11:30 AM"}</span>
+                  <span suppressHydrationWarning>{currentTime || "--:--"}</span>
                 </span>
                 <span className="hidden sm:inline-flex rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-xs text-slate-400">
                   Synced: {lastRefreshed}
@@ -121,13 +162,13 @@ export default function DashboardOverviewPage() {
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                {greeting}, Restaurant General Manager
+                {greeting}, {currentUser?.name || "Restaurant Owner"}
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-300 max-w-2xl" suppressHydrationWarning>
                 Live operational telemetry for <strong className="text-white font-semibold">{activeBranch.name}</strong>{" "}
                 (Branch Code: <span className="font-mono text-amber-300">{activeBranch.code}</span> · GSTIN:{" "}
-                <span className="font-mono text-slate-300">{activeBranch.gstin}</span>)
+                <span className="font-mono text-slate-300">{gstinLabel}</span>)
               </p>
             </div>
           </div>
@@ -143,25 +184,6 @@ export default function DashboardOverviewPage() {
               <span className="hidden sm:inline">Refresh</span>
             </button>
 
-            <button
-              onClick={() => alert("Generating GSTR-1, Shift Z-Report & Sales Ledger Snapshot...")}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-xs font-medium text-slate-100 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white"
-            >
-              <FileDown className="h-4 w-4 text-emerald-400" />
-              <span>Export Z-Report</span>
-            </button>
-
-            <Link
-              href="/landing"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/40 bg-gradient-to-r from-orange-500/30 to-amber-500/30 px-3.5 py-2.5 text-xs font-bold text-amber-200 backdrop-blur-md transition-all hover:bg-amber-500/40 hover:text-white"
-            >
-              <span>🌐</span>
-              <span className="hidden sm:inline">Public Landing</span>
-              <span className="rounded-full bg-amber-400 px-1.5 py-0.2 text-[9px] font-black text-slate-950 uppercase">
-                New
-              </span>
-            </Link>
-
             <Link
               href="/kitchen"
               className="inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/20 px-4 py-2.5 text-xs font-semibold text-amber-200 backdrop-blur-md transition-all hover:bg-amber-500/30 hover:text-white"
@@ -169,7 +191,7 @@ export default function DashboardOverviewPage() {
               <ChefHat className="h-4 w-4 text-amber-400" />
               <span>Kitchen KDS</span>
               <span className="rounded-full bg-amber-400 px-1.5 py-0.2 text-[10px] font-bold text-slate-950">
-                6
+                {kds.activeKots}
               </span>
             </Link>
 
@@ -216,17 +238,13 @@ export default function DashboardOverviewPage() {
           <div className="flex items-center gap-4 text-xs text-slate-300">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>SutraCloud Database: Connected</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
-              <span>Thermal Receipt Spooler: Online</span>
+              <span>Cloud Database: Tenant Isolated</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. REAL-TIME RESTAURANT "HEARTBEAT & FLOOR TELEMETRY" STRIP (4 VITAL RADARS) */}
+      {/* 2. REAL-TIME FLOOR & SHIFT RADARS */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Radar 1: Floor & Table Occupancy */}
         <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all hover:border-slate-300 hover:shadow-md">
@@ -237,7 +255,8 @@ export default function DashboardOverviewPage() {
                 <span>Floor Occupancy</span>
               </div>
               <div className="text-2xl font-bold tracking-tight text-slate-900">
-                18 / 24 <span className="text-sm font-normal text-slate-500">Tables (75%)</span>
+                {usedTables} / {floor.totalTables}{" "}
+                <span className="text-sm font-normal text-slate-500">Tables ({occupancyPct}%)</span>
               </div>
             </div>
             <Link
@@ -249,25 +268,10 @@ export default function DashboardOverviewPage() {
             </Link>
           </div>
 
-          {/* Segmented Table Progress Bar */}
-          <div className="mt-4 space-y-1.5">
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-              <div className="bg-emerald-500 transition-all" style={{ width: "50%" }} title="Dine-in (12)" />
-              <div className="bg-amber-500 transition-all" style={{ width: "17%" }} title="Billed (4)" />
-              <div className="bg-blue-400 transition-all" style={{ width: "8%" }} title="Cleaning (2)" />
-              <div className="bg-slate-200 transition-all" style={{ width: "25%" }} title="Available (6)" />
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 12 Seated
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> 4 Billed
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" /> 6 Open
-              </span>
-            </div>
+          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 font-medium">
+            <span>{floor.occupiedTables} Seated</span>
+            <span>{floor.billedTables} Billed</span>
+            <span>{floor.availableTables} Open</span>
           </div>
         </div>
 
@@ -277,10 +281,10 @@ export default function DashboardOverviewPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                 <ChefHat className="h-3.5 w-3.5 text-amber-600" />
-                <span>KDS Ticket Velocity</span>
+                <span>Kitchen Queue</span>
               </div>
               <div className="text-2xl font-bold tracking-tight text-slate-900">
-                12m 30s <span className="text-sm font-normal text-emerald-600">Avg Prep</span>
+                {kds.activeKots} <span className="text-sm font-normal text-slate-500">Active KOTs</span>
               </div>
             </div>
             <Link
@@ -292,26 +296,22 @@ export default function DashboardOverviewPage() {
             </Link>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px]">
-            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 font-semibold text-emerald-700">
-              <CheckCircle2 className="h-3 w-3" /> Target &lt; 15 min
-            </span>
-            <span className="text-slate-500 font-medium">
-              6 Active KOTs (4 Main · 2 Bar)
-            </span>
+          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 font-medium">
+            <span className="truncate">{kds.stationsSummary}</span>
           </div>
         </div>
 
-        {/* Radar 3: Direct Commission Saved (WhatsApp + QR) */}
+        {/* Radar 3: Direct Commission Saved */}
         <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all hover:border-slate-300 hover:shadow-md">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                 <Smartphone className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Commission Saved Today</span>
+                <span>Commission Saved</span>
               </div>
               <div className="text-2xl font-bold tracking-tight text-emerald-600">
-                ₹18,450 <span className="text-sm font-normal text-slate-500">Kept</span>
+                {formatINR(savings.commissionSaved)}{" "}
+                <span className="text-sm font-normal text-slate-500">Kept</span>
               </div>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -320,14 +320,12 @@ export default function DashboardOverviewPage() {
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px]">
-            <span className="font-semibold text-emerald-700">74 Direct Orders</span>
-            <span className="text-slate-400 font-medium">
-              Zero 30% Swiggy/Zomato fee
-            </span>
+            <span className="font-semibold text-emerald-700">{savings.directOrdersCount} Direct Orders</span>
+            <span className="text-slate-400 font-medium">Zero 3rd-party commission</span>
           </div>
         </div>
 
-        {/* Radar 4: Cash Drawer Balance & Shift Till */}
+        {/* Radar 4: Cash Drawer Balance */}
         <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all hover:border-slate-300 hover:shadow-md">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -336,7 +334,7 @@ export default function DashboardOverviewPage() {
                 <span>Counter Cash Till</span>
               </div>
               <div className="text-2xl font-bold tracking-tight text-slate-900">
-                ₹19,200 <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Balanced</span>
+                {formatINR(cash.expectedCash)}
               </div>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
@@ -345,14 +343,13 @@ export default function DashboardOverviewPage() {
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 font-medium">
-            <span>Float: ₹5,000</span>
-            <span>Safe Drops: ₹5,000</span>
-            <span className="font-semibold text-slate-700">Var: ₹0.00</span>
+            <span>Float: {formatINR(cash.openingBalance)}</span>
+            <span>Var: {formatINR(cash.cashVariance)}</span>
           </div>
         </div>
       </section>
 
-      {/* 3. AI OPERATIONS COPILOT & INTELLIGENCE ALERT BANNER */}
+      {/* 3. OPERATIONAL SUMMARY STRIP */}
       <div className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50/90 via-orange-50/50 to-amber-50/70 p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -362,104 +359,112 @@ export default function DashboardOverviewPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                  RestaurantOS Intelligence & Ops Insights
+                  Live Outlet Intelligence
                 </span>
                 <span className="rounded-full bg-amber-200/80 px-2 py-0.2 text-[10px] font-bold text-amber-900">
                   Real-Time
                 </span>
               </div>
               <p className="text-xs text-amber-950/80 mt-1 leading-relaxed">
-                Lunch rush peaked with <strong>48 orders/hr</strong> at 1:15 PM. <strong>Murgh Dum Biryani</strong> and{" "}
-                <strong>Butter Chicken</strong> accounted for <strong>38.2%</strong> of today's total revenue.{" "}
-                <span className="font-semibold text-rose-700">
-                  ⚠️ Alert: Fresh Malai Paneer raw inventory is at 4.2 kg (threshold 5.0 kg).
-                </span>
+                {analytics && analytics.metrics.totalOrders > 0 ? (
+                  <>
+                    <strong>{analytics.metrics.totalOrders} orders</strong> settled totaling{" "}
+                    <strong>{formatINR(analytics.metrics.grossSales)}</strong>.
+                    {topDish ? (
+                      <>
+                        {" "}Top dish: <strong>{topDish.name}</strong> ({topDish.count} portions).
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    Welcome to <strong>{activeBranch.name}</strong>! Your workspace is clean and isolated. Add dishes in{" "}
+                    <strong>Menu</strong> or open <strong>POS Terminal</strong> to record your first order.
+                  </>
+                )}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <Link
-              href="/inventory"
+              href="/menu"
               className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-xs hover:bg-amber-100/50 transition-colors"
             >
               <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-              <span>Review Inventory</span>
+              <span>Setup Menu</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* 4. PRIMARY FINANCIAL & REVENUE METRICS (8 Core Indicators) */}
+      {/* 4. PRIMARY FINANCIAL & REVENUE METRICS */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Key Financial & Performance Indicators
-            </h2>
-            <p className="text-[11px] text-slate-400">
-              Audited by NestJS multi-tenant calculation engine with Indian GST reconciliation
-            </p>
-          </div>
-          <span className="text-[11px] font-semibold text-slate-400">
-            Real-Time TanStack Query Stream
-          </span>
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Key Financial &amp; Performance Indicators
+          </h2>
+          <p className="text-[11px] text-slate-400">
+            Scoped strictly to {activeBranch.name} with Indian GST reconciliation
+          </p>
         </div>
-        <DashboardStatCards />
+        <DashboardStatCards analytics={analytics} loading={loading} />
       </section>
 
       {/* 5. PRIMARY REVENUE & HOURLY RUSH CHARTS */}
       <section className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <SalesHourlyChart />
-        <RevenueTrendsChart />
+        <SalesHourlyChart data={analytics?.hourlySales || []} />
+        <RevenueTrendsChart data={analytics?.periodicSales || []} />
       </section>
 
       {/* 6. DISTRIBUTION, CHANNELS & PAYMENT BREAKDOWN */}
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <OrderDistributionChart />
-        <PaymentMethodsChart />
-        <TopDishesChart />
+        <OrderDistributionChart data={analytics?.orderTypeDistribution || []} />
+        <PaymentMethodsChart data={analytics?.paymentMethods || []} />
+        <TopDishesChart data={analytics?.topSellingDishes || []} />
       </section>
 
       {/* 7. OPERATIONAL TABLES & REAL-TIME ALERTS */}
       <section className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         <RecentOrdersTable />
-        <PopularMenuItems />
+        <PopularMenuItems data={analytics?.topSellingDishes || []} />
         <LowStockAlerts />
       </section>
 
       {/* 8. AUDIT FEED & STATUTORY COMPLIANCE GUARD */}
       <section className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <RecentActivityFeed />
+        <RecentActivityFeed activities={analytics?.recentActivities || []} />
 
         <div className="col-span-1 xl:col-span-2 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
                 <ShieldAlert className="h-4 w-4 text-emerald-600" />
-                <span>Indian F&B Statutory & Compliance Assurance</span>
+                <span>Indian F&amp;B Statutory &amp; Compliance Guard</span>
               </div>
               <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
-                100% Tax Compliant
+                GST Ready
               </span>
             </div>
 
             <p className="text-xs text-slate-600 mt-3 leading-relaxed">
-              All transactions in this outlet strictly conform to Section 9(1) CGST (2.5%) and SGST (2.5%) = <strong>5.0% Composite Restaurant Service</strong> under SAC Code <strong className="text-slate-900 font-mono">996331</strong>. The 14-digit FSSAI license <strong className="text-slate-900 font-mono">{activeBranch.fssai}</strong> is automatically embedded on all 80mm ESC/POS thermal customer bills.
+              Outlet billing conforms to CGST (2.5%) + SGST (2.5%) under SAC{" "}
+              <strong className="text-slate-900 font-mono">996331</strong>. FSSAI License:{" "}
+              <strong className="text-slate-900 font-mono">{fssaiLabel}</strong>.
             </p>
 
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
               <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">Invoice Sequence</div>
-                <div className="font-mono font-bold text-slate-800 mt-0.5">{activeBranch.code}/2026-27/00285</div>
+                <div className="text-[10px] text-slate-400 uppercase font-semibold">Branch Code</div>
+                <div className="font-mono font-bold text-slate-800 mt-0.5">{activeBranch.code}</div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
                 <div className="text-[10px] text-slate-400 uppercase font-semibold">Statutory GSTIN</div>
-                <div className="font-mono font-bold text-slate-800 mt-0.5 truncate">{activeBranch.gstin}</div>
+                <div className="font-mono font-bold text-slate-800 mt-0.5 truncate">{gstinLabel}</div>
               </div>
               <div className="col-span-2 sm:col-span-1 rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">UPI Dynamic QR</div>
-                <div className="font-bold text-emerald-600 mt-0.5">Active on Bills</div>
+                <div className="text-[10px] text-slate-400 uppercase font-semibold">FSSAI Number</div>
+                <div className="font-mono font-bold text-slate-800 mt-0.5 truncate">{fssaiLabel}</div>
               </div>
             </div>
           </div>
@@ -467,13 +472,13 @@ export default function DashboardOverviewPage() {
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs text-slate-500">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              All voided items, bill discounts, and supervisor PIN overrides are logged to tamper-evident audit logs.
+              All voids, discounts, and billing changes are recorded to tamper-evident audit logs.
             </span>
             <Link
               href="/reports"
               className="inline-flex items-center gap-1 font-semibold text-slate-900 hover:text-emerald-600 transition-colors"
             >
-              <span>View Full GSTR-1 Ledger</span>
+              <span>View GSTR-1 Ledger</span>
               <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>

@@ -64,11 +64,16 @@ export async function GET(req: NextRequest) {
     }
 
     const now = new Date();
-    const periodEnd = activeSub?.currentPeriodEnd || org.subscriptionRenewal || new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-    const isAccessActive = now <= periodEnd || org.status === "ACTIVE";
-    const trialDaysRemaining = activeSub?.trialEndsAt
-      ? Math.max(0, Math.ceil((activeSub.trialEndsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
-      : 14;
+    const isPaymentBlocked = org.status === "PENDING_PAYMENT" || org.status === "SUSPENDED";
+    const periodEnd =
+      activeSub?.currentPeriodEnd ||
+      org.subscriptionRenewal ||
+      (isPaymentBlocked ? null : new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000));
+    const isAccessActive = !isPaymentBlocked && (org.status === "ACTIVE" || (periodEnd ? now <= periodEnd : false));
+    const trialDaysRemaining =
+      !isPaymentBlocked && activeSub?.trialEndsAt
+        ? Math.max(0, Math.ceil((activeSub.trialEndsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
+        : 0;
 
     return NextResponse.json({
       success: true,
@@ -80,17 +85,19 @@ export async function GET(req: NextRequest) {
         annualPrice: currentPlan.annualPrice,
         status: org.status,
         billingCycle: activeSub?.billingCycle || "MONTHLY",
-        renewalDate: periodEnd.toISOString(),
+        renewalDate: periodEnd ? periodEnd.toISOString() : null,
         trialEndsAt: activeSub?.trialEndsAt?.toISOString() || null,
-        isTrialActive: activeSub?.isTrialActive ?? true,
+        isTrialActive: !isPaymentBlocked && Boolean(activeSub?.isTrialActive),
         trialDaysRemaining,
-        mandateStatus: activeSub?.mandateStatus || (org.mandateRegistered ? "ACTIVE" : "PENDING_SETUP"),
-        mandateMethod: activeSub?.mandateMethod || "UPI_AUTOPAY",
-        mandateUpiId: activeSub?.mandateUpiId || "owner@okhdfcbank",
-        mandateBank: activeSub?.mandateBank || "HDFC Bank (••4210)",
+        mandateStatus: isPaymentBlocked
+          ? org.status
+          : activeSub?.mandateStatus || (org.mandateRegistered ? "ACTIVE" : "PENDING_SETUP"),
+        mandateMethod: activeSub?.mandateMethod || (isPaymentBlocked ? "PHONEPE" : "UPI_AUTOPAY"),
+        mandateUpiId: activeSub?.mandateUpiId || null,
+        mandateBank: activeSub?.mandateBank || null,
         cancelAtPeriodEnd: activeSub?.cancelAtPeriodEnd ?? false,
         cancelledAt: activeSub?.cancelledAt?.toISOString() || null,
-        accessValidUntil: periodEnd.toISOString(),
+        accessValidUntil: (periodEnd || now).toISOString(),
         isAccessActive,
         allowedModules: allowedModulesList,
         hasAdvancedReporting: currentPlan.hasAdvancedReporting,

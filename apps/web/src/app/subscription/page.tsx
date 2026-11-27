@@ -280,7 +280,9 @@ export default function SubscriptionPage() {
       case "ACTIVE":
         return <Badge variant="success">Active Subscription</Badge>;
       case "TRIALING":
-        return <Badge variant="warning">14-Day Free Trial</Badge>;
+        return <Badge variant="warning">Free Trial</Badge>;
+      case "PENDING_PAYMENT":
+        return <Badge variant="warning">Payment Pending</Badge>;
       case "SUSPENDED":
         return <Badge variant="destructive">Suspended</Badge>;
       default:
@@ -351,6 +353,42 @@ export default function SubscriptionPage() {
         </div>
       )}
 
+      {/* PENDING PAYMENT ONBOARDING / ACTIVATION GATE BANNER */}
+      {(subData?.status === "PENDING_PAYMENT" || subData?.status === "SUSPENDED") && (
+        <div className="rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-5 text-indigo-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-200/80 text-indigo-900 flex items-center justify-center shrink-0">
+              <CreditCard className="w-5 h-5 text-indigo-700" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-sm text-indigo-950">
+                  Complete PhonePe Payment to Activate Your Workspace
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-200 text-indigo-900 uppercase">
+                  {subData.status === "PENDING_PAYMENT" ? "Activation Required" : "Account Suspended"}
+                </span>
+              </div>
+              <p className="text-xs text-indigo-800 mt-1 leading-relaxed">
+                Your restaurant profile for <strong>{subData.organizationName}</strong> is saved. Pay for your selected <strong>{subData.planName}</strong> plan via PhonePe to unlock POS, KDS, Inventory, and Overview analytics.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => handlePayWithPhonePe(subData.planCode || "GROWTH")}
+            disabled={Boolean(payingPlanCode)}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider shrink-0 transition-colors shadow-xs flex items-center gap-1.5"
+          >
+            {payingPlanCode === (subData.planCode || "GROWTH") ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CreditCard className="h-3.5 w-3.5" />
+            )}
+            <span>Pay Now with PhonePe</span>
+          </button>
+        </div>
+      )}
+
       {/* PHONEPE CHECKOUT / VERIFICATION BANNER */}
       {paymentBanner && (
         <div
@@ -362,9 +400,18 @@ export default function SubscriptionPage() {
               : "border-rose-300 bg-rose-50 text-rose-950"
           }`}
         >
-          <div className="space-y-0.5">
+          <div className="space-y-1.5">
             <div className="font-extrabold text-sm">{paymentBanner.title}</div>
             <p className="leading-relaxed opacity-90">{paymentBanner.message}</p>
+            {paymentBanner.type === "success" && (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold transition-colors"
+              >
+                <span>Open Restaurant Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
           <button
             onClick={() => setPaymentBanner(null)}
@@ -438,10 +485,15 @@ export default function SubscriptionPage() {
                 <div className="h-8 w-px bg-slate-200 hidden sm:block" />
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                    Mandate Status & Method
+                    Payment / Renewal Status
                   </span>
                   <span className="font-bold flex items-center gap-1 mt-0.5">
-                    {subData?.cancelAtPeriodEnd ? (
+                    {subData?.status === "PENDING_PAYMENT" ? (
+                      <span className="text-amber-700 flex items-center gap-1 font-extrabold">
+                        <Clock className="h-3.5 w-3.5" />
+                        Awaiting PhonePe Activation
+                      </span>
+                    ) : subData?.cancelAtPeriodEnd ? (
                       <span className="text-amber-700 flex items-center gap-1 font-extrabold">
                         <Clock className="h-3.5 w-3.5" />
                         Cancelled (Valid till {subData.renewalDate ? new Date(subData.renewalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "end"})
@@ -449,13 +501,19 @@ export default function SubscriptionPage() {
                     ) : (
                       <span className="text-emerald-700 flex items-center gap-1">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        {subData?.mandateMethod === "CARD" ? "Card e-Mandate" : "UPI Autopay Active"}
+                        {subData?.mandateMethod === "CARD"
+                          ? "Card e-Mandate"
+                          : subData?.mandateMethod?.startsWith("PHONEPE")
+                          ? `Verified (${subData.mandateMethod})`
+                          : "Active Plan"}
                       </span>
                     )}
                   </span>
-                  <span className="text-[10px] text-slate-400 block font-mono">
-                    {subData?.mandateUpiId || subData?.mandateBank || "owner@okhdfcbank"}
-                  </span>
+                  {subData?.mandateUpiId && (
+                    <span className="text-[10px] text-slate-400 block font-mono">
+                      {subData.mandateUpiId}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

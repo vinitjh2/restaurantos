@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import bcrypt from "bcryptjs";
 import { signJwtToken } from "@/lib/server/auth-context";
+import { createPhonePeCheckoutOrder, getPhonePeConfig } from "@/lib/server/phonepe";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
       pincode,
       gstin,
       fssaiNumber,
-      subscriptionPlan, // STARTER, PROFESSIONAL, ENTERPRISE
+      subscriptionPlan, // STARTER, GROWTH, PRO, ENTERPRISE
+      billingCycle: rawCycle,
     } = body;
 
     // Validation
@@ -41,6 +43,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Normalize legacy plan code aliases to match SubscriptionPlan table
+    const rawPlanCode = String(subscriptionPlan || "GROWTH").trim().toUpperCase();
+    const requestedPlanCode = rawPlanCode === "PROFESSIONAL" ? "PRO" : rawPlanCode;
+    const billingCycle: "MONTHLY" | "ANNUAL" =
+      String(rawCycle || "MONTHLY").toUpperCase() === "ANNUAL" ? "ANNUAL" : "MONTHLY";
+
     // Auto-generate clean URL slug if not provided
     const cleanSlug = (slug || restaurantName)
       .toLowerCase()
@@ -48,7 +56,9 @@ export async function POST(req: NextRequest) {
       .replace(/^-+|-+$/g, "");
 
     // Check email uniqueness
-    const existingUser = await prisma.userAccount.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const existingUser = await prisma.userAccount.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: "An account with this email already exists" },
@@ -60,12 +70,31 @@ export async function POST(req: NextRequest) {
     const existingOrg = await prisma.organization.findUnique({ where: { slug: cleanSlug } });
     const finalSlug = existingOrg ? `${cleanSlug}-${Date.now().toString().slice(-4)}` : cleanSlug;
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    const branchCode = (restaurantName.slice(0, 3) + Date.now().toString().slice(-2)).toUpperCase();
+    // Resolve chosen plan from SubscriptionPlan table
+    const plan =
+      (await prisma.subscriptionPlan.findUnique({ where: { code: requestedPlanCode } })) ||
+      (await prisma.subscriptionPlan.findFirst({ where: { isActive: true }, orderBy: { monthlyPrice: "asc" } }));
 
-    // Atomic transaction: Create Organization + Owner Account + Initial Outlet Branch
+    if (!plan) {
+      return NextResponse.json(
+        { success: false, error: "No active subscription plans available" },
+        { status: 500 }
+      );
+    }
+
+    const amountInr = billingCycle === "ANNUAL" ? plan.annualPrice : plan.monthlyPrice;
+    const amountPaise = Math.max(100, Math.round(amountInr * 100));
+    const merchantOrderId = `PP-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const now = new Date();
+    const durationDays = billingCycle === "ANNUAL" ? 365 : 30;
+    const periodEnd = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const cleanPrefix = restaurantName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 3).toUpperCase() || "RST";
+    const branchCode = `${cleanPrefix}${Date.now().toString().slice(-3)}`;
+
+    // Atomic transaction: Create Organization (PENDING_PAYMENT) + Owner + Initial Outlet + Pending Invoice
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create Organization
       const organization = await tx.organization.create({
         data: {
           name: restaurantName.trim(),
@@ -74,13 +103,13 @@ export async function POST(req: NextRequest) {
           contactEmail: email.toLowerCase().trim(),
           contactPhone: phone || null,
           currency: "INR",
-          status: "ACTIVE",
-          subscriptionPlan: subscriptionPlan || "PROFESSIONAL",
-          subscriptionRenewal: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30-day initial trial
+          status: "PENDING_PAYMENT",
+          subscriptionPlan: plan.code,
+          subscriptionRenewal: null,
+          mandateRegistered: false,
         },
       });
 
-      // 2. Create Owner UserAccount
       const userAccount = await tx.userAccount.create({
         data: {
           organizationId: organization.id,
@@ -92,19 +121,18 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 3. Create Initial Flagship Branch
       const initialBranch = await tx.branch.create({
         data: {
           organizationId: organization.id,
-          name: branchName || `${restaurantName} — Main Outlet`,
+          name: branchName?.trim() || `${restaurantName.trim()} — Main Outlet`,
           code: branchCode,
-          address: address || "Commercial High Street",
-          city: city || "Bengaluru",
-          state: state || "Karnataka",
-          pincode: pincode || "560001",
-          phone: phone || "+91 98000 00000",
-          gstin: gstin || "29AABCU9603R1ZM",
-          fssaiNumber: fssaiNumber || "11223344000123",
+          address: address?.trim() || "",
+          city: city?.trim() || "",
+          state: state?.trim() || "",
+          pincode: pincode?.trim() || "",
+          phone: phone?.trim() || "",
+          gstin: gstin?.trim() || "",
+          fssaiNumber: fssaiNumber?.trim() || "",
           cgstRate: 2.5,
           sgstRate: 2.5,
           igstRate: 5.0,
@@ -113,7 +141,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 4. Create default table seats for initial branch
+      // Default table seats scoped by branchCode prefix
       const defaultTables = ["T-01", "T-02", "T-03", "T-04", "T-05"];
       for (const tNum of defaultTables) {
         await tx.tableSeat.create({
@@ -126,33 +154,89 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 5. Create default shift schedule
-      await tx.shiftSchedule.create({
+      // Create PENDING subscription invoice prior to PhonePe redirect
+      await tx.subscriptionInvoice.create({
         data: {
-          name: "General Service Shift",
-          startTime: "10:00",
-          endTime: "22:00",
-          lateThresholdMins: 15,
-          daysOfWeek: "MON,TUE,WED,THU,FRI,SAT,SUN",
-          isActive: true,
+          organizationId: organization.id,
+          invoiceNumber: merchantOrderId,
+          amount: amountInr,
+          currency: "INR",
+          status: "PENDING",
+          billingPeriodStart: now,
+          billingPeriodEnd: periodEnd,
+          paymentMethod: "PHONEPE",
+          razorpayOrderId: merchantOrderId,
         },
       });
 
-      // 6. Record Audit Log
       await tx.auditLog.create({
         data: {
           action: "ORGANIZATION_REGISTERED",
           entityType: "ORGANIZATION",
           entityId: organization.id,
           authorizedBy: userAccount.email,
-          details: `Registered tenant '${organization.name}' with initial branch '${initialBranch.name}' (${initialBranch.code})`,
+          details: `Registered tenant '${organization.name}' with branch '${initialBranch.name}' (${initialBranch.code})`,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          action: "PHONEPE_ORDER_INITIATED",
+          entityType: "SUBSCRIPTION_INVOICE",
+          entityId: merchantOrderId,
+          authorizedBy: userAccount.email,
+          reason: `Initiated onboarding PhonePe ${billingCycle} checkout for ${plan.code}`,
+          details: JSON.stringify({
+            organizationId: organization.id,
+            planCode: plan.code,
+            billingCycle,
+            amount: amountInr,
+          }),
         },
       });
 
       return { organization, userAccount, initialBranch };
     });
 
-    // Generate JWT token
+    // Generate PhonePe PG checkout link immediately after registration
+    let checkoutUrl: string | null = null;
+    let phonepeOrderId: string | null = null;
+    let paymentError: string | null = null;
+
+    const cfg = getPhonePeConfig(req.nextUrl.origin);
+    if (cfg.mode !== "unconfigured") {
+      try {
+        const redirectUrl = `${cfg.appUrl}/subscription?phonepeOrderId=${encodeURIComponent(merchantOrderId)}&onboarding=1`;
+        const callbackUrl = `${cfg.appUrl}/api/webhooks/phonepe`;
+        const checkout = await createPhonePeCheckoutOrder(cfg, {
+          merchantOrderId,
+          amountPaise,
+          redirectUrl,
+          callbackUrl,
+          message: `DineSutra ${plan.name} (${billingCycle}) — SutraUniverse`,
+          merchantUserId: result.organization.id.slice(0, 32),
+          mobileNumber: phone || null,
+          metaInfo: {
+            udf1: result.organization.id,
+            udf2: plan.code,
+            udf3: billingCycle,
+          },
+        });
+        checkoutUrl = checkout.redirectUrl;
+        phonepeOrderId = checkout.orderId;
+        await prisma.subscriptionInvoice.update({
+          where: { invoiceNumber: merchantOrderId },
+          data: { razorpayOrderId: checkout.orderId },
+        });
+      } catch (pgErr: any) {
+        console.error("[Register PhonePe Checkout Error]:", pgErr);
+        paymentError = pgErr.message || "Unable to initiate PhonePe checkout immediately.";
+      }
+    } else {
+      paymentError = "PhonePe gateway is not configured on this server yet.";
+    }
+
+    // Generate JWT session cookie so verification & subscription routes work seamlessly
     const token = signJwtToken({
       userId: result.userAccount.id,
       organizationId: result.organization.id,
@@ -163,14 +247,25 @@ export async function POST(req: NextRequest) {
       assignedBranchId: null,
     });
 
-    // Create response with secure HTTP-only cookie
     const response = NextResponse.json({
       success: true,
-      message: `Restaurant '${result.organization.name}' registered successfully!`,
+      paymentRequired: true,
+      checkoutUrl,
+      fallbackUrl: "/subscription?paymentRequired=1",
+      merchantOrderId,
+      phonepeOrderId,
+      amount: amountInr,
+      planCode: plan.code,
+      billingCycle,
+      paymentError,
+      message: checkoutUrl
+        ? `Account created! Redirecting to PhonePe Checkout (₹${amountInr})...`
+        : `Account created! Please complete PhonePe payment on your Subscription page.`,
       organization: {
         id: result.organization.id,
         name: result.organization.name,
         slug: result.organization.slug,
+        status: result.organization.status,
         businessType: result.organization.businessType,
         subscriptionPlan: result.organization.subscriptionPlan,
       },

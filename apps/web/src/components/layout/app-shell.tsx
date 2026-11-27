@@ -36,6 +36,7 @@ export function AppShell({ children }: AppShellProps) {
   const isPureAuth = pathname === "/login" || pathname === "/register";
 
   // Proactively hydrate user session from /api/auth/me for fresh browser profiles
+  // and gate unpaid/suspended restaurant accounts cleanly to /subscription.
   useEffect(() => {
     if (!isPureAuth) {
       let isMounted = true;
@@ -45,12 +46,25 @@ export function AppShell({ children }: AppShellProps) {
           return null;
         })
         .then((data) => {
-          if (isMounted && data?.success && data.organization) {
-            setSessionData({
-              user: data.user || null,
-              organization: data.organization,
-              branches: data.organization.branches,
-            });
+          if (!isMounted || !data?.success || !data.organization) return;
+          setSessionData({
+            user: data.user || null,
+            organization: data.organization,
+            branches: data.organization.branches,
+          });
+
+          const orgStatus = String(data.organization.status || "").toUpperCase();
+          const role = String(data.user?.role || "").toUpperCase();
+          const isPlatformRole = role === "PLATFORM_OWNER" || role === "PLATFORM_AUDITOR";
+          const isExemptRoute =
+            isStandaloneView || pathname.startsWith("/subscription");
+
+          if (
+            !isPlatformRole &&
+            !isExemptRoute &&
+            (orgStatus === "PENDING_PAYMENT" || orgStatus === "SUSPENDED")
+          ) {
+            window.location.href = "/subscription?paymentRequired=1";
           }
         })
         .catch(() => {
@@ -61,7 +75,7 @@ export function AppShell({ children }: AppShellProps) {
         isMounted = false;
       };
     }
-  }, [pathname, isPureAuth, setSessionData]);
+  }, [pathname, isPureAuth, isStandaloneView, setSessionData]);
 
   // Clean full-screen presentation for standalone views (waiter, mobile, customer display, login)
   if (isStandaloneView) {

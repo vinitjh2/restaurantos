@@ -38,14 +38,16 @@ export function TopNav() {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [dateDisplay, setDateDisplay] = useState("Sat, 7 Nov 2026");
+  const [dateDisplay, setDateDisplay] = useState("");
 
   useEffect(() => {
     setDateDisplay(formatIndianDate());
   }, []);
 
   const activeBranch = getActiveBranch();
-  const activeOrg = organizations.find((o) => o.id === currentOrgId) || organizations[0];
+  const activeOrg =
+    organizations.find((o) => o.id === currentOrgId) ||
+    organizations[0] || { id: "", name: "Syncing Restaurant..." };
 
   return (
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -162,15 +164,14 @@ export function TopNav() {
 
         {/* Ecosystem Cross-Link: StaySutra Hotel PMS */}
         <a
-          href="http://localhost:3001"
+          href="https://staysutra.sutrauniverse.com"
           target="_blank"
           rel="noopener noreferrer"
           className="hidden xl:flex items-center gap-1.5 rounded-lg border border-indigo-200/90 bg-indigo-50/70 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-all shadow-2xs"
-          title="Switch to StaySutra Hotel PMS (Port 3001)"
+          title="Switch to StaySutra Hotel PMS"
         >
           <Hotel className="h-3.5 w-3.5 text-indigo-600" />
           <span>StaySutra PMS</span>
-          <span className="rounded bg-indigo-200/80 px-1 py-0.2 text-[9px] font-bold text-indigo-900">3001 ↗</span>
         </a>
 
         {/* Quick Launch POS Button */}
@@ -190,36 +191,18 @@ export function TopNav() {
             title="Notifications"
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-            </span>
           </button>
 
           {notifOpen && (
             <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-xl z-50 animate-in fade-in-50 zoom-in-95">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2 px-2">
                 <span className="text-xs font-bold text-slate-900">Notifications</span>
-                <Badge variant="destructive" className="text-[10px] py-0 px-1.5">
-                  3 unread
+                <Badge variant="outline" className="text-[10px] py-0 px-1.5">
+                  0 unread
                 </Badge>
               </div>
-              <div className="divide-y divide-slate-100 py-1 text-xs">
-                <div className="p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-                  <div className="font-semibold text-slate-900">Low Stock Alert: Amul Butter</div>
-                  <div className="text-[11px] text-slate-500">Only 2.4 Kg remaining. Reorder level: 10 Kg.</div>
-                  <div className="text-[10px] text-amber-600 mt-0.5">8 mins ago</div>
-                </div>
-                <div className="p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-                  <div className="font-semibold text-slate-900">Table 12 Requesting Bill</div>
-                  <div className="text-[11px] text-slate-500">Captain Vikram generated pre-bill of ₹1,280.</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">14 mins ago</div>
-                </div>
-                <div className="p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-                  <div className="font-semibold text-slate-900">Zomato Order Ingested #9841</div>
-                  <div className="text-[11px] text-slate-500">Auto-routed to Kitchen station.</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">22 mins ago</div>
-                </div>
+              <div className="py-6 px-3 text-center text-xs text-slate-400">
+                All caught up. Live inventory alerts, KOT spikes, and payment notifications for your outlet appear here.
               </div>
             </div>
           )}

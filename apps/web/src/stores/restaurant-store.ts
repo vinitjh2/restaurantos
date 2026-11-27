@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { DEMO_BRANCHES, DEMO_RESTAURANTS, RestaurantBranch } from "@/lib/demo-data";
+import type { RestaurantBranch } from "@/lib/demo-data";
 
 export interface SessionUser {
   id?: string;
@@ -8,9 +8,40 @@ export interface SessionUser {
   role: string;
 }
 
+export interface StoreOrganization {
+  id: string;
+  name: string;
+  slug?: string;
+  status?: string;
+  subscriptionPlan?: string;
+}
+
+export interface ActiveBranchView {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+  address?: string;
+  phone?: string;
+  gstin: string;
+  fssai?: string;
+  fssaiNumber?: string;
+  state?: string;
+}
+
+const NEUTRAL_BRANCH: ActiveBranchView = {
+  id: "",
+  name: "Loading Outlet...",
+  code: "---",
+  city: "",
+  gstin: "",
+  fssai: "",
+  fssaiNumber: "",
+};
+
 interface RestaurantState {
-  organizations: typeof DEMO_RESTAURANTS;
-  branches: RestaurantBranch[];
+  organizations: StoreOrganization[];
+  branches: ActiveBranchView[];
   currentUser: SessionUser | null;
   currentOrgId: string;
   currentBranchId: string;
@@ -18,19 +49,23 @@ interface RestaurantState {
   isSearchOpen: boolean;
   setOrganization: (orgId: string) => void;
   setBranch: (branchId: string) => void;
-  setSessionData: (data: { user?: SessionUser | null; organization?: any; branches?: RestaurantBranch[] }) => void;
+  setSessionData: (data: {
+    user?: SessionUser | null;
+    organization?: StoreOrganization | any;
+    branches?: (RestaurantBranch | ActiveBranchView)[];
+  }) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setSearchOpen: (open: boolean) => void;
-  getActiveBranch: () => RestaurantBranch;
+  getActiveBranch: () => ActiveBranchView;
 }
 
 export const useRestaurantStore = create<RestaurantState>((set, get) => ({
-  organizations: DEMO_RESTAURANTS,
-  branches: DEMO_BRANCHES,
+  organizations: [],
+  branches: [],
   currentUser: null,
-  currentOrgId: DEMO_RESTAURANTS[0].id,
-  currentBranchId: DEMO_BRANCHES[0].id,
+  currentOrgId: "",
+  currentBranchId: "",
   isSidebarCollapsed: false,
   isSearchOpen: false,
 
@@ -38,8 +73,17 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
   setBranch: (branchId) => set({ currentBranchId: branchId }),
   setSessionData: (data) =>
     set((state) => {
-      const branches = data.branches && data.branches.length > 0 ? data.branches : state.branches;
-      const organizations = data.organization ? [data.organization] : state.organizations;
+      const branches =
+        data.branches && data.branches.length > 0
+          ? data.branches.map((b: any) => ({
+              ...b,
+              fssai: b.fssai || b.fssaiNumber || "",
+              fssaiNumber: b.fssaiNumber || b.fssai || "",
+            }))
+          : state.branches;
+      const organizations = data.organization
+        ? [data.organization]
+        : state.organizations;
       return {
         currentUser: data.user !== undefined ? data.user : state.currentUser,
         organizations,
@@ -54,6 +98,6 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
   getActiveBranch: () => {
     const { branches, currentBranchId } = get();
-    return branches.find((b) => b.id === currentBranchId) || branches[0];
+    return branches.find((b) => b.id === currentBranchId) || branches[0] || NEUTRAL_BRANCH;
   },
 }));

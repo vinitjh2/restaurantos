@@ -1,6 +1,5 @@
 "use client";
 
-import { DEMO_ACTIVITIES } from "@/lib/demo-data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
   Activity,
@@ -10,8 +9,13 @@ import {
   Wallet,
   Truck,
 } from "lucide-react";
+import type { DashboardActivity } from "@/types/dashboard";
 
-export function RecentActivityFeed() {
+interface RecentActivityFeedProps {
+  activities?: DashboardActivity[];
+}
+
+export function RecentActivityFeed({ activities = [] }: RecentActivityFeedProps) {
   const getIcon = (type: string) => {
     switch (type) {
       case "BILL":
@@ -34,28 +38,34 @@ export function RecentActivityFeed() {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-emerald-600" />
-          <CardTitle>Live Activity & Audit Feed</CardTitle>
+          <CardTitle>Live Activity &amp; Audit Feed</CardTitle>
         </div>
-        <CardDescription>Immutable transaction events and supervisor approvals</CardDescription>
+        <CardDescription>Immutable transaction events and approvals for your restaurant</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-slate-200">
-          {DEMO_ACTIVITIES.map((activity) => (
-            <div key={activity.id} className="relative flex items-start gap-3 text-xs">
-              <div className="absolute -left-6 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white shadow-xs">
-                {getIcon(activity.type)}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-900">{activity.title}</span>
-                  <span className="text-[10px] text-slate-400 font-medium">{activity.time}</span>
+        {activities.length === 0 ? (
+          <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+            No recent operational events recorded yet.
+          </div>
+        ) : (
+          <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-slate-200">
+            {activities.map((activity) => (
+              <div key={activity.id} className="relative flex items-start gap-3 text-xs">
+                <div className="absolute -left-6 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white shadow-xs">
+                  {getIcon(activity.type)}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">{activity.description}</p>
-                <span className="text-[10px] text-slate-400 font-medium">By {activity.user}</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-slate-900">{activity.title}</span>
+                    <span className="text-[10px] text-slate-400 font-medium shrink-0">{activity.time}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{activity.description}</p>
+                  <span className="text-[10px] text-slate-400 font-medium">By {activity.user}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
