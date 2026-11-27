@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    let items = await prisma.menuItem.findMany({
+    const tenantCtx = await getTenantContext(req);
+    const items = await prisma.menuItem.findMany({
+      where:
+        tenantCtx.role === "PLATFORM_OWNER"
+          ? {}
+          : { organizationId: tenantCtx.organizationId },
       include: {
         variants: true,
         modifiers: {
@@ -17,17 +23,6 @@ export async function GET() {
       },
       orderBy: { name: "asc" },
     });
-
-    if (items.length === 0) {
-      items = [
-        { id: "m1", name: "Paneer Butter Masala", category: "Main Course", dietType: "VEG", basePrice: 320, isAvailable: true, variants: [{ id: "v1", name: "Half", price: 180 }, { id: "v2", name: "Full", price: 320 }], modifiers: [] } as any,
-        { id: "m2", name: "Murgh Dum Biryani", category: "Biryani", dietType: "NON_VEG", basePrice: 350, isAvailable: true, variants: [{ id: "v3", name: "Regular", price: 350 }, { id: "v4", name: "Large", price: 580 }], modifiers: [] } as any,
-        { id: "m3", name: "Butter Garlic Naan", category: "Breads", dietType: "VEG", basePrice: 65, isAvailable: true, variants: [], modifiers: [] } as any,
-        { id: "m4", name: "Paneer Tikka Angara", category: "Starters", dietType: "VEG", basePrice: 280, isAvailable: true, variants: [], modifiers: [] } as any,
-        { id: "m5", name: "Dal Makhani Royale", category: "Main Course", dietType: "VEG", basePrice: 260, isAvailable: true, variants: [], modifiers: [] } as any,
-        { id: "m6", name: "Fresh Mint Lime Soda", category: "Beverages", dietType: "VEG", basePrice: 90, isAvailable: true, variants: [], modifiers: [] } as any,
-      ];
-    }
 
     const categories = Array.from(new Set(items.map((i) => i.category)));
 
@@ -44,6 +39,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const body = await req.json();
     const {
       name,
@@ -84,7 +80,7 @@ export async function POST(req: NextRequest) {
         hsnSacCode: hsnSacCode || sacCode || "996331",
         isAvailable: true,
         imageUrl: imageUrl || null,
-        organizationId: organizationId || null,
+        organizationId: tenantCtx.organizationId || organizationId || null,
       },
     });
 

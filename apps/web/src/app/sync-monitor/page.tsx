@@ -132,9 +132,9 @@ export default function SyncMonitorPage() {
       offlineSyncId: `OFF-IND-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       clientTimestamp: Date.now(),
       deviceId: offlineStorage.getDeviceId(),
-      tenantId: "org-bawarchi",
-      branchId: "IND",
-      userId: "staff-vikram",
+      tenantId: "tenant-local",
+      branchId: "MAIN",
+      userId: "staff-user",
       orderNumber: testOrderId,
       localReceiptNumber: `OFF-REC-IND-${Date.now().toString().slice(-5)}`,
       orderType: "DINE_IN",
@@ -171,7 +171,7 @@ export default function SyncMonitorPage() {
     };
 
     await offlineStorage.saveOrder(testOrder);
-    await syncQueue.enqueueOperation("CREATE_ORDER", testOrder, "org-bawarchi", "IND", "staff-vikram");
+    await syncQueue.enqueueOperation("CREATE_ORDER", testOrder, "tenant-local", "MAIN", "staff-user");
     await loadLocalState();
     addLog(`Created test offline order #${testOrderId} in local queue.`);
   };
@@ -215,8 +215,8 @@ export default function SyncMonitorPage() {
         body: JSON.stringify({
           operationId: `OP-CONFLICT-${Date.now()}`,
           deviceId: "POS-DEV-SECONDARY-02",
-          tenantId: "org-bawarchi",
-          branchId: "IND",
+          tenantId: "tenant-local",
+          branchId: "MAIN",
           userId: "cashier-device-b",
           operationType: "CANCEL_ORDER",
           targetOrderId: "some-paid-order-id",

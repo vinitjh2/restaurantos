@@ -193,7 +193,7 @@ export default function TutorialPage() {
               <Store className="w-8 h-8 text-slate-300" />
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
-              RestaurantOS features a centralized enterprise layout. The left sidebar grants instant access to all 16 operational modules, while the top bar allows one-click switching between branches (Indiranagar, Koramangala, HSR Layout).
+              RestaurantOS features a centralized enterprise layout. The left sidebar grants instant access to all 16 operational modules, while the top bar allows one-click switching between your restaurant branches.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
@@ -607,7 +607,7 @@ export default function TutorialPage() {
             <ScreenshotFrame title="Daily Closing Z-Report Snapshot Preview" url="http://localhost:3000/reports">
               <div className="bg-white p-4 rounded-xl border border-slate-200 max-w-sm mx-auto shadow-2xs font-mono text-xs space-y-2.5">
                 <div className="text-center border-b pb-2">
-                  <div className="font-black text-slate-900 text-sm">BAWARCHI ROYALE</div>
+                  <div className="font-black text-slate-900 text-sm">YOUR RESTAURANT</div>
                   <div className="text-[10px] text-slate-500">Official Daily Shift Z-Report</div>
                   <div className="text-[9px] text-slate-400 mt-0.5">Shift #44 • Sat, 7 Nov 2026</div>
                 </div>
@@ -637,7 +637,7 @@ export default function TutorialPage() {
               <GitFork className="w-8 h-8 text-slate-300" />
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Operate multiple outlets (IND Indiranagar, KOR Koramangala, HSR Cloud Kitchen) with complete database tenant isolation. Initiate raw stock transfers between central base kitchens and satellite outlets with in-transit verification.
+              Operate multiple outlets (Main Branch, Downtown Hub, Cloud Kitchen) with complete database tenant isolation. Initiate raw stock transfers between central base kitchens and satellite outlets with in-transit verification.
             </p>
           </section>
 

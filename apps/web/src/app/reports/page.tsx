@@ -24,8 +24,10 @@ import { formatINR } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MenuEngineeringMatrix } from "@/components/reports/menu-engineering-matrix";
+import { useRestaurantStore } from "@/stores/restaurant-store";
 
 export default function ReportsPage() {
+  const branches = useRestaurantStore((s) => s.branches);
   const [activeTab, setActiveTab] = useState<"SALES" | "GST" | "PNL" | "AUDITS" | "MENU_MATRIX">("SALES");
   const [timeRange, setTimeRange] = useState("30d");
   const [selectedBranch, setSelectedBranch] = useState("All");
@@ -141,9 +143,11 @@ export default function ReportsPage() {
             className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none"
           >
             <option value="All">All Outlets (Consolidated)</option>
-            <option value="IND">Indiranagar Flagship (IND)</option>
-            <option value="KOR">Koramangala Kitchen & Bar (KOR)</option>
-            <option value="HSR">HSR Cloud Kitchen (HSR)</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.code}>
+                {b.name} ({b.code})
+              </option>
+            ))}
           </select>
         </div>
       </div>

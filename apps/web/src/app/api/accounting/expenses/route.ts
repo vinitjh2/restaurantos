@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
     const branch = searchParams.get("branch");
 
-    const where: any = {};
+    const tenantBranches = await prisma.branch.findMany({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { id: true, code: true },
+    });
+    const branchKeys = Array.from(new Set(tenantBranches.flatMap((b) => [b.id, b.code])));
+
+    const where: any =
+      tenantCtx.role === "PLATFORM_OWNER"
+        ? {}
+        : branchKeys.length > 0
+        ? { branchId: { in: branchKeys } }
+        : { branchId: "__none__" };
+
     if (category && category !== "All") where.category = category;
     if (branch && branch !== "All") where.branchId = branch;
 
@@ -43,8 +57,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const body = await req.json();
     const { category, description, amount, paymentMode, vendor, authorizedBy, branchId, receiptRef } = body;
+
+    const primaryBranch = await prisma.branch.findFirst({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { id: true, code: true },
+    });
 
     const expenseAmount = Number(amount);
     if (!category || !description || isNaN(expenseAmount) || expenseAmount <= 0) {
@@ -61,8 +81,8 @@ export async function POST(req: NextRequest) {
         amount: expenseAmount,
         paymentMode: paymentMode || "CASH",
         vendor: vendor || null,
-        authorizedBy: authorizedBy || "Manager",
-        branchId: branchId || "IND",
+        authorizedBy: authorizedBy || tenantCtx.name || "Manager",
+        branchId: branchId || primaryBranch?.code || primaryBranch?.id || tenantCtx.organizationId,
         receiptRef: receiptRef || null,
         date: new Date(),
       },

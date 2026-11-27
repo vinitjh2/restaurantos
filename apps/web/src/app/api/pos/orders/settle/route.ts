@@ -169,8 +169,8 @@ export async function POST(req: NextRequest) {
     });
 
     const upiLink = generateUPILink({
-      vpa: "bawarchiroyale@icici",
-      merchantName: branch?.name || "Bawarchi Royale",
+      vpa: (branch as any)?.upiVpa || "",
+      merchantName: branch?.name || "Restaurant",
       amount: calc.grandTotal,
       invoiceNumber,
     });

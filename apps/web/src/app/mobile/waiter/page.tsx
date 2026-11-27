@@ -328,8 +328,8 @@ export default function MobileWaiterPage() {
         await offlineStorage.enqueueOperation({
           uuid: opId,
           deviceId: offlineStorage.getDeviceId(),
-          tenantId: "org-bawarchi",
-          branchId: "IND",
+          tenantId: "tenant-local",
+          branchId: "MAIN",
           userId: "waiter-mobile",
           operationType: "CREATE_ORDER",
           timestamp: Date.now(),

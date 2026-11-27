@@ -71,9 +71,6 @@ export async function GET(req: NextRequest) {
     const branchCodes = tenantBranches.map((b) => b.code);
     const branchKeys = Array.from(new Set([...branchIds, ...branchCodes]));
     const ingBranchKeys = [...branchKeys];
-    if (tenantCtx.organizationSlug === "bawarchi-royale" && branchCode === "All") {
-      ingBranchKeys.push("default");
-    }
 
     const emptyOrderWhere = branchIds.length > 0 ? { branchId: { in: branchIds } } : { branchId: "__none__" };
     const branchKeyWhere = branchKeys.length > 0 ? { branchId: { in: branchKeys } } : { branchId: "__none__" };
@@ -294,12 +291,7 @@ export async function GET(req: NextRequest) {
       tableFilters.length > 0
         ? await prisma.tableSeat.findMany({
             where: {
-              OR: [
-                ...tableFilters,
-                ...(tenantCtx.organizationSlug === "bawarchi-royale"
-                  ? [{ tableNumber: { in: ["T-01", "T-02", "T-03", "T-04", "T-05", "T-06", "AC-01", "RF-01"] } }]
-                  : []),
-              ],
+              OR: tableFilters,
             },
             select: { status: true },
           })

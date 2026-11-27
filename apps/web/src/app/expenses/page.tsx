@@ -88,20 +88,20 @@ export default function ExpensesPage() {
   });
 
   const [openShiftForm, setOpenShiftForm] = useState({
-    openedBy: "Rahul Sharma (Cashier)",
-    openingBalance: 3000,
-    branchId: "IND",
+    openedBy: "",
+    openingBalance: 0,
+    branchId: "",
     notes: "Morning shift drawer opened",
   });
 
   const [cashDropForm, setCashDropForm] = useState({
-    cashDropAmount: 5000,
+    cashDropAmount: 0,
     notes: "Safe vault transfer",
   });
 
   const [closeShiftForm, setCloseShiftForm] = useState({
     actualClosingCash: 0,
-    closedBy: "Ananya Roy (Manager)",
+    closedBy: "",
     notes: "Evening shift reconciliation",
   });
 
@@ -474,7 +474,7 @@ export default function ExpensesPage() {
                   <span>Till Drawer Shift Reconciliation</span>
                 </h3>
                 <span className="text-xs text-slate-500">
-                  Branch: IND (Indiranagar) | Shift Operator: {activeShift?.openedBy || "None"}
+                  Shift Operator: {activeShift?.openedBy || "None"}
                 </span>
               </div>
               <div className="flex items-center gap-2">

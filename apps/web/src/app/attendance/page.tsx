@@ -227,7 +227,7 @@ export default function AttendancePage() {
       const res = await fetch("/api/attendance/leaves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, leaveId, approvedBy: "Ananya Roy (Manager)" }),
+        body: JSON.stringify({ action, leaveId, approvedBy: "Manager" }),
       });
       const data = await res.json();
       if (data.success) {

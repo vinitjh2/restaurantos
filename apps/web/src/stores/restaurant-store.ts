@@ -1,5 +1,13 @@
 import { create } from "zustand";
-import type { RestaurantBranch } from "@/lib/demo-data";
+
+export interface RestaurantBranch {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+  gstin: string;
+  fssai: string;
+}
 
 export interface SessionUser {
   id?: string;

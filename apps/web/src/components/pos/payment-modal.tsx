@@ -69,16 +69,8 @@ export function PaymentModal({
         })
         .catch((err) => {
           console.error("Could not fetch hotel rooms:", err);
-          // Fallback static list if bridge request blocked
-          setHotelRooms([
-            { roomNumber: "101", guestName: "Vikramaditya Singhania", roomType: "Deluxe King", mealPlan: "CP" },
-            { roomNumber: "102", guestName: "Marcus Sterling", roomType: "Deluxe King", mealPlan: "MAP" },
-            { roomNumber: "201", guestName: "Pooja Mehra", roomType: "Executive Suite", mealPlan: "CP" },
-            { roomNumber: "202", guestName: "Arjun & Neha Kapoor", roomType: "Executive Suite", mealPlan: "AP" },
-            { roomNumber: "301", guestName: "Aditya & Sunita Birla", roomType: "Royal Heritage Suite", mealPlan: "AP" },
-            { roomNumber: "Villa 1", guestName: "H.H. Sheikha Aisha Al-Maktoum", roomType: "Private Pool Villa", mealPlan: "AP" },
-          ]);
-          setSelectedHotelRoom("101");
+          setHotelRooms([]);
+          setSelectedHotelRoom("");
         })
         .finally(() => setIsLoadingRooms(false));
     }
@@ -91,9 +83,9 @@ export function PaymentModal({
   // Canvas for Dynamic UPI QR code
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const upiLink = `upi://pay?pa=bawarchiroyale@icici&pn=BawarchiRoyale&am=${grandTotal.toFixed(
+  const upiLink = `upi://pay?pa=&pn=Restaurant&am=${grandTotal.toFixed(
     2
-  )}&tn=RestaurantOS&cu=INR`;
+  )}&tn=DineSutra&cu=INR`;
 
   useEffect(() => {
     if (selectedMethod === "UPI" && qrCanvasRef.current) {
@@ -317,7 +309,7 @@ export function PaymentModal({
                 <div className="rounded-xl bg-emerald-50 border border-emerald-200/60 p-3 text-emerald-800">
                   <div className="font-bold">Dynamic UPI QR Ready</div>
                   <p className="text-[11px] text-emerald-700 mt-0.5">
-                    Customer scans QR to pay exactly <span className="font-bold">{formatINR(grandTotal)}</span> directly to restaurant VPA: <span className="font-mono font-bold">bawarchiroyale@icici</span>
+                    Customer scans QR to pay exactly <span className="font-bold">{formatINR(grandTotal)}</span> via UPI.
                   </p>
                 </div>
 

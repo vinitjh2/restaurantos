@@ -19,10 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { unifiedPrinter } from "@/lib/hardware/unified-printer";
 
 export default function MobilePOSPage() {
-  const [cart, setCart] = useState([
-    { id: "1", name: "Murgh Dum Biryani", price: 350, quantity: 2 },
-    { id: "2", name: "Butter Garlic Naan", price: 65, quantity: 3 },
-  ]);
+  const [cart, setCart] = useState<Array<{ id: string; name: string; price: number; quantity: number }>>([]);
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "UPI" | "CARD">("UPI");
   const [isProcessing, setIsProcessing] = useState(false);
   const [successReceipt, setSuccessReceipt] = useState<string | null>(null);
@@ -34,13 +31,13 @@ export default function MobilePOSPage() {
   const handleSettleAndPrint = async () => {
     setIsProcessing(true);
     try {
-      const invoiceNumber = `IND/2026-27/${Date.now().toString().slice(-5)}`;
+      const invoiceNumber = `INV/2026-27/${Date.now().toString().slice(-5)}`;
       const receiptData = {
-        restaurantName: "Bawarchi Royale",
-        branchName: "Indiranagar Flagship",
-        address: "100 Feet Rd, Indiranagar, Bengaluru",
-        phone: "+91 80 4123 4567",
-        gstin: "29AABCU9603R1ZM",
+        restaurantName: "DineSutra Outlet",
+        branchName: "Main Branch",
+        address: "",
+        phone: "",
+        gstin: "",
         invoiceNumber,
         orderNumber: `ORD-IND-${Date.now().toString().slice(-4)}`,
         orderType: "DINE_IN",

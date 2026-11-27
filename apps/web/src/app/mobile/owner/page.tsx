@@ -29,79 +29,33 @@ export default function OwnerMobileDashboard() {
 
   // Live KPI Data
   const [kpis, setKpis] = useState({
-    liveSalesToday: 48920,
-    salesGrowthPct: 14.8,
-    totalOrders: 64,
-    averageBill: 764,
-    revenue: 48920,
-    expenses: 16400,
-    netProfit: 32520,
-    profitMarginPct: 66.5,
+    liveSalesToday: 0,
+    salesGrowthPct: 0,
+    totalOrders: 0,
+    averageBill: 0,
+    revenue: 0,
+    expenses: 0,
+    netProfit: 0,
+    profitMarginPct: 0,
   });
 
   // Popular Dishes Ranking
-  const [popularDishes] = useState([
-    { rank: 1, name: "Murgh Dum Biryani", sold: 38, revenue: 13300, category: "Biryani" },
-    { rank: 2, name: "Paneer Butter Masala", sold: 26, revenue: 8320, category: "Mains" },
-    { rank: 3, name: "Butter Garlic Naan", sold: 74, revenue: 4810, category: "Breads" },
-    { rank: 4, name: "Dal Makhani Royale", sold: 18, revenue: 4680, category: "Mains" },
-    { rank: 5, name: "Amritsari Sweet Lassi", sold: 29, revenue: 2610, category: "Beverages" },
-  ]);
+  const [popularDishes] = useState<Array<{ rank: number; name: string; sold: number; revenue: number; category: string }>>([]);
 
   // Multi-Branch Performance
-  const [branches] = useState([
-    {
-      code: "IND",
-      name: "Indiranagar Flagship",
-      revenue: 28450,
-      orders: 37,
-      status: "OPTIMAL",
-      targetPct: 112,
-    },
-    {
-      code: "KOR",
-      name: "Koramangala Hub",
-      revenue: 14620,
-      orders: 19,
-      status: "GOOD",
-      targetPct: 98,
-    },
-    {
-      code: "WHF",
-      name: "Whitefield Cloud Kitchen",
-      revenue: 5850,
-      orders: 8,
-      status: "GROWING",
-      targetPct: 84,
-    },
-  ]);
+  const [branches] = useState<Array<{ code: string; name: string; revenue: number; orders: number; status: string; targetPct: number }>>([]);
 
   // Active Staff Telemetry
-  const [activeStaff] = useState([
-    { name: "Pooja Hegde", role: "Head Cashier", shiftOrders: 28, clockedIn: "09:30 AM", status: "ACTIVE" },
-    { name: "Rahul Verma", role: "Captain / Waiter", shiftOrders: 19, clockedIn: "10:15 AM", status: "ACTIVE" },
-    { name: "Chef Murugan", role: "Head Chef", kitchenStation: "Main Kitchen", clockedIn: "08:00 AM", status: "COOKING" },
-    { name: "Vikram Sen", role: "Bartender", shiftOrders: 17, clockedIn: "11:00 AM", status: "ACTIVE" },
-  ]);
+  const [activeStaff] = useState<Array<{ name: string; role: string; shiftOrders?: number; kitchenStation?: string; clockedIn: string; status: string }>>([]);
 
   // Urgent Inventory Alerts
-  const [inventoryAlerts] = useState([
-    { id: "1", item: "Amul Butter", remaining: "2.4 Kg", reorder: "10 Kg", severity: "CRITICAL" },
-    { id: "2", item: "Fresh Cooking Cream", remaining: "4 Liters", reorder: "12 Liters", severity: "WARNING" },
-    { id: "3", item: "Basmati Biryani Rice (Batch B-92)", expiry: "Expires in 3 days", severity: "EXPIRY" },
-  ]);
+  const [inventoryAlerts] = useState<Array<{ id: string; item: string; remaining?: string; reorder?: string; expiry?: string; severity: string }>>([]);
 
   const refreshData = async () => {
     setLoading(true);
-    // Simulates quick live refresh
     setTimeout(() => {
-      setKpis((prev) => ({
-        ...prev,
-        liveSalesToday: prev.liveSalesToday + Math.floor(Math.random() * 800),
-        totalOrders: prev.totalOrders + 1,
-      }));
       setLoading(false);
-    }, 600);
+    }, 300);
   };
 
   return (
@@ -114,7 +68,7 @@ export default function OwnerMobileDashboard() {
           </div>
           <div>
             <h1 className="text-sm font-black text-slate-900 leading-none">DineSutra Live Owner</h1>
-            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Bawarchi Royale Group</p>
+            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Live Outlet Telemetry</p>
           </div>
         </div>
 

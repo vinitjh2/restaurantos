@@ -54,7 +54,7 @@ function LoginForm() {
               name: data.user.name,
               role: data.user.role,
               organizationId: data.organization.id,
-              organizationSlug: data.organization.slug || 'bawarchi-royale',
+              organizationSlug: data.organization.slug || '',
               assignedBranchId: data.user.assignedBranchId,
               cachedAt: Date.now(),
             });

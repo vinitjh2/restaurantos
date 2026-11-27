@@ -21,18 +21,18 @@ export default function SettingsPage() {
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [branchId, setBranchId] = useState("");
-  const [name, setName] = useState("Bawarchi Royale - Indiranagar Flagship");
-  const [gstin, setGstin] = useState("29AABCU9603R1ZM");
-  const [fssaiNumber, setFssaiNumber] = useState("11223334000189");
-  const [address, setAddress] = useState("100 Feet Road, HAL 2nd Stage, Indiranagar");
-  const [city, setCity] = useState("Bengaluru");
-  const [state, setState] = useState("Karnataka");
-  const [pincode, setPincode] = useState("560038");
-  const [phone, setPhone] = useState("+91 80 4123 4567");
+  const [name, setName] = useState("");
+  const [gstin, setGstin] = useState("");
+  const [fssaiNumber, setFssaiNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [phone, setPhone] = useState("");
   const [cgstRate, setCgstRate] = useState(2.5);
   const [sgstRate, setSgstRate] = useState(2.5);
   const [isTaxInclusive, setIsTaxInclusive] = useState(false);
-  const [receiptFooter, setReceiptFooter] = useState("Thank you for dining with us! Follow @bawarchiroyale");
+  const [receiptFooter, setReceiptFooter] = useState("Thank you for dining with us!");
 
   useEffect(() => {
     async function loadSettings() {

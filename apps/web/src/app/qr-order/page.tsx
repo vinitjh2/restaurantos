@@ -277,17 +277,12 @@ function QrOrderContent() {
     }
   };
 
-  // Sample running bill items for Table T-01
+  // Sample running bill items for Table
   const runningTableItems = useMemo(() => {
     if (activeOrder?.items && activeOrder.items.length > 0) {
       return activeOrder.items;
     }
-    return [
-      { id: "rb-1", name: "Murgh Dum Biryani Royale", price: 350, quantity: 2 },
-      { id: "rb-2", name: "Butter Garlic Naan", price: 65, quantity: 4 },
-      { id: "rb-3", name: "Paneer Butter Masala", price: 320, quantity: 1 },
-      { id: "rb-4", name: "Amritsari Kesar Sweet Lassi", price: 90, quantity: 2 },
-    ];
+    return [];
   }, [activeOrder]);
 
   const runningSubtotal = runningTableItems.reduce((acc: number, it: any) => acc + it.price * it.quantity, 0);
@@ -298,8 +293,12 @@ function QrOrderContent() {
   // Generate real dynamic UPI QR Code for Pay-at-Table
   useEffect(() => {
     async function makeUpiQr() {
-      const vpa = "bawarchiroyale@icici";
-      const name = "Bawarchi Royale";
+      const vpa = "";
+      if (!vpa) {
+        setTableUpiQr("");
+        return;
+      }
+      const name = "Restaurant";
       const note = `Table-${table}-Bill`;
       const upiUrl = `upi://pay?pa=${vpa}&pn=${encodeURIComponent(name)}&am=${runningGrandTotal}&cu=INR&tn=${encodeURIComponent(note)}`;
       try {
@@ -462,7 +461,7 @@ function QrOrderContent() {
       <div className="relative h-56 sm:h-64 w-full overflow-hidden bg-slate-950">
         <img
           src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80"
-          alt="Bawarchi Royale Interior"
+          alt="Restaurant Interior"
           className="h-full w-full object-cover opacity-45 scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
@@ -508,10 +507,10 @@ function QrOrderContent() {
               </div>
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-              Bawarchi Royale
+              DineSutra Table Ordering
             </h1>
             <p className="text-xs text-slate-300 truncate">
-              Indiranagar Flagship · DineSutra Smart Table Service
+              Branch {branch} · DineSutra Smart Table Service
             </p>
           </div>
         </div>
@@ -674,7 +673,7 @@ function QrOrderContent() {
                         className="h-44 w-44 rounded-2xl border border-slate-200 shadow-md bg-white p-2.5"
                       />
                       <span className="text-xs font-mono font-bold text-slate-800 mt-2">
-                        UPI: bawarchiroyale@icici
+                        Payable: {formatINR(runningGrandTotal)}
                       </span>
                       <span className="text-[10px] text-slate-400">
                         Exact payable amount embedded: {formatINR(runningGrandTotal)}
@@ -682,30 +681,15 @@ function QrOrderContent() {
                     </div>
                   ) : (
                     <div className="h-44 w-44 mx-auto flex items-center justify-center text-xs text-slate-400">
-                      Generating Dynamic UPI QR...
+                      Ask staff for UPI QR or pay at counter
                     </div>
                   )}
 
                   {/* 1-Tap Mobile App Links */}
                   <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                    <a
-                      href={`upi://pay?pa=bawarchiroyale@icici&pn=Bawarchi%20Royale&am=${runningGrandTotal}&cu=INR&tn=Table-${table}-Bill`}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs hover:bg-slate-50 transition-colors"
-                    >
-                      Google Pay
-                    </a>
-                    <a
-                      href={`upi://pay?pa=bawarchiroyale@icici&pn=Bawarchi%20Royale&am=${runningGrandTotal}&cu=INR&tn=Table-${table}-Bill`}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs hover:bg-slate-50 transition-colors"
-                    >
-                      PhonePe
-                    </a>
-                    <a
-                      href={`upi://pay?pa=bawarchiroyale@icici&pn=Bawarchi%20Royale&am=${runningGrandTotal}&cu=INR&tn=Table-${table}-Bill`}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs hover:bg-slate-50 transition-colors"
-                    >
-                      Paytm
-                    </a>
+                    <span className="text-[11px] text-slate-500">
+                      Configure merchant UPI VPA in Settings to enable 1-tap UPI links.
+                    </span>
                   </div>
                 </div>
 

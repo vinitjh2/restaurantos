@@ -1,36 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    let tables = await prisma.tableSeat.findMany({
-      orderBy: { tableNumber: "asc" },
+    const tenantCtx = await getTenantContext(req);
+
+    const tenantBranches = await prisma.branch.findMany({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { id: true, code: true },
     });
+    const branchIds = tenantBranches.map((b) => b.id);
+    const branchCodes = tenantBranches.map((b) => b.code);
 
-    if (tables.length === 0) {
-      tables = [
-        { id: "t1", tableNumber: "T-01", floor: "Ground Floor", capacity: 4, status: "AVAILABLE" } as any,
-        { id: "t2", tableNumber: "T-02", floor: "Ground Floor", capacity: 2, status: "OCCUPIED" } as any,
-        { id: "t3", tableNumber: "T-03", floor: "Ground Floor", capacity: 6, status: "AVAILABLE" } as any,
-        { id: "t4", tableNumber: "T-04", floor: "Ground Floor", capacity: 4, status: "OCCUPIED" } as any,
-        { id: "t5", tableNumber: "T-05", floor: "First Floor", capacity: 4, status: "AVAILABLE" } as any,
-        { id: "t6", tableNumber: "T-06", floor: "First Floor", capacity: 8, status: "AVAILABLE" } as any,
-      ];
-    }
+    const tables =
+      tenantCtx.role === "PLATFORM_OWNER"
+        ? await prisma.tableSeat.findMany({ orderBy: { tableNumber: "asc" } })
+        : branchCodes.length > 0
+        ? await prisma.tableSeat.findMany({
+            where: {
+              OR: branchCodes.map((code) => ({ tableNumber: { startsWith: `${code}-` } })),
+            },
+            orderBy: { tableNumber: "asc" },
+          })
+        : [];
 
-    // Query active/recent orders linked to tables
+    // Query active/recent orders linked to tenant's branches
     let orders: any[] = [];
     try {
-      orders = await prisma.order.findMany({
-        where: { tableNumber: { not: null } },
-        include: {
-          items: true,
-          invoice: true,
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      orders =
+        tenantCtx.role === "PLATFORM_OWNER" || branchIds.length > 0
+          ? await prisma.order.findMany({
+              where: {
+                tableNumber: { not: null },
+                ...(tenantCtx.role === "PLATFORM_OWNER" ? {} : { branchId: { in: branchIds } }),
+              },
+              include: {
+                items: true,
+                invoice: true,
+              },
+              orderBy: { createdAt: "desc" },
+            })
+          : [];
     } catch (e) {
       console.warn("Failed to query table orders:", e);
     }
@@ -94,6 +107,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const body = await req.json();
     const { tableNumber, floor, capacity } = body;
 
@@ -104,20 +118,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const primaryBranch = await prisma.branch.findFirst({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { code: true },
+    });
+
+    const rawNum = tableNumber.trim().toUpperCase();
+    const scopedTableNumber =
+      primaryBranch && !rawNum.startsWith(`${primaryBranch.code}-`)
+        ? `${primaryBranch.code}-${rawNum}`
+        : rawNum;
+
     const existing = await prisma.tableSeat.findUnique({
-      where: { tableNumber: tableNumber.trim().toUpperCase() },
+      where: { tableNumber: scopedTableNumber },
     });
 
     if (existing) {
       return NextResponse.json(
-        { success: false, error: `Table ${tableNumber} already exists on ${existing.floor}` },
+        { success: false, error: `Table ${scopedTableNumber} already exists on ${existing.floor}` },
         { status: 409 }
       );
     }
 
     const newTable = await prisma.tableSeat.create({
       data: {
-        tableNumber: tableNumber.trim().toUpperCase(),
+        tableNumber: scopedTableNumber,
         floor: floor.trim(),
         capacity: Number(capacity) || 4,
         status: "AVAILABLE",

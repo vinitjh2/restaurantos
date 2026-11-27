@@ -105,8 +105,8 @@ export default function IntegrationsSettingsPage() {
         const payload = {
           order: {
             order_id: `ZOM-${Math.floor(1000 + Math.random() * 9000)}`,
-            customer: { name: "Ankit Sharma", phone: "+91 98765 43210" },
-            delivery: { address: "Flat 402, Sunshine Apts, Indiranagar" },
+            customer: { name: "Test Customer", phone: "+91 90000 00000" },
+            delivery: { address: "123 Sample Street" },
             items: [
               { id: "101", name: "Murgh Dum Biryani", quantity: 2, price: 350, customizations: ["Extra Salan", "Spicy"] },
               { id: "102", name: "Amritsari Sweet Lassi", quantity: 2, price: 90 },

@@ -87,7 +87,7 @@ const INITIAL_CCTV_TABLES: CctvTable[] = [
     guestCount: 2,
     seatedSeconds: 1240, // ~20m
     noWaiterAlert: false,
-    waiterAssigned: "Vikram (Captain)",
+    waiterAssigned: "Waiter A",
     waiterArrived: true,
     orderStatus: "BILL_REQUESTED",
     polygon: [
@@ -107,7 +107,7 @@ const INITIAL_CCTV_TABLES: CctvTable[] = [
     guestCount: 4,
     seatedSeconds: 680, // ~11m
     noWaiterAlert: false,
-    waiterAssigned: "Vikram (Captain)",
+    waiterAssigned: "Waiter A",
     waiterArrived: true,
     orderStatus: "EATING",
     polygon: [
@@ -209,7 +209,7 @@ const INITIAL_CCTV_PERSONS: CctvPerson[] = [
   { id: "p-05", type: "CUSTOMER", label: "Customer [05:12]", box: { x: 71, y: 39, w: 7, h: 14 }, tableId: "t-03", durationSeconds: 312 },
   { id: "p-06", type: "CUSTOMER", label: "Customer [05:12]", box: { x: 81, y: 40, w: 7, h: 14 }, tableId: "t-03", durationSeconds: 312 },
   // Waiter near T-02
-  { id: "p-waiter-1", type: "WAITER", label: "Waiter (Vikram)", box: { x: 48, y: 22, w: 8, h: 18 }, tableId: "t-02", durationSeconds: 45 },
+  { id: "p-waiter-1", type: "WAITER", label: "Waiter A", box: { x: 48, y: 22, w: 8, h: 18 }, tableId: "t-02", durationSeconds: 45 },
 ];
 
 // Peak Hours Analytics Data (From 0:30 in video)
@@ -367,7 +367,7 @@ export function CctvTableVisionRadar() {
               status: "SEATED",
               noWaiterAlert: false,
               waiterArrived: true,
-              waiterAssigned: "Vikram (Captain)",
+              waiterAssigned: "Waiter A",
               orderStatus: "EATING",
             }
           : t
@@ -375,7 +375,7 @@ export function CctvTableVisionRadar() {
     );
     setPersons((prev) => [
       ...prev.filter((p) => p.id !== "p-waiter-3"),
-      { id: "p-waiter-3", type: "WAITER", label: "Captain (Vikram)", box: { x: 74, y: 25, w: 8, h: 18 }, tableId: "t-03", durationSeconds: 15 },
+      { id: "p-waiter-3", type: "WAITER", label: "Captain A", box: { x: 74, y: 25, w: 8, h: 18 }, tableId: "t-03", durationSeconds: 15 },
     ]);
   };
 
@@ -529,7 +529,7 @@ export function CctvTableVisionRadar() {
               onClick={handleScenarioWaiterArrived}
               className="bg-white hover:bg-slate-100 text-red-950 text-xs font-black shadow-md border-0"
             >
-              <span>Assign Captain Vikram Now</span>
+              <span>Assign Captain Now</span>
             </Button>
           </div>
         </div>

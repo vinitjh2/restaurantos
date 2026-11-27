@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { determineLoyaltyTier } from "@/lib/server/loyalty-engine";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
     const tier = searchParams.get("tier");
 
-    const where: any = {};
+    const baseWhere: any =
+      tenantCtx.role === "PLATFORM_OWNER"
+        ? {}
+        : { organizationId: tenantCtx.organizationId };
+    const where: any = { ...baseWhere };
     if (tier && tier !== "All") where.loyaltyTier = tier;
     if (search) {
       where.OR = [
@@ -34,8 +40,9 @@ export async function GET(req: NextRequest) {
       take: 100,
     });
 
-    const totalCustomers = await prisma.customer.count();
+    const totalCustomers = await prisma.customer.count({ where: baseWhere });
     const aggregate = await prisma.customer.aggregate({
+      where: baseWhere,
       _sum: { totalSpend: true },
       _avg: { averageOrderValue: true },
     });
@@ -57,6 +64,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const body = await req.json();
     const { name, phone, email, birthday, address, customerNotes, gstin } = body;
 
@@ -97,6 +105,7 @@ export async function POST(req: NextRequest) {
     const newCustomer = await prisma.$transaction(async (tx) => {
       const cust = await tx.customer.create({
         data: {
+          organizationId: tenantCtx.organizationId,
           name,
           phone: phone.trim(),
           email: email || null,

@@ -19,9 +19,6 @@ export async function GET(req: NextRequest) {
     const branchKeys = Array.from(
       new Set(tenantBranches.flatMap((b) => [b.id, b.code]))
     );
-    if (tenantCtx.organizationSlug === "bawarchi-royale") {
-      branchKeys.push("default");
-    }
 
     const where: any =
       tenantCtx.role === "PLATFORM_OWNER"

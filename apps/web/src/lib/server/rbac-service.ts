@@ -20,7 +20,7 @@ export interface RoleConfigItem {
  * Merges stored database customizations with default role permissions.
  */
 export async function getRolePermissionsMap(
-  organizationId: string = "org-bawarchi"
+  organizationId: string = ""
 ): Promise<{
   activeRoles: Record<SystemRole, PermissionCode[]>;
   roleDetails: RoleConfigItem[];
@@ -96,7 +96,7 @@ export async function saveRolePermissions(
   role: SystemRole,
   permissions: PermissionCode[],
   updatedBy: string = "Restaurant Owner",
-  organizationId: string = "org-bawarchi"
+  organizationId: string = ""
 ): Promise<RoleConfigItem> {
   const serialized = JSON.stringify(permissions);
 
@@ -140,7 +140,7 @@ export async function saveRolePermissions(
  */
 export async function resetRolePermissions(
   role: SystemRole,
-  organizationId: string = "org-bawarchi"
+  organizationId: string = ""
 ): Promise<RoleConfigItem> {
   try {
     await prisma.rolePermissionConfig.deleteMany({

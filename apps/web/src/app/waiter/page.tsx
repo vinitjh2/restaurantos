@@ -64,45 +64,28 @@ interface LiveKOT {
   items: Array<{ itemName: string; quantity: number; station?: string }>;
 }
 
-const DEFAULT_TABLES: TableSeat[] = [
-  { id: "t1", tableNumber: "T-01", floor: "Ground Floor", capacity: 2, status: "OCCUPIED", currentBill: 820, seatedMinutes: 28 },
-  { id: "t2", tableNumber: "T-02", floor: "Ground Floor", capacity: 4, status: "AVAILABLE" },
-  { id: "t3", tableNumber: "T-03", floor: "Ground Floor", capacity: 4, status: "OCCUPIED", currentBill: 1450, seatedMinutes: 45 },
-  { id: "t4", tableNumber: "T-04", floor: "Ground Floor", capacity: 6, status: "BILL_REQUESTED", currentBill: 2180, seatedMinutes: 62 },
-  { id: "t5", tableNumber: "T-05", floor: "Ground Floor", capacity: 4, status: "AVAILABLE" },
-  { id: "t6", tableNumber: "T-06", floor: "First Floor", capacity: 4, status: "OCCUPIED", currentBill: 640, seatedMinutes: 15 },
-  { id: "t7", tableNumber: "T-07", floor: "First Floor", capacity: 8, status: "AVAILABLE" },
-  { id: "t8", tableNumber: "T-08", floor: "First Floor", capacity: 2, status: "AVAILABLE" },
-  { id: "t9", tableNumber: "T-09", floor: "Rooftop Lounge", capacity: 4, status: "OCCUPIED", currentBill: 3400, seatedMinutes: 80 },
-  { id: "t10", tableNumber: "T-10", floor: "Rooftop Lounge", capacity: 4, status: "AVAILABLE" },
-];
+const DEFAULT_TABLES: TableSeat[] = [];
 
-const DEFAULT_MENU: MenuItem[] = [
-  { id: "m1", name: "Paneer Tikka Angara", category: "Starters", dietType: "VEG", price: 290, shortCode: "PTA" },
-  { id: "m2", name: "Chicken Malai Tikka", category: "Starters", dietType: "NON_VEG", price: 340, shortCode: "CMT" },
-  { id: "m3", name: "Crispy Corn Pepper Salt", category: "Starters", dietType: "VEG", price: 240, shortCode: "CCS" },
-  { id: "m4", name: "Paneer Butter Masala", category: "Main Course", dietType: "VEG", price: 320, shortCode: "PBM" },
-  { id: "m5", name: "Murgh Lababdar", category: "Main Course", dietType: "NON_VEG", price: 380, shortCode: "MLB" },
-  { id: "m6", name: "Dal Makhani Royale", category: "Main Course", dietType: "VEG", price: 260, shortCode: "DMR" },
-  { id: "m7", name: "Murgh Dum Biryani", category: "Biryani", dietType: "NON_VEG", price: 350, shortCode: "MDB" },
-  { id: "m8", name: "Subz Dum Biryani", category: "Biryani", dietType: "VEG", price: 280, shortCode: "SDB" },
-  { id: "m9", name: "Butter Garlic Naan", category: "Breads", dietType: "VEG", price: 65, shortCode: "BGN" },
-  { id: "m10", name: "Tandoori Roti Butter", category: "Breads", dietType: "VEG", price: 35, shortCode: "TRB" },
-  { id: "m11", name: "Amritsari Sweet Lassi", category: "Beverages", dietType: "VEG", price: 90, shortCode: "ASL" },
-  { id: "m12", name: "Fresh Lime Soda", category: "Beverages", dietType: "VEG", price: 75, shortCode: "FLS" },
-  { id: "m13", name: "Gulab Jamun (2 pcs)", category: "Desserts", dietType: "VEG", price: 85, shortCode: "GJM" },
-];
+const EMPTY_TABLE: TableSeat = {
+  id: "",
+  tableNumber: "No Table",
+  floor: "Main",
+  capacity: 0,
+  status: "AVAILABLE",
+};
+
+const DEFAULT_MENU: MenuItem[] = [];
 
 export default function WaiterTerminalPage() {
   const [tables, setTables] = useState<TableSeat[]>(DEFAULT_TABLES);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(DEFAULT_MENU);
   const [selectedFloor, setSelectedFloor] = useState<string>("All");
-  const [selectedTable, setSelectedTable] = useState<TableSeat>(DEFAULT_TABLES[0]);
+  const [selectedTable, setSelectedTable] = useState<TableSeat>(EMPTY_TABLE);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [guestCount, setGuestCount] = useState<number>(2);
-  const [captainName, setCaptainName] = useState("Captain Vikram Singh");
+  const [captainName, setCaptainName] = useState("Captain");
   const [isSendingKOT, setIsSendingKOT] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [activeViewTab, setActiveViewTab] = useState<"NEW_ORDER" | "ACTIVE_KOTS">("NEW_ORDER");

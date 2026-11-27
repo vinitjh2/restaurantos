@@ -1,23 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { reconcileCashDrawer } from "@/lib/server/accounting-engine";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const { searchParams } = new URL(req.url);
-    const branchId = searchParams.get("branch") || "IND";
+    const requestedBranch = searchParams.get("branch");
+
+    const tenantBranches = await prisma.branch.findMany({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { id: true, code: true },
+    });
+    const branchKeys = Array.from(new Set(tenantBranches.flatMap((b) => [b.id, b.code])));
+    const branchFilter =
+      requestedBranch && branchKeys.includes(requestedBranch)
+        ? { branchId: requestedBranch }
+        : branchKeys.length > 0
+        ? { branchId: { in: branchKeys } }
+        : { branchId: "__none__" };
 
     // Find current active (OPEN) shift or latest closed shift
     let shift = await prisma.cashRegisterShift.findFirst({
-      where: { branchId, status: "OPEN" },
+      where: { ...branchFilter, status: "OPEN" },
       orderBy: { openingTime: "desc" },
     });
 
     if (!shift) {
       shift = await prisma.cashRegisterShift.findFirst({
-        where: { branchId },
+        where: branchFilter,
         orderBy: { openingTime: "desc" },
       });
     }
@@ -35,7 +49,7 @@ export async function GET(req: NextRequest) {
     if (shift.status === "OPEN") {
       const cashInvoices = await prisma.invoice.findMany({
         where: {
-          branchId,
+          branchId: shift.branchId,
           status: "PAID",
           paymentMethod: { in: ["CASH", "SPLIT"] },
           settledAt: { gte: shift.openingTime },
@@ -75,10 +89,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const body = await req.json();
     const { action, branchId, openedBy, closedBy, openingBalance, cashDropAmount, actualClosingCash, notes } = body;
 
-    const branch = branchId || "IND";
+    const primaryBranch = await prisma.branch.findFirst({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { code: true, id: true },
+    });
+
+    const branch = branchId || primaryBranch?.code || primaryBranch?.id || tenantCtx.organizationId;
 
     // 1. OPEN NEW SHIFT
     if (action === "OPEN") {

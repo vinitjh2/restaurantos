@@ -78,120 +78,6 @@ interface TableSeatRecord {
   activeOrder?: ActiveOrderRecord | null;
 }
 
-const FALLBACK_TABLE_ITEMS: Record<string, ActiveOrderRecord> = {
-  "T-01": {
-    orderNumber: "ORD-2840",
-    orderType: "DINE_IN",
-    status: "PREPARING",
-    customerName: "Vikram Malhotra",
-    customerPhone: "+91 98450 11223",
-    guestCount: 2,
-    subtotal: 1310,
-    taxAmount: 65.5,
-    grandTotal: 1375.5,
-    items: [
-      { itemName: "Butter Chicken", quantity: 2, unitPrice: 370, subtotal: 740, cookingNotes: "Mild spice, extra gravy" },
-      { itemName: "Butter Garlic Naan", quantity: 4, unitPrice: 80, subtotal: 320, cookingNotes: "Crisp hot from tandoor" },
-      { itemName: "Dal Makhani", quantity: 1, unitPrice: 250, subtotal: 250, cookingNotes: "Slow cooked black lentils" },
-    ],
-  },
-  "T-02": {
-    orderNumber: "ORD-2844",
-    orderType: "DINE_IN",
-    status: "OCCUPIED",
-    customerName: "Priya Nair",
-    customerPhone: "+91 96110 33902",
-    guestCount: 4,
-    subtotal: 750,
-    taxAmount: 37.5,
-    grandTotal: 787.5,
-    items: [
-      { itemName: "Tandoori Chicken", quantity: 1, unitPrice: 260, subtotal: 260, cookingNotes: "Half portion, mint chutney" },
-      { itemName: "Murgh Dum Biryani", quantity: 1, unitPrice: 350, subtotal: 350, cookingNotes: "With mirchi ka salan" },
-      { itemName: "Masala Chaas", quantity: 2, unitPrice: 70, subtotal: 140, cookingNotes: "Chilled with roasted jeera" },
-    ],
-  },
-  "T-04": {
-    orderNumber: "ORD-2841",
-    orderType: "QR_DIGITAL",
-    status: "PREPARING",
-    customerName: "Ananya Deshmukh (QR Self-Order)",
-    customerPhone: "+91 97412 88341",
-    guestCount: 4,
-    subtotal: 620,
-    taxAmount: 31,
-    grandTotal: 651,
-    items: [
-      { itemName: "Paneer Butter Masala", quantity: 1, unitPrice: 320, subtotal: 320, cookingNotes: "Creamy gravy, less oil" },
-      { itemName: "Butter Garlic Naan", quantity: 2, unitPrice: 80, subtotal: 160 },
-      { itemName: "Masala Chaas", quantity: 2, unitPrice: 70, subtotal: 140 },
-    ],
-  },
-  "T-05": {
-    orderNumber: "ORD-IND-QR8512",
-    orderType: "DINE_IN",
-    status: "BILLED",
-    customerName: "Guest Check — Table T-05",
-    guestCount: 4,
-    subtotal: 880,
-    taxAmount: 44,
-    grandTotal: 924,
-    items: [
-      { itemName: "Murgh Dum Biryani", quantity: 2, unitPrice: 350, subtotal: 700 },
-      { itemName: "Amritsari Sweet Lassi", quantity: 2, unitPrice: 90, subtotal: 180, cookingNotes: "Thick malai topping" },
-    ],
-  },
-  "AC-01": {
-    orderNumber: "ORD-4932",
-    orderType: "DINE_IN",
-    status: "PREPARING",
-    customerName: "Kavita Rao & Friends",
-    customerPhone: "+91 94480 66123",
-    guestCount: 4,
-    subtotal: 1180,
-    taxAmount: 59,
-    grandTotal: 1239,
-    items: [
-      { itemName: "Crispy Corn Salt & Pepper", quantity: 2, unitPrice: 240, subtotal: 480 },
-      { itemName: "Paneer Butter Masala", quantity: 1, unitPrice: 320, subtotal: 320 },
-      { itemName: "Butter Garlic Naan", quantity: 3, unitPrice: 80, subtotal: 240 },
-      { itemName: "Masala Chaas", quantity: 2, unitPrice: 70, subtotal: 140 },
-    ],
-  },
-  "RF-01": {
-    orderNumber: "ORD-9068",
-    orderType: "DINE_IN",
-    status: "PREPARING",
-    customerName: "Sameer Joshi & Guests",
-    customerPhone: "+91 98200 44119",
-    guestCount: 4,
-    subtotal: 1050,
-    taxAmount: 52.5,
-    grandTotal: 1102.5,
-    items: [
-      { itemName: "Tandoori Chicken", quantity: 2, unitPrice: 260, subtotal: 520 },
-      { itemName: "Butter Garlic Naan", quantity: 4, unitPrice: 80, subtotal: 320 },
-      { itemName: "Masala Chaas", quantity: 3, unitPrice: 70, subtotal: 210 },
-    ],
-  },
-  "RF-02": {
-    orderNumber: "ORD-RF02-LIVE",
-    orderType: "DINE_IN",
-    status: "PREPARING",
-    customerName: "Aman Gupta & Group",
-    guestCount: 6,
-    subtotal: 2230,
-    taxAmount: 111.5,
-    grandTotal: 2341.5,
-    items: [
-      { itemName: "Murgh Dum Biryani", quantity: 3, unitPrice: 350, subtotal: 1050 },
-      { itemName: "Butter Chicken", quantity: 1, unitPrice: 370, subtotal: 370 },
-      { itemName: "Butter Garlic Naan", quantity: 6, unitPrice: 80, subtotal: 480 },
-      { itemName: "Gulab Jamun (2 Pcs)", quantity: 3, unitPrice: 110, subtotal: 330 },
-    ],
-  },
-};
-
 export default function TablesPage() {
   const [tables, setTables] = useState<TableSeatRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,18 +181,11 @@ export default function TablesPage() {
           const section =
             index < 4 ? "AC_HALL" : index < 8 ? "ROOFTOP" : index < 12 ? "GARDEN" : "VIP_DINING";
 
-          const fallbackOrder = FALLBACK_TABLE_ITEMS[t.tableNumber];
-          const activeOrder =
-            t.activeOrder ||
-            (t.status === "OCCUPIED" || t.status === "BILLED" ? fallbackOrder : null);
+          const activeOrder = t.activeOrder || null;
 
-          const estimatedTotal =
-            activeOrder?.grandTotal ||
-            (t.status === "OCCUPIED" ? 1200 + ((index * 240) % 1800) : t.status === "BILLED" ? 2150 : 0);
+          const estimatedTotal = activeOrder?.grandTotal || 0;
 
-          const seatedMinutes =
-            t.seatedMinutes ||
-            (t.status === "OCCUPIED" ? 18 + ((index * 7) % 45) : t.status === "BILLED" ? 52 : 0);
+          const seatedMinutes = t.seatedMinutes || 0;
 
           return { ...t, section, activeOrder, estimatedTotal, seatedMinutes };
         });
@@ -642,8 +521,7 @@ export default function TablesPage() {
                   const isCleaning = table.status === "CLEANING";
 
                   const itemsCount =
-                    table.activeOrder?.items?.reduce((acc, i) => acc + i.quantity, 0) ||
-                    (FALLBACK_TABLE_ITEMS[table.tableNumber]?.items?.reduce((acc, i) => acc + i.quantity, 0) ?? 0);
+                    table.activeOrder?.items?.reduce((acc, i) => acc + i.quantity, 0) || 0;
 
                   return (
                     <div
@@ -775,8 +653,7 @@ export default function TablesPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredTables.map((table) => {
             const itemsCount =
-              table.activeOrder?.items?.reduce((acc, i) => acc + i.quantity, 0) ||
-              (FALLBACK_TABLE_ITEMS[table.tableNumber]?.items?.reduce((acc, i) => acc + i.quantity, 0) ?? 0);
+              table.activeOrder?.items?.reduce((acc, i) => acc + i.quantity, 0) || 0;
 
             return (
               <div
@@ -861,24 +738,7 @@ export default function TablesPage() {
       {/* TABLE INSPECTION MODAL DRAWER WITH ORDERED ITEMS AND WORKING QR STANDEE TAB */}
       {inspectedTable && (() => {
         const currentOrder: ActiveOrderRecord | null =
-          inspectedTable.activeOrder ||
-          (inspectedTable.status === "OCCUPIED" || inspectedTable.status === "BILLED"
-            ? FALLBACK_TABLE_ITEMS[inspectedTable.tableNumber] || {
-                orderNumber: `ORD-${inspectedTable.tableNumber}`,
-                orderType: "DINE_IN",
-                status: inspectedTable.status,
-                customerName: `Guest Check — Table ${inspectedTable.tableNumber}`,
-                guestCount: inspectedTable.capacity,
-                subtotal: Math.round(((inspectedTable.estimatedTotal || 1200) / 1.05) * 100) / 100,
-                taxAmount: Math.round(((inspectedTable.estimatedTotal || 1200) - (inspectedTable.estimatedTotal || 1200) / 1.05) * 100) / 100,
-                grandTotal: inspectedTable.estimatedTotal || 1200,
-                items: [
-                  { itemName: "Murgh Dum Biryani", quantity: 2, unitPrice: 350, subtotal: 700 },
-                  { itemName: "Butter Garlic Naan", quantity: 3, unitPrice: 80, subtotal: 240 },
-                  { itemName: "Masala Chaas", quantity: 2, unitPrice: 70, subtotal: 140 },
-                ],
-              }
-            : null);
+          inspectedTable.activeOrder || null;
 
         const totalItemsCount = currentOrder?.items?.reduce((acc, i) => acc + i.quantity, 0) || 0;
         const currentQrTargetUrl = `${customQrHost}/qr-order?branch=IND&table=${encodeURIComponent(inspectedTable.tableNumber)}`;

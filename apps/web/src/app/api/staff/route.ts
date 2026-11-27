@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { DEFAULT_ROLE_PERMISSIONS, SystemRole } from "@/lib/server/rbac-engine";
 import { hashPin } from "@/lib/server/pin-security";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const { searchParams } = new URL(req.url);
     const role = searchParams.get("role");
 
-    const where: any = {};
+    const where: any =
+      tenantCtx.role === "PLATFORM_OWNER"
+        ? {}
+        : { organizationId: tenantCtx.organizationId };
     if (role && role !== "All") where.role = role.toUpperCase();
 
     const staffList = await prisma.staff.findMany({
@@ -39,6 +44,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const body = await req.json();
     const { name, email, phone, role, pinCode, hourlyRate, monthlySalary, customPermissions } = body;
 
@@ -66,6 +72,8 @@ export async function POST(req: NextRequest) {
 
     const staff = await prisma.staff.create({
       data: {
+        organizationId: tenantCtx.organizationId,
+        branchId: tenantCtx.assignedBranchId || null,
         name,
         email: email || null,
         phone,

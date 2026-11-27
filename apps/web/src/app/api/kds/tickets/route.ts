@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { getTenantContext } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
     const { searchParams } = new URL(req.url);
     const station = searchParams.get("station"); // "All" | "Main Kitchen" | "Bar" | "Bakery" | "Beverage Counter"
     const status = searchParams.get("status"); // "active" (default) or "all"
 
-    const whereClause: any = {};
+    const tenantBranches = await prisma.branch.findMany({
+      where: { organizationId: tenantCtx.organizationId },
+      select: { id: true, code: true },
+    });
+    const branchKeys = Array.from(new Set(tenantBranches.flatMap((b) => [b.id, b.code])));
+
+    const tenantBranchFilter =
+      tenantCtx.role === "PLATFORM_OWNER"
+        ? {}
+        : branchKeys.length > 0
+        ? { branchId: { in: branchKeys } }
+        : { branchId: "__none__" };
+
+    const whereClause: any = { ...tenantBranchFilter };
 
     if (station && station !== "All") {
       whereClause.station = station;
@@ -37,7 +52,7 @@ export async function GET(req: NextRequest) {
 
     // Calculate station-wise pending counts
     const allActive = await prisma.kOT.findMany({
-      where: { status: { in: ["NEW", "ACCEPTED", "PREPARING", "READY"] } },
+      where: { ...tenantBranchFilter, status: { in: ["NEW", "ACCEPTED", "PREPARING", "READY"] } },
       select: { station: true, status: true },
     });
 
@@ -58,6 +73,7 @@ export async function GET(req: NextRequest) {
     // Calculate Preparation Time Statistics
     const completedTickets = await prisma.kOT.findMany({
       where: {
+        ...tenantBranchFilter,
         status: { in: ["READY", "SERVED"] },
         readyAt: { not: null },
       },
@@ -82,9 +98,9 @@ export async function GET(req: NextRequest) {
 
     const completedCount = completedTickets.length;
     const avgPrepMinutes =
-      completedCount > 0 ? Math.round((totalDurationMinutes / completedCount) * 10) / 10 : 12.4;
+      completedCount > 0 ? Math.round((totalDurationMinutes / completedCount) * 10) / 10 : 0;
     const onTimeRate =
-      completedCount > 0 ? Math.round((onTimeCount / completedCount) * 100) : 94.2;
+      completedCount > 0 ? Math.round((onTimeCount / completedCount) * 100) : 0;
 
     return NextResponse.json({
       success: true,

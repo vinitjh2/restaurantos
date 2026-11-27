@@ -35,7 +35,7 @@ export function ThermalReceiptModal({ receiptData, onClose }: ThermalReceiptModa
 
   useEffect(() => {
     if (qrCanvasRef.current) {
-      const upiUrl = `upi://pay?pa=bawarchiroyale@icici&pn=BawarchiRoyale&am=${receiptData.calculation.grandTotal}&tn=${receiptData.invoiceNumber}&cu=INR`;
+      const upiUrl = `upi://pay?pa=&pn=Restaurant&am=${receiptData.calculation.grandTotal}&tn=${receiptData.invoiceNumber}&cu=INR`;
       QRCode.toCanvas(qrCanvasRef.current, upiUrl, {
         width: 110,
         margin: 1,

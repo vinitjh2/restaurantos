@@ -16,7 +16,6 @@ import {
   User,
   MapPin,
   Calendar,
-  Sparkles,
 } from "lucide-react";
 import { formatINR } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
@@ -40,166 +39,9 @@ interface OrderRecord {
   createdAt: string;
 }
 
-const FALLBACK_DEMO_ORDERS: OrderRecord[] = [
-  {
-    id: "demo-ord-2840",
-    orderNumber: "ORD-2840",
-    orderType: "DINE_IN",
-    status: "PREPARING",
-    tableNumber: "T-01",
-    customerName: "Vikram Malhotra",
-    customerPhone: "+91 98450 11223",
-    itemsCount: 7,
-    itemsSummary: "2x Butter Chicken, 4x Butter Garlic Naan, 1x Dal Makhani",
-    subtotal: 1310,
-    taxAmount: 65.5,
-    grandTotal: 1375.5,
-    paymentMethod: "UNPAID",
-    invoiceNumber: "INV-IND-2840",
-    createdAt: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2841",
-    orderNumber: "ORD-2841",
-    orderType: "QR_DIGITAL",
-    status: "PREPARING",
-    tableNumber: "T-04",
-    customerName: "Ananya Deshmukh",
-    customerPhone: "+91 97412 88341",
-    itemsCount: 5,
-    itemsSummary: "1x Paneer Butter Masala, 2x Butter Garlic Naan, 2x Masala Chaas",
-    subtotal: 620,
-    taxAmount: 31,
-    grandTotal: 651,
-    paymentMethod: "UPI (Google Pay)",
-    invoiceNumber: "INV-IND-2841",
-    createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2842",
-    orderNumber: "ORD-2842",
-    orderType: "DELIVERY",
-    status: "SERVED",
-    tableNumber: null,
-    customerName: "Zomato Partner (#9841)",
-    customerPhone: "+91 98800 23456",
-    itemsCount: 4,
-    itemsSummary: "2x Murgh Dum Biryani, 2x Gulab Jamun (2 Pcs)",
-    subtotal: 920,
-    taxAmount: 46,
-    grandTotal: 966,
-    paymentMethod: "Zomato Pay",
-    invoiceNumber: "INV-IND-2842",
-    createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2843",
-    orderNumber: "ORD-2843",
-    orderType: "TAKEAWAY",
-    status: "PAID",
-    tableNumber: null,
-    customerName: "Rohit Verma",
-    customerPhone: "+91 99160 55421",
-    itemsCount: 5,
-    itemsSummary: "1x Crispy Corn Salt & Pepper, 1x Paneer Butter Masala, 3x Butter Garlic Naan",
-    subtotal: 800,
-    taxAmount: 40,
-    grandTotal: 840,
-    paymentMethod: "Cash",
-    invoiceNumber: "INV-IND-2843",
-    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2844",
-    orderNumber: "ORD-2844",
-    orderType: "DINE_IN",
-    status: "PAID",
-    tableNumber: "T-02",
-    customerName: "Priya Nair",
-    customerPhone: "+91 96110 33902",
-    itemsCount: 4,
-    itemsSummary: "1x Tandoori Chicken, 1x Murgh Dum Biryani, 2x Masala Chaas",
-    subtotal: 750,
-    taxAmount: 37.5,
-    grandTotal: 787.5,
-    paymentMethod: "Credit Card (HDFC)",
-    invoiceNumber: "INV-IND-2844",
-    createdAt: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2845",
-    orderNumber: "ORD-2845",
-    orderType: "DINE_IN",
-    status: "PAID",
-    tableNumber: "T-06",
-    customerName: "Aditya & Family",
-    customerPhone: "+91 98451 99012",
-    itemsCount: 13,
-    itemsSummary: "3x Murgh Dum Biryani, 1x Butter Chicken, 6x Butter Garlic Naan, 3x Gulab Jamun",
-    subtotal: 2230,
-    taxAmount: 111.5,
-    grandTotal: 2341.5,
-    paymentMethod: "UPI (PhonePe)",
-    invoiceNumber: "INV-IND-2845",
-    createdAt: new Date(Date.now() - 75 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2846",
-    orderNumber: "ORD-2846",
-    orderType: "DELIVERY",
-    status: "PREPARING",
-    tableNumber: null,
-    customerName: "Swiggy Express (#4410)",
-    customerPhone: "+91 99001 77234",
-    itemsCount: 6,
-    itemsSummary: "1x Butter Chicken, 1x Dal Makhani, 4x Butter Garlic Naan",
-    subtotal: 940,
-    taxAmount: 47,
-    grandTotal: 987,
-    paymentMethod: "Swiggy Pay",
-    invoiceNumber: "INV-IND-2846",
-    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2847",
-    orderNumber: "ORD-2847",
-    orderType: "QR_DIGITAL",
-    status: "SERVED",
-    tableNumber: "AC-01",
-    customerName: "Kavita Rao",
-    customerPhone: "+91 94480 66123",
-    itemsCount: 2,
-    itemsSummary: "1x Crispy Corn Salt & Pepper, 1x Masala Chaas",
-    subtotal: 310,
-    taxAmount: 15.5,
-    grandTotal: 325.5,
-    paymentMethod: "UPI (Paytm)",
-    invoiceNumber: "INV-IND-2847",
-    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "demo-ord-2848",
-    orderNumber: "ORD-2848",
-    orderType: "DINE_IN",
-    status: "CANCELLED",
-    tableNumber: "RF-01",
-    customerName: "Sameer Joshi",
-    customerPhone: "+91 98200 44119",
-    itemsCount: 3,
-    itemsSummary: "1x Tandoori Chicken, 2x Butter Garlic Naan",
-    subtotal: 420,
-    taxAmount: 21,
-    grandTotal: 441,
-    paymentMethod: "REFUNDED",
-    invoiceNumber: "INV-IND-2848",
-    createdAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-  },
-];
-
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterType, setFilterType] = useState<string>("ALL");
   const [search, setSearch] = useState("");
@@ -210,44 +52,16 @@ export default function OrdersPage() {
       setLoading(true);
       const res = await fetch("/api/orders?limit=100");
       const data = await res.json();
-      if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+      if (data.success && Array.isArray(data.orders)) {
         setOrders(data.orders);
       } else {
-        // If empty, auto-seed and reload
-        try {
-          const seedRes = await fetch("/api/orders/seed", { method: "POST" });
-          const seedData = await seedRes.json();
-          if (seedData.success) {
-            const reRes = await fetch("/api/orders?limit=100");
-            const reData = await reRes.json();
-            if (reData.success && reData.orders?.length > 0) {
-              setOrders(reData.orders);
-              return;
-            }
-          }
-        } catch {}
-        setOrders(FALLBACK_DEMO_ORDERS);
+        setOrders([]);
       }
     } catch (err) {
       console.error("Failed to fetch live orders:", err);
-      setOrders(FALLBACK_DEMO_ORDERS);
+      setOrders([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSeedDemoOrders = async () => {
-    try {
-      setIsSeeding(true);
-      const res = await fetch("/api/orders/seed", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        await fetchOrders();
-      }
-    } catch (err) {
-      console.error("Failed to seed demo orders:", err);
-    } finally {
-      setIsSeeding(false);
     }
   };
 
@@ -348,17 +162,6 @@ export default function OrdersPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleSeedDemoOrders}
-            className="gap-1.5 text-xs text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
-            disabled={isSeeding}
-            title="Generate and populate realistic demo orders across all branches"
-          >
-            <Sparkles className={`h-3.5 w-3.5 ${isSeeding ? "animate-spin" : ""}`} />
-            <span>{isSeeding ? "Seeding..." : "Seed Demo Orders"}</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={fetchOrders}
             className="gap-1.5 text-xs"
             disabled={loading}
@@ -433,17 +236,9 @@ export default function OrdersPage() {
             Loading real-time orders from database...
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs space-y-3">
-            <p>No orders match the selected filters.</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSeedDemoOrders}
-              className="gap-1.5 text-xs text-orange-600 border-orange-200 hover:bg-orange-50"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Generate Realistic Demo Orders</span>
-            </Button>
+          <div className="p-12 text-center text-slate-400 text-xs space-y-2">
+            <p className="font-medium text-slate-500">No orders yet.</p>
+            <p>Orders placed from POS or QR self-ordering will appear here in real time.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

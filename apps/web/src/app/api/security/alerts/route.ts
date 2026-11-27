@@ -25,59 +25,20 @@ export async function GET(req: NextRequest) {
       take: 20,
     });
 
-    // 2. Demo sample data if audit logs are empty
-    const alerts = auditLogs.length > 0
-      ? auditLogs.map((log) => ({
-          id: log.id,
-          type: log.action,
-          severity: log.action.includes("FAILED") || log.action.includes("REJECTED") || log.action === "REFUND_ISSUED"
-            ? "CRITICAL"
-            : log.action === "ORDER_CANCELLED"
-            ? "HIGH"
-            : "MEDIUM",
-          message: `${log.action.replace(/_/g, " ")}: ${log.reason || "Action triggered on system"}`,
-          authorizedBy: log.authorizedBy,
-          timestamp: log.timestamp.toISOString(),
-          details: log.details || "",
-        }))
-      : [
-          {
-            id: "alt-01",
-            type: "ORDER_CANCELLED",
-            severity: "HIGH",
-            message: "Table T-03 Bill #IND/2026-27/00281 (₹1,450) was cancelled after KOT was sent to kitchen.",
-            authorizedBy: "Manager Vikram (PIN Override)",
-            timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-            details: "Reason: Customer claimed delayed service and departed before main course.",
-          },
-          {
-            id: "alt-02",
-            type: "DISCOUNT_APPLIED",
-            severity: "MEDIUM",
-            message: "30% Staff Courtesy Discount (₹620) applied on Table T-07.",
-            authorizedBy: "Manager Vikram",
-            timestamp: new Date(Date.now() - 48 * 60 * 1000).toISOString(),
-            details: "Reason: VIP Regular Customer / Birthday discount.",
-          },
-          {
-            id: "alt-03",
-            type: "PIN_VERIFY_FAILED",
-            severity: "CRITICAL",
-            message: "Multiple failed supervisor PIN attempts on Cashier Station #01.",
-            authorizedBy: "UNKNOWN",
-            timestamp: new Date(Date.now() - 95 * 60 * 1000).toISOString(),
-            details: "3 consecutive invalid PINs entered within 40 seconds.",
-          },
-          {
-            id: "alt-04",
-            type: "DRAWER_KICK_MANUAL",
-            severity: "HIGH",
-            message: "Cash drawer solenoid opened manually without active bill settlement.",
-            authorizedBy: "Cashier Amit",
-            timestamp: new Date(Date.now() - 140 * 60 * 1000).toISOString(),
-            details: "Reason: Cash exchange for customer change.",
-          },
-        ];
+    // 2. Return live audit log alerts (empty if none exist)
+    const alerts = auditLogs.map((log) => ({
+      id: log.id,
+      type: log.action,
+      severity: log.action.includes("FAILED") || log.action.includes("REJECTED") || log.action === "REFUND_ISSUED"
+        ? "CRITICAL"
+        : log.action === "ORDER_CANCELLED"
+        ? "HIGH"
+        : "MEDIUM",
+      message: `${log.action.replace(/_/g, " ")}: ${log.reason || "Action triggered on system"}`,
+      authorizedBy: log.authorizedBy,
+      timestamp: log.timestamp.toISOString(),
+      details: log.details || "",
+    }));
 
     return NextResponse.json({
       success: true,

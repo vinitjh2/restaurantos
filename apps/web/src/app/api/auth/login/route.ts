@@ -59,49 +59,6 @@ const VERIFIED_SYSTEM_ACCOUNTS: StaticCredential[] = [
     branchName: "HQ Operations",
     branchCode: "HQ",
   },
-  // 3. Restaurant Tenant Owner
-  {
-    email: "owner@bawarchiroyale.in",
-    passwords: ["Bawarchi@2026!"],
-    name: "Vikramaditya Singhania (Owner)",
-    role: "TENANT_OWNER",
-    orgSlug: "bawarchi-royale",
-    orgName: "Bawarchi Royale Hospitality",
-    branchName: "Indiranagar Flagship",
-    branchCode: "IND",
-  },
-  {
-    email: "owner@bawarchiroyale.com",
-    passwords: ["Password123!", "Bawarchi@2026!"],
-    name: "Vikramaditya Singhania (Owner)",
-    role: "TENANT_OWNER",
-    orgSlug: "bawarchi-royale",
-    orgName: "Bawarchi Royale Hospitality",
-    branchName: "Indiranagar Flagship",
-    branchCode: "IND",
-  },
-  // 4. Restaurant Branch Manager
-  {
-    email: "manager@bawarchiroyale.in",
-    passwords: ["Manager@2026!"],
-    name: "Karan Malhotra (Branch Manager)",
-    role: "BRANCH_MANAGER",
-    orgSlug: "bawarchi-royale",
-    orgName: "Bawarchi Royale Hospitality",
-    branchName: "Indiranagar Flagship",
-    branchCode: "IND",
-  },
-  // 5. Cashier / POS Terminal Staff
-  {
-    email: "cashier@bawarchiroyale.in",
-    passwords: ["Cashier@2026!"],
-    name: "Pooja Sharma (Cashier / POS)",
-    role: "STAFF",
-    orgSlug: "bawarchi-royale",
-    orgName: "Bawarchi Royale Hospitality",
-    branchName: "Indiranagar Flagship",
-    branchCode: "IND",
-  },
 ];
 
 export async function POST(req: NextRequest) {
@@ -167,14 +124,14 @@ export async function POST(req: NextRequest) {
           branch = await prisma.branch.create({
             data: {
               name: matchedSystemAccount.branchName || "Main Branch",
-              code: matchedSystemAccount.branchCode || "IND",
-              address: "100 Feet Road, Indiranagar",
+              code: matchedSystemAccount.branchCode || "HQ",
+              address: "Headquarters",
               city: "Bengaluru",
               state: "Karnataka",
-              pincode: "560038",
-              phone: "+91 80 4123 4567",
-              gstin: "29AABCU9603R1ZM",
-              fssaiNumber: "11223344000123",
+              pincode: "560001",
+              phone: "",
+              gstin: "",
+              fssaiNumber: "",
               organizationId: org.id,
             },
           });
@@ -230,8 +187,8 @@ export async function POST(req: NextRequest) {
             branches: [
               {
                 id: "branch-primary-id",
-                name: matchedSystemAccount.branchName || "Indiranagar Flagship",
-                code: matchedSystemAccount.branchCode || "IND",
+                name: matchedSystemAccount.branchName || "Main Branch",
+                code: matchedSystemAccount.branchCode || "HQ",
                 city: "Bengaluru",
               },
             ],
