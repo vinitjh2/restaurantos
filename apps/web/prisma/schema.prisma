@@ -865,3 +865,22 @@ model SyncOperation {
   entityId        String?  // Server Order ID or Invoice ID
   createdAt       DateTime @default(now())
 }
+
+model CctvCamera {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  branchId           String
+  name               String
+  brand              String    @default("CP_PLUS")
+  rtspUrl            String
+  edgeToken          String
+  tableZones         String    @default("[]")
+  isActive           Boolean   @default(true)
+  lastHeartbeatAt    DateTime?
+  lastSnapshotBase64 String?
+  lastTelemetryJson  String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([organizationId, branchId])
+}

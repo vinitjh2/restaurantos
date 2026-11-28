@@ -245,6 +245,63 @@ export function CctvTableVisionRadar() {
   const [simRunning, setSimRunning] = useState(true);
   const [activeTab, setActiveTab] = useState<"RADAR" | "ANALYTICS" | "RTSP">("RADAR");
 
+  // Real Edge Camera & Zone Mapper State
+  const [savedCameras, setSavedCameras] = useState<any[]>([]);
+  const [selectedSavedCamId, setSelectedSavedCamId] = useState<string>("");
+  const [liveEdgeMode, setLiveEdgeMode] = useState(false);
+  const [newCamName, setNewCamName] = useState("Main Dining Cam 01");
+  const [newCamBrand, setNewCamBrand] = useState("CP_PLUS");
+  const [newCamRtsp, setNewCamRtsp] = useState("rtsp://admin:admin@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0");
+  const [savingCam, setSavingCam] = useState(false);
+  const [camMessage, setCamMessage] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [mapperTableName, setMapperTableName] = useState("T-01");
+  const [mapperPoints, setMapperPoints] = useState<Array<{ x: number; y: number }>>([]);
+
+  const loadCameras = async () => {
+    try {
+      const res = await fetch("/api/cctv/cameras");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.cameras)) {
+        setSavedCameras(data.cameras);
+        if (!selectedSavedCamId && data.cameras.length > 0) {
+          setSelectedSavedCamId(data.cameras[0].id);
+        }
+        const activeCamObj =
+          data.cameras.find((c: any) => c.id === (selectedSavedCamId || data.cameras[0]?.id)) ||
+          data.cameras[0];
+        if (liveEdgeMode && activeCamObj?.lastTelemetryJson) {
+          try {
+            const parsed = JSON.parse(activeCamObj.lastTelemetryJson);
+            if (Array.isArray(parsed.tables) && parsed.tables.length > 0) {
+              setTables(
+                parsed.tables.map((t: any) => ({
+                  ...t,
+                  center:
+                    t.polygon && t.polygon.length > 0
+                      ? {
+                          x: t.polygon.reduce((s: number, p: any) => s + p.x, 0) / t.polygon.length,
+                          y: t.polygon.reduce((s: number, p: any) => s + p.y, 0) / t.polygon.length,
+                        }
+                      : { x: 50, y: 50 },
+                }))
+              );
+            }
+            if (Array.isArray(parsed.detections)) {
+              setPersons(parsed.detections);
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadCameras();
+    const t = setInterval(loadCameras, 3000);
+    return () => clearInterval(t);
+  }, [liveEdgeMode, selectedSavedCamId]);
+
   // Web Audio Ping Generator
   const playAlertChime = () => {
     if (!soundEnabled || typeof window === "undefined") return;
@@ -565,7 +622,21 @@ export function CctvTableVisionRadar() {
 
               {/* CAMERA FEED & INTERACTIVE OVERLAY CANVAS */}
               <div className="relative aspect-[16/10] bg-slate-950 overflow-hidden select-none">
-                {/* Simulated Restaurant Room Background Grid */}
+                {(() => {
+                  const activeCamObj = savedCameras.find((c) => c.id === selectedSavedCamId) || savedCameras[0];
+                  if (liveEdgeMode && activeCamObj?.lastSnapshotBase64) {
+                    return (
+                      <img
+                        src={activeCamObj.lastSnapshotBase64}
+                        alt={activeCamObj.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    );
+                  }
+                  return null;
+                })()}
+                {/* Simulated Restaurant Room Background Grid (hidden when live snapshot active) */}
+                {!(liveEdgeMode && (savedCameras.find((c) => c.id === selectedSavedCamId) || savedCameras[0])?.lastSnapshotBase64) && (
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 opacity-95">
                   {/* Perspective Floor Grid */}
                   <div
@@ -583,6 +654,7 @@ export function CctvTableVisionRadar() {
                   <div className="absolute top-[70%] left-[56%] w-40 h-40 rounded-full bg-amber-400/10 blur-xl pointer-events-none" />
                   <div className="absolute top-[68%] left-[85%] w-36 h-36 rounded-full bg-amber-400/10 blur-xl pointer-events-none" />
                 </div>
+                )}
 
                 {/* SVG POLYGONS FOR TABLE ZONES */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1000 600" preserveAspectRatio="none">
@@ -1182,54 +1254,352 @@ export function CctvTableVisionRadar() {
 
       {/* RTSP STREAM CONFIGURATION TAB */}
       {activeTab === "RTSP" && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs max-w-3xl space-y-5">
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <Wifi className="w-4 h-4 text-emerald-600" />
-              <span>Connect Existing Restaurant CCTV Cameras (RTSP / ONVIF)</span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              DineSutra connects directly to any standard NVR / DVR without requiring proprietary camera hardware.
-            </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Add & Manage Cameras */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <Wifi className="w-4 h-4 text-emerald-600" />
+                  <span>Connected CCTV Cameras ({savedCameras.length})</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Add your CP Plus, Hikvision, or Dahua RTSP cameras and copy the Edge Agent config.
+                </p>
+              </div>
+              <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl">
+                <input
+                  type="checkbox"
+                  checked={liveEdgeMode}
+                  onChange={(e) => {
+                    setLiveEdgeMode(e.target.checked);
+                    setSimRunning(!e.target.checked);
+                  }}
+                />
+                <span>Live Edge Mode</span>
+              </label>
+            </div>
+
+            {/* Add New Camera Form */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Camera Name</label>
+                  <input
+                    type="text"
+                    value={newCamName}
+                    onChange={(e) => setNewCamName(e.target.value)}
+                    className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900"
+                    placeholder="Main Dining Cam 01"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Brand</label>
+                  <select
+                    value={newCamBrand}
+                    onChange={(e) => setNewCamBrand(e.target.value)}
+                    className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900"
+                  >
+                    <option value="CP_PLUS">CP Plus (iCMOB / RTSP)</option>
+                    <option value="HIKVISION">Hikvision</option>
+                    <option value="DAHUA">Dahua</option>
+                    <option value="ONVIF">Generic ONVIF / Wi-Fi</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">RTSP Stream URL</label>
+                <input
+                  type="text"
+                  value={newCamRtsp}
+                  onChange={(e) => setNewCamRtsp(e.target.value)}
+                  className="w-full text-xs font-mono bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900"
+                  placeholder="rtsp://admin:admin@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0"
+                />
+              </div>
+              {camMessage && (
+                <div className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  {camMessage}
+                </div>
+              )}
+              <Button
+                size="sm"
+                disabled={savingCam}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs w-full"
+                onClick={async () => {
+                  setSavingCam(true);
+                  setCamMessage(null);
+                  try {
+                    const res = await fetch("/api/cctv/cameras", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: newCamName, brand: newCamBrand, rtspUrl: newCamRtsp }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                      setCamMessage(data.error || "Failed to add camera");
+                    } else {
+                      setCamMessage(`Added "${data.camera.name}"! Copy its cameras.json config below.`);
+                      setSelectedSavedCamId(data.camera.id);
+                      await loadCameras();
+                    }
+                  } finally {
+                    setSavingCam(false);
+                  }
+                }}
+              >
+                {savingCam ? "Saving Camera..." : "+ Add RTSP Camera"}
+              </Button>
+            </div>
+
+            {/* Saved Cameras List */}
+            <div className="space-y-2.5">
+              {savedCameras.map((cam) => {
+                const isOnline =
+                  cam.lastHeartbeatAt &&
+                  Date.now() - new Date(cam.lastHeartbeatAt).getTime() < 30000;
+                const zones = (() => {
+                  try {
+                    return JSON.parse(cam.tableZones || "[]");
+                  } catch {
+                    return [];
+                  }
+                })();
+                return (
+                  <div
+                    key={cam.id}
+                    className={`p-3.5 rounded-xl border text-xs space-y-2 ${
+                      selectedSavedCamId === cam.id
+                        ? "border-amber-400 bg-amber-50/40"
+                        : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-300"
+                          }`}
+                        />
+                        <span className="font-extrabold text-slate-900">{cam.name}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 font-bold text-slate-600">
+                          {cam.brand}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-500">
+                        {isOnline ? "LIVE EDGE" : "WAITING FOR AGENT"} · {zones.length} Zones
+                      </span>
+                    </div>
+                    <div className="font-mono text-[10px] text-slate-500 truncate">{cam.rtspUrl}</div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px]"
+                        onClick={() => setSelectedSavedCamId(cam.id)}
+                      >
+                        Map Zones
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px]"
+                        onClick={() => {
+                          const cfg = JSON.stringify(
+                            {
+                              apiUrl: typeof window !== "undefined" ? window.location.origin : "https://dine.sutrauniverse.com",
+                              cameras: [
+                                {
+                                  cameraId: cam.id,
+                                  edgeToken: cam.edgeToken,
+                                  name: cam.name,
+                                  rtspUrl: cam.rtspUrl,
+                                },
+                              ],
+                            },
+                            null,
+                            2
+                          );
+                          navigator.clipboard?.writeText(cfg);
+                          setCopiedId(cam.id);
+                          setTimeout(() => setCopiedId(null), 2000);
+                        }}
+                      >
+                        {copiedId === cam.id ? "Copied cameras.json!" : "Copy cameras.json"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] text-rose-600 border-rose-200 hover:bg-rose-50 ml-auto"
+                        onClick={async () => {
+                          await fetch(`/api/cctv/cameras?id=${cam.id}`, { method: "DELETE" });
+                          await loadCameras();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              {savedCameras.length === 0 && (
+                <div className="text-center py-6 text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                  No RTSP cameras added yet. Add your first CP Plus camera above.
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-4">
+          {/* Right: Interactive Table Zone Polygon Mapper */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Camera 01 RTSP Stream URL
-              </label>
-              <input
-                type="text"
-                value={rtspUrl}
-                onChange={(e) => setRtspUrl(e.target.value)}
-                className="w-full text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-amber-500"
-                placeholder="rtsp://admin:password@192.168.1.108:554/ch0_sub.264"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Compatible with CP Plus, Dahua, Hikvision, Uniview, Honeywell, and Axis ONVIF profiles.
+              <h3 className="text-sm font-extrabold text-slate-900">
+                Interactive Table Zone Mapper
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Click 4 corners on the camera frame to define a table zone, then click Save Zone.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <span className="font-bold text-slate-800 block">AI Inference Model</span>
-                <span className="text-slate-500 text-[11px]">YOLOv11x-Pose &amp; ByteTrack Object Tracking</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <span className="font-bold text-slate-800 block">Waiter SLA Alert Timeout</span>
-                <span className="text-slate-500 text-[11px]">300 Seconds (5 Minutes Standard)</span>
-              </div>
-            </div>
+            {(() => {
+              const activeCamObj = savedCameras.find((c) => c.id === selectedSavedCamId) || savedCameras[0];
+              if (!activeCamObj) {
+                return (
+                  <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                    Add &amp; select a camera on the left to map table polygons.
+                  </div>
+                );
+              }
+              const existingZones: any[] = (() => {
+                try {
+                  return JSON.parse(activeCamObj.tableZones || "[]");
+                } catch {
+                  return [];
+                }
+              })();
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={mapperTableName}
+                      onChange={(e) => setMapperTableName(e.target.value)}
+                      className="h-8 w-28 rounded-lg border border-slate-300 px-2.5 text-xs font-bold"
+                      placeholder="T-01"
+                    />
+                    <span className="text-xs text-slate-500">
+                      Points: {mapperPoints.length}/4
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs ml-auto"
+                      onClick={() => setMapperPoints([])}
+                    >
+                      Reset Points
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={mapperPoints.length < 3}
+                      className="h-8 text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold"
+                      onClick={async () => {
+                        const nextZones = [
+                          ...existingZones.filter((z) => z.tableNumber !== mapperTableName),
+                          {
+                            id: mapperTableName,
+                            tableNumber: mapperTableName,
+                            section: "Main Dining",
+                            capacity: 4,
+                            polygon: mapperPoints,
+                          },
+                        ];
+                        await fetch("/api/cctv/cameras", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: activeCamObj.id, tableZones: nextZones }),
+                        });
+                        setMapperPoints([]);
+                        setCamMessage(`Saved zone ${mapperTableName} on ${activeCamObj.name}`);
+                        await loadCameras();
+                      }}
+                    >
+                      Save Zone
+                    </Button>
+                  </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                size="sm"
-                className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
-                onClick={() => alert("RTSP camera configuration saved successfully!")}
-              >
-                Save RTSP Settings
-              </Button>
-            </div>
+                  <div
+                    className="relative aspect-[16/10] bg-slate-900 rounded-xl overflow-hidden cursor-crosshair border border-slate-300"
+                    onClick={(e) => {
+                      if (mapperPoints.length >= 4) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = Number((((e.clientX - rect.left) / rect.width) * 100).toFixed(1));
+                      const y = Number((((e.clientY - rect.top) / rect.height) * 100).toFixed(1));
+                      setMapperPoints([...mapperPoints, { x, y }]);
+                    }}
+                  >
+                    {activeCamObj.lastSnapshotBase64 ? (
+                      <img
+                        src={activeCamObj.lastSnapshotBase64}
+                        alt={activeCamObj.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">
+                        Waiting for Edge Agent snapshot (click 4 corners anyway to pre-map)
+                      </div>
+                    )}
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                      {existingZones.map((z: any) => (
+                        <polygon
+                          key={z.tableNumber}
+                          points={(z.polygon || []).map((p: any) => `${p.x},${p.y}`).join(" ")}
+                          fill="rgba(16,185,129,0.22)"
+                          stroke="#10b981"
+                          strokeWidth="0.6"
+                        />
+                      ))}
+                      {mapperPoints.length >= 2 && (
+                        <polygon
+                          points={mapperPoints.map((p) => `${p.x},${p.y}`).join(" ")}
+                          fill="rgba(245,158,11,0.25)"
+                          stroke="#f59e0b"
+                          strokeWidth="0.8"
+                        />
+                      )}
+                      {mapperPoints.map((p, idx) => (
+                        <circle key={idx} cx={p.x} cy={p.y} r="1.4" fill="#f59e0b" />
+                      ))}
+                    </svg>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {existingZones.map((z: any) => (
+                      <span
+                        key={z.tableNumber}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-800"
+                      >
+                        {z.tableNumber}
+                        <button
+                          type="button"
+                          className="text-rose-600 hover:text-rose-800"
+                          onClick={async () => {
+                            const nextZones = existingZones.filter((x) => x.tableNumber !== z.tableNumber);
+                            await fetch("/api/cctv/cameras", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: activeCamObj.id, tableZones: nextZones }),
+                            });
+                            await loadCameras();
+                          }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
