@@ -83,9 +83,9 @@ export default function IntegrationsSettingsPage() {
     } else if (item.provider === "SWIGGY") {
       setMerchantId("SWG-BLR-7814");
       setApiSecret("swg_sec_token_552881cd");
-    } else if (item.provider === "RAZORPAY") {
-      setMerchantId("rzp_live_8391024");
-      setApiSecret("rzp_sec_key_38401");
+    } else if (item.provider === "PHONEPE") {
+      setMerchantId("");
+      setApiSecret("");
     } else {
       setMerchantId("");
       setApiSecret("");
@@ -198,7 +198,7 @@ export default function IntegrationsSettingsPage() {
 
   const getProviderIcon = (provider: string) => {
     switch (provider) {
-      case "RAZORPAY":
+      case "PHONEPE":
         return <CreditCard className="h-6 w-6 text-indigo-600" />;
       case "WHATSAPP":
         return <MessageSquare className="h-6 w-6 text-emerald-600" />;
@@ -224,7 +224,7 @@ export default function IntegrationsSettingsPage() {
             </h1>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Connect Razorpay, WhatsApp Business, Zomato, Swiggy, and Tally Prime accounting
+            Connect PhonePe PG, WhatsApp Business, Zomato, Swiggy, and Tally Prime accounting
           </p>
         </div>
 

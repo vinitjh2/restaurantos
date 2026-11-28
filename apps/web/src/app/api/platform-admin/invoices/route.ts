@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       amount: inv.amount,
       currency: inv.currency,
       status: inv.status,
-      paymentMethod: inv.paymentMethod || "RAZORPAY",
+      paymentMethod: inv.paymentMethod || "PHONEPE",
       razorpayPaymentId: inv.razorpayPaymentId,
       paidAt: inv.paidAt?.toISOString() || null,
       createdAt: inv.createdAt.toISOString(),

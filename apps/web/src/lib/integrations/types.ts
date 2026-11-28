@@ -11,7 +11,7 @@ export type IntegrationStatus =
   | "AUTHENTICATION_ERROR";
 
 export type IntegrationProvider =
-  | "RAZORPAY"
+  | "PHONEPE"
   | "WHATSAPP"
   | "ZOMATO"
   | "SWIGGY"

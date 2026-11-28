@@ -120,7 +120,7 @@ interface InvoiceRecord {
 }
 
 export default function PlatformAdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "restaurants" | "plans" | "invoices" | "razorpay">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "restaurants" | "plans" | "invoices" | "phonepe">("overview");
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ email: string; name: string; role: string } | null>(null);
@@ -614,15 +614,15 @@ export default function PlatformAdminPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("razorpay")}
+          onClick={() => setActiveTab("phonepe")}
           className={`pb-3 transition-colors flex items-center gap-1.5 ${
-            activeTab === "razorpay"
+            activeTab === "phonepe"
               ? "border-b-2 border-indigo-600 text-indigo-600 font-black"
               : "text-slate-500 hover:text-slate-900"
           }`}
         >
           <Webhook className="h-3.5 w-3.5" />
-          <span>Razorpay Webhook Engine</span>
+          <span>PhonePe Webhook Engine</span>
         </button>
       </div>
 
@@ -721,8 +721,8 @@ export default function PlatformAdminPage() {
               <div className="space-y-2.5 text-xs">
                 <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-emerald-900 block">Razorpay Webhook Handler</span>
-                    <span className="text-[10px] text-emerald-700">HMAC-SHA256 Signature Verified</span>
+                    <span className="font-bold text-emerald-900 block">PhonePe PG Webhook Handler</span>
+                    <span className="text-[10px] text-emerald-700">SHA-256 Signature Verified</span>
                   </div>
                   <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                 </div>
@@ -1066,18 +1066,18 @@ export default function PlatformAdminPage() {
         </div>
       )}
 
-      {/* TAB 5: RAZORPAY WEBHOOK SECURITY & TEST SUITE */}
-      {activeTab === "razorpay" && (
+      {/* TAB 5: PHONEPE WEBHOOK SECURITY & TEST SUITE */}
+      {activeTab === "phonepe" && (
         <div className="space-y-6 max-w-3xl">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <Webhook className="h-5 w-5 text-indigo-600" />
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  Razorpay Webhook Cryptographic Security
+                  PhonePe Webhook Cryptographic Security
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Live verification engine with HMAC-SHA256 signature verification & duplicate-event protection
+                  Live verification engine with SHA-256 signature verification &amp; duplicate-event protection
                 </p>
               </div>
             </div>
@@ -1086,7 +1086,7 @@ export default function PlatformAdminPage() {
               <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-100">
                 <span className="font-semibold text-slate-700">Webhook Endpoint URL</span>
                 <span className="font-mono text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
-                  /api/webhooks/razorpay
+                  /api/webhooks/phonepe
                 </span>
               </div>
 
@@ -1094,7 +1094,7 @@ export default function PlatformAdminPage() {
                 <span className="font-semibold text-slate-700">Signature Algorithm</span>
                 <span className="font-bold text-emerald-700 flex items-center gap-1">
                   <CheckCircle2 className="h-4 w-4" />
-                  HMAC-SHA256 (x-razorpay-signature)
+                  SHA-256 (Authorization / X-VERIFY)
                 </span>
               </div>
 
@@ -1110,7 +1110,7 @@ export default function PlatformAdminPage() {
             <div className="pt-4 border-t border-slate-100">
               <h4 className="text-xs font-bold text-slate-800 mb-2">Simulate Real Signed Webhook Trigger</h4>
               <p className="text-xs text-slate-500 mb-3">
-                Sends an HMAC-signed payload to <code className="font-mono">/api/webhooks/razorpay</code> to test idempotency and auto-subscription activation.
+                Tests unsigned webhook rejection on <code className="font-mono">/api/webhooks/phonepe</code> to verify signature barrier and idempotency.
               </p>
 
               <Button
@@ -1122,39 +1122,28 @@ export default function PlatformAdminPage() {
                   if (isAuditor) return;
                   try {
                     setWebhookTestStatus("Testing signature and idempotency verification...");
-                    // Test simulated call
                     const testPayload = JSON.stringify({
-                      id: `evt_test_${Date.now()}`,
-                      event: "payment.captured",
+                      event: "checkout.order.completed",
                       payload: {
-                        payment: {
-                          entity: {
-                            id: `pay_test_${Date.now()}`,
-                            amount: 199900,
-                            currency: "INR",
-                            notes: {
-                              organizationId: restaurants[0]?.id,
-                              planCode: "PRO",
-                            },
-                          },
-                        },
+                        merchantOrderId: `TEST_ORD_${Date.now()}`,
+                        state: "COMPLETED",
+                        amount: 199900,
                       },
                     });
 
                     // Call API route without signature to verify barrier
-                    const res = await fetch("/api/webhooks/razorpay", {
+                    const res = await fetch("/api/webhooks/phonepe", {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
-                        // Send intentionally without signature to test barrier
                       },
                       body: testPayload,
                     });
 
-                    if (res.status === 400) {
-                      setWebhookTestStatus("VERIFIED: Webhook correctly rejected unsigned request with HTTP 400 Bad Request! Signature barrier active.");
+                    if (res.status === 400 || res.status === 401) {
+                      setWebhookTestStatus(`VERIFIED: PhonePe webhook correctly rejected unsigned request with HTTP ${res.status}! Signature barrier active.`);
                     } else {
-                      setWebhookTestStatus("Webhook responded.");
+                      setWebhookTestStatus(`Webhook responded with HTTP ${res.status}.`);
                     }
                   } catch (e: any) {
                     setWebhookTestStatus(`Error: ${e.message}`);

@@ -29,37 +29,20 @@ export async function GET(req: NextRequest) {
         : "Add PHONEPE_CLIENT_ID & PHONEPE_CLIENT_SECRET (or v1 Merchant ID & Salt Key) in server .env.",
     };
 
-    // 2. Razorpay Status Check
-    const rzpKey = process.env.RAZORPAY_KEY_ID;
-    const rzpSecret = process.env.RAZORPAY_KEY_SECRET;
-    const razorpayStatus = {
-      provider: "RAZORPAY",
-      name: "Razorpay Online Payments & UPI",
-      category: "PAYMENTS",
-      status: Boolean(rzpKey && rzpSecret) ? "SANDBOX_VERIFIED" : "DISCONNECTED",
-      isLiveOperational: false, // Strict: Never claim operational without live gateway verification
-      credentialsPresent: Boolean(rzpKey && rzpSecret),
-      endpoint: "https://api.razorpay.com/v1/orders",
-      message: Boolean(rzpKey && rzpSecret)
-        ? "Razorpay API keys configured. Webhook active at /api/webhooks/razorpay."
-        : "Razorpay API Key ID and Secret not configured in environment.",
-    };
-
-    // 3. WhatsApp Status Check
+    // 2. WhatsApp Status Check
     const whatsappStatus = await whatsappService.checkHealth();
 
-    // 4. Zomato Status Check
+    // 3. Zomato Status Check
     const zomatoStatus = await zomatoService.checkHealth();
 
-    // 5. Swiggy Status Check
+    // 4. Swiggy Status Check
     const swiggyStatus = await swiggyService.checkHealth();
 
-    // 6. Accounting Status Check
+    // 5. Accounting Status Check
     const accountingStatus = await accountingService.checkHealth();
 
     const integrations = [
       phonePeStatus,
-      razorpayStatus,
       whatsappStatus,
       zomatoStatus,
       swiggyStatus,
