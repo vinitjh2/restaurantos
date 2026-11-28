@@ -274,6 +274,8 @@ export function CctvTableVisionRadar() {
           try {
             const parsed = JSON.parse(activeCamObj.lastTelemetryJson);
             if (Array.isArray(parsed.tables) && parsed.tables.length > 0) {
+              const hasNewBreach = parsed.tables.some((t: any) => t.status === "SLA_BREACH");
+              if (hasNewBreach) playAlertChime();
               setTables(
                 parsed.tables.map((t: any) => ({
                   ...t,
@@ -810,20 +812,37 @@ export function CctvTableVisionRadar() {
               <div className="bg-slate-900 px-4 py-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
                 {/* Camera Feed Switcher */}
                 <div className="flex items-center gap-1.5 overflow-x-auto">
-                  {(["CAM-01", "CAM-02", "CAM-03", "CAM-04"] as const).map((cam) => (
-                    <button
-                      key={cam}
-                      onClick={() => setActiveCam(cam)}
-                      className={cn(
-                        "px-3 py-1 rounded-lg font-mono font-bold transition-all text-xs",
-                        activeCam === cam
-                          ? "bg-amber-500 text-slate-950 shadow-xs"
-                          : "bg-slate-800 text-slate-400 hover:text-white"
-                      )}
-                    >
-                      {cam}
-                    </button>
-                  ))}
+                  {liveEdgeMode && savedCameras.length > 0 ? (
+                    savedCameras.map((cam, idx) => (
+                      <button
+                        key={cam.id}
+                        onClick={() => setSelectedSavedCamId(cam.id)}
+                        className={cn(
+                          "px-3 py-1 rounded-lg font-mono font-bold transition-all text-xs whitespace-nowrap",
+                          selectedSavedCamId === cam.id
+                            ? "bg-amber-500 text-slate-950 shadow-xs"
+                            : "bg-slate-800 text-slate-400 hover:text-white"
+                        )}
+                      >
+                        CAM-0{idx + 1} · {cam.name}
+                      </button>
+                    ))
+                  ) : (
+                    (["CAM-01", "CAM-02", "CAM-03", "CAM-04"] as const).map((cam) => (
+                      <button
+                        key={cam}
+                        onClick={() => setActiveCam(cam)}
+                        className={cn(
+                          "px-3 py-1 rounded-lg font-mono font-bold transition-all text-xs",
+                          activeCam === cam
+                            ? "bg-amber-500 text-slate-950 shadow-xs"
+                            : "bg-slate-800 text-slate-400 hover:text-white"
+                        )}
+                      >
+                        {cam}
+                      </button>
+                    ))
+                  )}
                 </div>
 
                 {/* CV Layer Toggles */}
@@ -1267,17 +1286,48 @@ export function CctvTableVisionRadar() {
                   Add your CP Plus, Hikvision, or Dahua RTSP cameras and copy the Edge Agent config.
                 </p>
               </div>
-              <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl">
-                <input
-                  type="checkbox"
-                  checked={liveEdgeMode}
-                  onChange={(e) => {
-                    setLiveEdgeMode(e.target.checked);
-                    setSimRunning(!e.target.checked);
-                  }}
-                />
-                <span>Live Edge Mode</span>
-              </label>
+              <div className="flex items-center gap-2">
+                {savedCameras.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-[11px]"
+                    onClick={() => {
+                      const allCfg = JSON.stringify(
+                        {
+                          apiUrl:
+                            typeof window !== "undefined"
+                              ? window.location.origin
+                              : "https://dine.sutrauniverse.com",
+                          cameras: savedCameras.map((c) => ({
+                            cameraId: c.id,
+                            edgeToken: c.edgeToken,
+                            name: c.name,
+                            rtspUrl: c.rtspUrl,
+                          })),
+                        },
+                        null,
+                        2
+                      );
+                      navigator.clipboard?.writeText(allCfg);
+                      setCamMessage("Copied multi-camera cameras.json for all connected cameras!");
+                    }}
+                  >
+                    Copy All ({savedCameras.length})
+                  </Button>
+                )}
+                <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl">
+                  <input
+                    type="checkbox"
+                    checked={liveEdgeMode}
+                    onChange={(e) => {
+                      setLiveEdgeMode(e.target.checked);
+                      setSimRunning(!e.target.checked);
+                    }}
+                  />
+                  <span>Live Edge Mode</span>
+                </label>
+              </div>
             </div>
 
             {/* Add New Camera Form */}

@@ -28,8 +28,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid edge token" }, { status: 401 });
     }
 
+    // Cross-reference active POS/KOT orders so tables already served don't fire false SLA alerts
+    const activeOrders = await prisma.order.findMany({
+      where: {
+        branchId: camera.branchId,
+        status: { in: ["OPEN", "KOT_SENT", "PREPARING", "READY"] },
+        tableNumber: { not: null },
+      },
+      select: { tableNumber: true },
+    });
+    const servedTables = new Set(
+      activeOrders.map((o) => String(o.tableNumber || "").trim().toUpperCase())
+    );
+
+    const rawTables = Array.isArray(body.tables) ? body.tables : [];
+    const enrichedTables = rawTables.map((t: any) => {
+      const tNum = String(t.tableNumber || t.id || "").trim().toUpperCase();
+      const hasKot = servedTables.has(tNum);
+      const isBreach = t.status === "SLA_BREACH" && !hasKot;
+      return {
+        ...t,
+        waiterArrived: Boolean(t.waiterArrived || hasKot),
+        status: isBreach ? "SLA_BREACH" : t.status === "SLA_BREACH" && hasKot ? "SEATED" : t.status,
+        noWaiterAlert: isBreach,
+      };
+    });
+
     const telemetry = {
-      tables: Array.isArray(body.tables) ? body.tables : [],
+      tables: enrichedTables,
       detections: Array.isArray(body.detections) ? body.detections : [],
       fps: Number(body.fps || 0),
       model: String(body.model || "YOLOv8n"),
@@ -49,6 +75,31 @@ export async function POST(req: NextRequest) {
         ...(snapshot !== undefined ? { lastSnapshotBase64: snapshot } : {}),
       },
     });
+
+    // Record SLA breach alerts in AuditLog (throttled per camera every 5 minutes)
+    const breached = enrichedTables.filter((t: any) => t.status === "SLA_BREACH");
+    if (breached.length > 0) {
+      const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const recentAlert = await prisma.auditLog.findFirst({
+        where: {
+          branchId: camera.branchId,
+          action: "CCTV_WAITER_SLA_BREACH",
+          entityId: camera.id,
+          createdAt: { gte: fiveMinsAgo },
+        },
+      });
+      if (!recentAlert) {
+        await prisma.auditLog.create({
+          data: {
+            branchId: camera.branchId,
+            action: "CCTV_WAITER_SLA_BREACH",
+            entityType: "CctvCamera",
+            entityId: camera.id,
+            details: `Unattended table alert on ${camera.name}: ${breached.map((b: any) => b.tableNumber).join(", ")}`,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

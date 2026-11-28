@@ -1,0 +1,23 @@
+{
+  "apiUrl": "https://dine.sutrauniverse.com",
+  "cameras": [
+    {
+      "cameraId": "PASTE_CAMERA_1_ID",
+      "edgeToken": "PASTE_CAMERA_1_TOKEN",
+      "name": "CP Plus Dining Cam 01",
+      "rtspUrl": "rtsp://admin:admin@192.168.1.101:554/cam/realmonitor?channel=1&subtype=0"
+    },
+    {
+      "cameraId": "PASTE_CAMERA_2_ID",
+      "edgeToken": "PASTE_CAMERA_2_TOKEN",
+      "name": "CP Plus Dining Cam 02",
+      "rtspUrl": "rtsp://admin:admin@192.168.1.102:554/cam/realmonitor?channel=1&subtype=0"
+    },
+    {
+      "cameraId": "PASTE_CAMERA_3_ID",
+      "edgeToken": "PASTE_CAMERA_3_TOKEN",
+      "name": "CP Plus Entrance Cam 03",
+      "rtspUrl": "rtsp://admin:admin@192.168.1.103:554/cam/realmonitor?channel=1&subtype=0"
+    }
+  ]
+}
