@@ -4,8 +4,8 @@
   "webDir": "out",
   "server": {
     "androidScheme": "https",
-    "cleartext": true,
-    "url": "http://localhost:3000"
+    "cleartext": false,
+    "url": "https://dine.sutrauniverse.com"
   },
   "android": {
     "buildOptions": {
