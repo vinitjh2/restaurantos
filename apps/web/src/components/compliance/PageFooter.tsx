@@ -66,7 +66,7 @@ export const PageFooter: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://staysutra.sutrauniverse.com"
+                  href="https://stay.sutrauniverse.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-amber-400 flex items-center gap-1.5"
@@ -76,7 +76,7 @@ export const PageFooter: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://ranksutra.sutrauniverse.com"
+                  href="https://rank.sutrauniverse.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-indigo-400 flex items-center gap-1.5"

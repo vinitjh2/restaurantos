@@ -195,7 +195,7 @@ export function Sidebar() {
       {!isSidebarCollapsed && (
         <div className="px-3 pt-2">
           <a
-            href="https://staysutra.sutrauniverse.com"
+            href="https://stay.sutrauniverse.com"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between rounded-xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50/80 to-purple-50/60 p-2.5 text-xs font-semibold text-indigo-900 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition-all group"

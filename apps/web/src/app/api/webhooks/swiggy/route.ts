@@ -1,10 +1,28 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { swiggyService } from "@/lib/integrations/swiggy";
 
 export async function POST(req: NextRequest) {
   try {
-    const rawPayload = await req.json();
+    const secret = process.env.SWIGGY_WEBHOOK_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { success: false, error: "Swiggy webhook verification is not configured" },
+        { status: 500 }
+      );
+    }
+
+    const rawText = await req.text();
+    const sig = req.headers.get("x-swiggy-signature") || req.headers.get("x-webhook-signature") || "";
+    const expected = crypto.createHmac("sha256", secret).update(rawText).digest("hex");
+    const sigBuf = Buffer.from(sig, "utf8");
+    const expBuf = Buffer.from(expected, "utf8");
+    if (!sig || sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return NextResponse.json({ success: false, error: "Invalid Swiggy webhook signature" }, { status: 401 });
+    }
+
+    const rawPayload = JSON.parse(rawText);
     const parsed = swiggyService.parseSwiggyOrder(rawPayload);
 
     const branch = await prisma.branch.findFirst({ where: { code: "IND" } }) || await prisma.branch.findFirst();

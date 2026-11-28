@@ -1271,7 +1271,7 @@ export function DineSutraLandingPage() {
               <span className="text-slate-700 hidden sm:inline">|</span>
               <a href="https://sutrauniverse.com" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">🌌 SutraUniverse</a>
               <a href="https://kiosksutra.sutrauniverse.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">🌯 KioskSutra</a>
-              <a href="https://staysutra.sutrauniverse.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">🏨 StaySutra</a>
+              <a href="https://stay.sutrauniverse.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">🏨 StaySutra</a>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 pt-4 border-t border-slate-800/40">

@@ -374,7 +374,7 @@ function QrOrderContent() {
     if (cart.length === 0) return;
     try {
       setIsSubmitting(true);
-      const res = await fetch("/api/pos/orders/qr-submit", {
+      const res = await fetch("/api/qr-order/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

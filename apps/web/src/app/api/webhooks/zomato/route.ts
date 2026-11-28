@@ -1,10 +1,28 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 import { zomatoService } from "@/lib/integrations/zomato";
 
 export async function POST(req: NextRequest) {
   try {
-    const rawPayload = await req.json();
+    const secret = process.env.ZOMATO_WEBHOOK_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { success: false, error: "Zomato webhook verification is not configured" },
+        { status: 500 }
+      );
+    }
+
+    const rawText = await req.text();
+    const sig = req.headers.get("x-zomato-signature") || req.headers.get("x-webhook-signature") || "";
+    const expected = crypto.createHmac("sha256", secret).update(rawText).digest("hex");
+    const sigBuf = Buffer.from(sig, "utf8");
+    const expBuf = Buffer.from(expected, "utf8");
+    if (!sig || sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return NextResponse.json({ success: false, error: "Invalid Zomato webhook signature" }, { status: 401 });
+    }
+
+    const rawPayload = JSON.parse(rawText);
     const parsed = zomatoService.parseZomatoOrder(rawPayload);
 
     // Fetch primary branch for ingestion

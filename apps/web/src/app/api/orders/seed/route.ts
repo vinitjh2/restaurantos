@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import { getTenantContext, requireRole } from "@/lib/server/auth-context";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+    const tenantCtx = await getTenantContext(req);
+    requireRole(tenantCtx, ["PLATFORM_OWNER"]);
+
     const branches = await prisma.branch.findMany();
     if (branches.length === 0) {
       return NextResponse.json({ success: false, error: "No branches configured in database" }, { status: 400 });
@@ -260,7 +264,7 @@ export async function POST(req: NextRequest) {
       seededCount,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode || 500 });
   }
 }
 

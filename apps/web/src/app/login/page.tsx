@@ -13,7 +13,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get('redirect');
-  const redirectPath = (!rawRedirect || rawRedirect === '/' || rawRedirect === '/landing') ? '/dashboard' : rawRedirect;
+  const isSafeRedirect = Boolean(rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//'));
+  const redirectPath = (!isSafeRedirect || rawRedirect === '/' || rawRedirect === '/landing') ? '/dashboard' : rawRedirect!;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

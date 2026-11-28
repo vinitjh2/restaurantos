@@ -4,11 +4,17 @@ import { prisma } from "@/lib/server/prisma";
 
 export const dynamic = "force-dynamic";
 
-const RAZORPAY_WEBHOOK_SECRET =
-  process.env.RAZORPAY_WEBHOOK_SECRET || "restaurantos_rzp_webhook_secret_2026";
-
 export async function POST(req: NextRequest) {
   try {
+    const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!RAZORPAY_WEBHOOK_SECRET) {
+      console.error("[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET is not configured.");
+      return NextResponse.json(
+        { success: false, error: "Webhook verification is not configured" },
+        { status: 500 }
+      );
+    }
+
     const rawBody = await req.text();
     const signature = req.headers.get("x-razorpay-signature");
 
@@ -25,7 +31,12 @@ export async function POST(req: NextRequest) {
       .update(rawBody)
       .digest("hex");
 
-    if (signature !== expectedSignature) {
+    const sigBuf = Buffer.from(signature, "utf8");
+    const expectedBuf = Buffer.from(expectedSignature, "utf8");
+    if (
+      sigBuf.length !== expectedBuf.length ||
+      !crypto.timingSafeEqual(sigBuf, expectedBuf)
+    ) {
       console.warn("[Razorpay Webhook] Invalid HMAC-SHA256 signature rejected.");
       return NextResponse.json(
         { success: false, error: "Invalid webhook signature" },

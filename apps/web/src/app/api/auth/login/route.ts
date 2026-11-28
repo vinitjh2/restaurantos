@@ -20,7 +20,7 @@ const VERIFIED_SYSTEM_ACCOUNTS: StaticCredential[] = [
   // 1. Full Access Super Admin
   {
     email: "admin@sutrauniverse.com",
-    passwords: ["SutraAdmin@2026!", "AdminPassword123!"],
+    passwords: ["SutraAdmin@2026!"],
     name: "SutraUniverse Master Admin",
     role: "PLATFORM_OWNER",
     orgSlug: "sutrauniverse-hq",
@@ -30,7 +30,7 @@ const VERIFIED_SYSTEM_ACCOUNTS: StaticCredential[] = [
   },
   {
     email: "superadmin@sutrauniverse.com",
-    passwords: ["SutraAdmin@2026!", "AdminPassword123!"],
+    passwords: ["SutraAdmin@2026!"],
     name: "SutraUniverse Master Admin",
     role: "PLATFORM_OWNER",
     orgSlug: "sutrauniverse-hq",
@@ -40,7 +40,7 @@ const VERIFIED_SYSTEM_ACCOUNTS: StaticCredential[] = [
   },
   {
     email: "superadmin@restaurantos.io",
-    passwords: ["Password123!", "SutraAdmin@2026!"],
+    passwords: ["SutraAdmin@2026!"],
     name: "Platform Super Administrator",
     role: "PLATFORM_OWNER",
     orgSlug: "sutrauniverse-hq",
@@ -216,14 +216,18 @@ export async function POST(req: NextRequest) {
       }
 
       // Verify bcrypt password hash
-      if (user.passwordHash) {
-        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-        if (!isValidPassword) {
-          return NextResponse.json(
-            { success: false, error: "Invalid email or password" },
-            { status: 401 }
-          );
-        }
+      if (!user.passwordHash) {
+        return NextResponse.json(
+          { success: false, error: "Invalid email or password" },
+          { status: 401 }
+        );
+      }
+      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      if (!isValidPassword) {
+        return NextResponse.json(
+          { success: false, error: "Invalid email or password" },
+          { status: 401 }
+        );
       }
     }
 

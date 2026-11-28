@@ -34,7 +34,7 @@ export function formatPreDebitMessage(payload: PreDebitAlertPayload): string {
     ? `${payload.mandateBank}`
     : payload.paymentMethod || "UPI Autopay";
 
-  return `🔔 [SutraPay Reminder] Dear ${payload.restaurantName}, your DineSutra plan (₹${payload.amount.toLocaleString("en-IN")}) will auto-renew on ${formattedDate} via ${methodLabel}. If you wish to cancel or pause your mandate before auto-debit, manage anytime: https://dinesutra.com/subscription`;
+  return `🔔 [SutraPay Reminder] Dear ${payload.restaurantName}, your DineSutra plan (₹${payload.amount.toLocaleString("en-IN")}) will auto-renew on ${formattedDate} via ${methodLabel}. If you wish to cancel or pause your mandate before auto-debit, manage anytime: https://dine.sutrauniverse.com/subscription`;
 }
 
 /**

@@ -1141,9 +1141,7 @@ export default function PlatformAdminPage() {
                       },
                     });
 
-                    // Compute HMAC
-                    const testSecret = "restaurantos_rzp_webhook_secret_2026";
-                    // Call API route
+                    // Call API route without signature to verify barrier
                     const res = await fetch("/api/webhooks/razorpay", {
                       method: "POST",
                       headers: {
