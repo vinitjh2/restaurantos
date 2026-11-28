@@ -71,7 +71,7 @@ export default function PrivacyPage() {
                 <span>3. Zero Payment Instrument Storage Guarantee</span>
               </h2>
               <p>
-                DineSutra never stores, inspects, or processes sensitive payment card credentials, CVV codes, bank login passwords, or UPI PINs. All online payments, QR collections, and recurring subscriptions are facilitated via RBI-authorized, PCI-DSS Level 1 certified payment aggregators (e.g., PhonePe PG or Cashfree).
+                DineSutra never stores, inspects, or processes sensitive payment card credentials, CVV codes, bank login passwords, or UPI PINs. All online payments, QR collections, and recurring subscriptions are facilitated via RBI-authorized, PCI-DSS Level 1 certified payment aggregators (PhonePe PG).
               </p>
             </section>
 
