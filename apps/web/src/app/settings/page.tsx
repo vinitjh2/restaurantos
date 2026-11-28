@@ -33,13 +33,24 @@ export default function SettingsPage() {
   const [sgstRate, setSgstRate] = useState(2.5);
   const [isTaxInclusive, setIsTaxInclusive] = useState(false);
   const [receiptFooter, setReceiptFooter] = useState("Thank you for dining with us!");
+  const [brandLogoUrl, setBrandLogoUrl] = useState("");
+  const [showLogoOnPos, setShowLogoOnPos] = useState(true);
+  const [showLogoOnBill, setShowLogoOnBill] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
       try {
         setLoading(true);
-        const res = await fetch("/api/settings");
+        const [res, meRes] = await Promise.all([fetch("/api/settings"), fetch("/api/auth/me")]);
         const data = await res.json();
+        const meData = await meRes.json().catch(() => null);
+        if (meData?.success && meData.organization?.logoUrl) {
+          setBrandLogoUrl(meData.organization.logoUrl);
+        }
+        if (typeof window !== "undefined") {
+          setShowLogoOnPos(localStorage.getItem("dinesutra_show_logo_pos") !== "false");
+          setShowLogoOnBill(localStorage.getItem("dinesutra_show_logo_bill") !== "false");
+        }
         if (data.success && data.branch) {
           const b = data.branch;
           setBranchId(b.id);
@@ -69,24 +80,35 @@ export default function SettingsPage() {
     try {
       setSaving(true);
       setStatusMessage(null);
-      const res = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          branchId,
-          name,
-          address,
-          city,
-          state,
-          pincode,
-          phone,
-          gstin,
-          fssaiNumber,
-          cgstRate: Number(cgstRate),
-          sgstRate: Number(sgstRate),
-          isTaxInclusive,
+      const [res] = await Promise.all([
+        fetch("/api/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            branchId,
+            name,
+            address,
+            city,
+            state,
+            pincode,
+            phone,
+            gstin,
+            fssaiNumber,
+            cgstRate: Number(cgstRate),
+            sgstRate: Number(sgstRate),
+            isTaxInclusive,
+          }),
         }),
-      });
+        fetch("/api/organization/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ logoUrl: brandLogoUrl.trim() || null }),
+        }),
+      ]);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("dinesutra_show_logo_pos", String(showLogoOnPos));
+        localStorage.setItem("dinesutra_show_logo_bill", String(showLogoOnBill));
+      }
       const data = await res.json();
       if (data.success) {
         setStatusMessage({
@@ -172,17 +194,95 @@ export default function SettingsPage() {
 
             <div className="flex items-center gap-4 text-xs">
               <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-amber-500/50 flex items-center justify-center overflow-hidden p-1 shadow-md shrink-0">
-                <img src="/dinesutra-logo.svg" alt="DineSutra Seal" className="h-full w-full object-cover scale-125 rounded-xl" />
+                <img
+                  src={brandLogoUrl || "/dinesutra-logo.svg"}
+                  alt="Brand Logo"
+                  className={brandLogoUrl ? "h-full w-full object-contain rounded-xl bg-white p-0.5" : "h-full w-full object-cover scale-125 rounded-xl"}
+                />
               </div>
-              <div className="space-y-1">
-                <h4 className="font-extrabold text-slate-900 text-sm">DineSutra Royal Seal</h4>
+              <div className="space-y-1 flex-1">
+                <h4 className="font-extrabold text-slate-900 text-sm">
+                  {brandLogoUrl ? "Custom Restaurant Brand Logo" : "DineSutra Royal Seal (Default)"}
+                </h4>
                 <p className="text-slate-500 text-[11px]">
-                  Applied automatically to Customer QR menus, 80mm thermal receipts, Captain handheld terminals, and live CCTV HUD overlays.
+                  Upload your restaurant logo to display on the POS sidebar and print a small brand logo at the top of every thermal GST bill.
                 </p>
-                <div className="text-[10px] font-mono text-amber-700 font-semibold">
-                  Path: /public/dinesutra-logo.svg (Master High Definition)
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700 block">Upload Brand Logo (PNG / JPG / WebP)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const img = new Image();
+                      img.onload = () => {
+                        const maxSide = 220;
+                        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+                        const canvas = document.createElement("canvas");
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        const ctx = canvas.getContext("2d");
+                        if (ctx) {
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                          setBrandLogoUrl(canvas.toDataURL("image/png"));
+                        }
+                      };
+                      img.src = String(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-[11px] text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700 block">Or Paste Logo Image URL</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={brandLogoUrl}
+                    onChange={(e) => setBrandLogoUrl(e.target.value)}
+                    placeholder="https://.../logo.png"
+                    className="h-9 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-slate-900 focus:bg-white focus:outline-none"
+                  />
+                  {brandLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setBrandLogoUrl("")}
+                      className="px-2.5 h-9 rounded-lg border border-rose-200 text-rose-600 text-[11px] font-semibold hover:bg-rose-50"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-4 pt-1 text-xs">
+              <label className="inline-flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={showLogoOnPos}
+                  onChange={(e) => setShowLogoOnPos(e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                <span>Show Brand Logo on POS &amp; Sidebar</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={showLogoOnBill}
+                  onChange={(e) => setShowLogoOnBill(e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                <span>Show Small Logo at Top of Printed Bills</span>
+              </label>
             </div>
           </div>
 

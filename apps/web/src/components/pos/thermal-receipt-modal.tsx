@@ -10,6 +10,7 @@ import { buildReceipt80mm, buildReceipt58mm, getCashDrawerPulse } from "@/lib/ha
 interface ThermalReceiptModalProps {
   receiptData: {
     invoiceNumber: string;
+    brandLogoUrl?: string;
     branch: {
       name: string;
       address: string;
@@ -146,8 +147,12 @@ export function ThermalReceiptModal({ receiptData, onClose }: ThermalReceiptModa
         <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-tight text-slate-800 bg-white border border-slate-100 m-2 rounded-lg shadow-inner">
           {/* Header */}
           <div className="text-center space-y-1 border-b border-dashed border-slate-300 pb-3 flex flex-col items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-950 border border-amber-500/50 flex items-center justify-center overflow-hidden p-0.5 shadow-xs mb-1">
-              <img src="/dinesutra-logo.svg" alt="DineSutra" className="h-full w-full object-cover scale-125 rounded-full" />
+            <div className="w-11 h-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden p-0.5 shadow-xs mb-1">
+              <img
+                src={receiptData.brandLogoUrl || "/dinesutra-logo.svg"}
+                alt={branch.name}
+                className={receiptData.brandLogoUrl ? "h-full w-full object-contain" : "h-full w-full object-cover scale-125 rounded-full bg-slate-950"}
+              />
             </div>
             <div className="text-sm font-black uppercase tracking-wider">{branch.name}</div>
             <div className="text-[10px] text-slate-600">{branch.address}, {branch.city}</div>

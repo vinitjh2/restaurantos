@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         slug: organization.slug,
         businessType: organization.businessType,
         currency: organization.currency,
+        logoUrl: organization.logoUrl || null,
         status: organization.status,
         subscriptionPlan: organization.subscriptionPlan,
         subscriptionRenewal: organization.subscriptionRenewal,

@@ -93,7 +93,11 @@ const NAV_SECTIONS: NavSection[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isSidebarCollapsed, toggleSidebar } = useRestaurantStore();
+  const { isSidebarCollapsed, toggleSidebar, organizations, currentOrgId } = useRestaurantStore();
+  const activeOrg = organizations.find((o) => o.id === currentOrgId) || organizations[0];
+  const showCustomLogo =
+    Boolean(activeOrg?.logoUrl) &&
+    (typeof window === "undefined" || localStorage.getItem("dinesutra_show_logo_pos") !== "false");
 
   return (
     <aside
@@ -105,13 +109,17 @@ export function Sidebar() {
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-100">
         <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50/80 border border-rose-200/90 shadow-2xs p-1">
-            <DineSutraLogo variant="icon" className="h-7 w-7" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50/80 border border-rose-200/90 shadow-2xs p-1 overflow-hidden">
+            {showCustomLogo && activeOrg?.logoUrl ? (
+              <img src={activeOrg.logoUrl} alt={activeOrg.name} className="h-full w-full object-contain rounded-lg" />
+            ) : (
+              <DineSutraLogo variant="icon" className="h-7 w-7" />
+            )}
           </div>
           {!isSidebarCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-black tracking-tight text-slate-900 leading-none">
-                Dine<span className="text-amber-600">Sutra</span>
+              <span className="text-sm font-black tracking-tight text-slate-900 leading-none truncate max-w-[130px]">
+                {showCustomLogo && activeOrg?.name ? activeOrg.name : <>Dine<span className="text-amber-600">Sutra</span></>}
               </span>
               <span className="text-[9px] text-slate-400 font-bold tracking-wider uppercase mt-1 flex items-center gap-1">
                 <SutraUniverseLogo variant="icon" className="w-3 h-3" />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRestaurantStore } from "@/stores/restaurant-store";
 import {
   Search,
   Plus,
@@ -527,9 +528,16 @@ export default function POSPage() {
 
   const onPaymentSuccess = (settlementData: any) => {
     setPaymentOpen(false);
+    const showLogoOnBill =
+      typeof window === "undefined" || localStorage.getItem("dinesutra_show_logo_bill") !== "false";
+    const activeOrg = useRestaurantStore.getState().organizations.find(
+      (o) => o.id === useRestaurantStore.getState().currentOrgId
+    ) || useRestaurantStore.getState().organizations[0];
+
     setReceiptData({
       invoiceNumber: settlementData.invoiceNumber,
       branch: settlementData.branch,
+      brandLogoUrl: showLogoOnBill ? activeOrg?.logoUrl || undefined : undefined,
       orderType,
       tableNumber: orderType === "DINE_IN" ? selectedTable : undefined,
       customerName: customerName || undefined,

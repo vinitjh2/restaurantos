@@ -20,6 +20,7 @@ export interface StoreOrganization {
   id: string;
   name: string;
   slug?: string;
+  logoUrl?: string | null;
   status?: string;
   subscriptionPlan?: string;
 }
