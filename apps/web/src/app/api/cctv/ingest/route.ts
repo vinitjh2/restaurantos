@@ -82,19 +82,19 @@ export async function POST(req: NextRequest) {
       const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
       const recentAlert = await prisma.auditLog.findFirst({
         where: {
-          branchId: camera.branchId,
           action: "CCTV_WAITER_SLA_BREACH",
           entityId: camera.id,
-          createdAt: { gte: fiveMinsAgo },
+          timestamp: { gte: fiveMinsAgo },
         },
       });
       if (!recentAlert) {
         await prisma.auditLog.create({
           data: {
-            branchId: camera.branchId,
             action: "CCTV_WAITER_SLA_BREACH",
             entityType: "CctvCamera",
             entityId: camera.id,
+            authorizedBy: "AI_CCTV_EDGE_AGENT",
+            reason: "5-minute unattended table SLA breach",
             details: `Unattended table alert on ${camera.name}: ${breached.map((b: any) => b.tableNumber).join(", ")}`,
           },
         });
